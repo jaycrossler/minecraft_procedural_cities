@@ -1,7 +1,7 @@
 #############################################################################################################
 # Procedural Building creation functions for MineCraft.  Uses mcpi to connect to RaspberryJuice on SpigotMC
 # Import via python command line:
-#   exec(open("py/buildings.py").read())
+#   exec(open("Building.py").read())
 # Usage:
 #   b = Building()
 #   b.build()
@@ -16,9 +16,12 @@ import mcpi.block as block
 import numpy as np
 import time
 import math
-
+import os
+import VoxelGraphics as vg
+from Map import Map
+#-----------------------
 mc = Minecraft.create()
-
+#-----------------------
 
 
 
@@ -46,12 +49,15 @@ class Building(object):
         if not options:
             options = Map()
 
-        self.seed = options.seed or get_seed()
-        np.random.seed(self.seed)
+        self.seed = options.seed or vg.get_seed()
+        vg.init_with_seed(self.seed)
 
         #If position isn't set, use the player position
         if pos is False:
-            pos = mc.player.getTilePos()
+            try:
+                pos = mc.player.getTilePos()
+            except mcpi.connection.RequestError:
+                pos =  mcpi.vec3.Vec3(0,0,0)
         
         #If "force_height" not passed in as an option, then pick height of the terrain at the x,z point
         if not options.force_height:
@@ -95,8 +101,8 @@ class Building(object):
         return d
 
     def create_polys(building):
-        #NOTE: Currently, only creates a box
-        
+        #NOTE: Currently, only creates a box        
+
         sw = mcpi.vec3.Vec3(-math.floor(building.width/2), 0, -math.floor(building.depth/2))
         se = mcpi.vec3.Vec3(-math.floor(building.width/2), 0, math.floor(building.depth/2))
         ne = mcpi.vec3.Vec3(math.ceil(building.width/2), 0, math.ceil(building.depth/2))
@@ -108,10 +114,12 @@ class Building(object):
         polys = []
         data_so_far = building.data()
         polys.append(BuildingPoly('roof', c + sw + up, c + ne + up, data_so_far))
+
         polys.append(BuildingPoly('wall', c + sw + dn, c + se + up, data_so_far.copy(direction="Front")))
         polys.append(BuildingPoly('wall', c + se + dn, c + ne + up, data_so_far.copy(direction="Side")))
         polys.append(BuildingPoly('wall', c + ne + dn, c + nw + up, data_so_far.copy(direction="Back")))
         polys.append(BuildingPoly('wall', c + nw + dn, c + sw + up, data_so_far.copy(direction="Side")))
+
         polys.append(BuildingPoly('foundation', c + sw + dn, c + ne + dn, data_so_far))
         return polys
 
@@ -140,70 +148,3 @@ def biome_at(pos):
     except mcpi.connection.RequestError:
         biome = "Plains"
     return biome
-
-def get_seed():
-    # TODO: Return the world seed, add in x,y,z
-    return np.random.randint(65000)
-
-# Helper function to look up options in dict
-def opts(options, v_name, def_val=False):
-    if v_name in options:
-        return options[v_name]
-    else:
-        return def_val
-
-
-
-# TreeDict like version of JavaScript objects
-class DotDict(dict):
-    def __init__(self, **kwds):
-        self.update(kwds)
-        self.__dict__ = self
-
-
-
-class Map(dict):
-    """
-    Example:
-    m = Map({'first_name': 'Eduardo'}, last_name='Pool', age=24, sports=['Soccer'])
-    """
-    def __init__(self, *args, **kwargs):
-        super(Map, self).__init__(*args, **kwargs)
-        for arg in args:
-            if isinstance(arg, dict):
-                for k, v in arg.items():
-                    self[k] = v
-
-        if kwargs:
-            for k, v in kwargs.items():
-                self[k] = v
-
-    def __getattr__(self, attr):
-        return self.get(attr)
-
-    def __setattr__(self, key, value):
-        self.__setitem__(key, value)
-
-    def __setitem__(self, key, value):
-        super(Map, self).__setitem__(key, value)
-        self.__dict__.update({key: value})
-
-    def __delattr__(self, item):
-        self.__delitem__(item)
-
-    def __delitem__(self, key):
-        super(Map, self).__delitem__(key)
-        del self.__dict__[key]
-
-    def extend (self, **new_keys):
-        for key in new_keys:
-            self[key] = new_keys[key]
-        return self
-
-    def copy (self, **new_keys):
-        item = Map({})
-        for key in self:
-            item[key] = self[key]
-        for key in new_keys:
-            item[key] = new_keys[key]
-        return item
