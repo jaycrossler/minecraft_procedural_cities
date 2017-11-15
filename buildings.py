@@ -4,8 +4,11 @@
 #   exec(open("py/buildings.py").read())
 # Usage:
 #   b = Building()
+#   b.build()
 # or
-#   b = Building(mcpi.vec3.Vec3(42,0,42), name="Mansion", height=20, depth=20, width=30, biome="Plains")
+#   options = Map({},name="Mansion", height=20, depth=20, width=30)
+#   b = Building(mcpi.vec3.Vec3(42,0,42), options)
+#   b.build
 ##############################################################################################################
 import mcpi
 from mcpi.minecraft import Minecraft
@@ -17,55 +20,58 @@ import math
 mc = Minecraft.create()
 
 
-# TreeDict like version of JavaScript objects
-class DotDict(dict):
-    def __init__(self, **kwds):
-        self.update(kwds)
-        self.__dict__ = self
 
 
+#-----------------------
 # Polygon helper class to store, build, and create blocks
 class BuildingPoly(object):
-    def __init__(self, kind, pos1, pos2, **options):
+    def __init__(self, kind, pos1, pos2, options):
         self.kind = kind
         self.pos1 = pos1
         self.pos2 = pos2
+        self.direction = options.direction
         self.material = options.material
-
+    
     def create(self):
         mc.setBlocks(self.pos1.x, self.pos1.y, self.pos1.z, self.pos2.x, self.pos2.y, self.pos2.z, self.material)
-
+    
     def clear(self):
         mc.setBlocks(self.pos1.x, self.pos1.y, self.pos1.z, self.pos2.x, self.pos2.y, self.pos2.z, block.AIR.id)
+#-----------------------
 
 # Main class for creating a building along with settings
-class Building(object):
-    def __init__(self, pos=False, **options):
-        self.seed = opts(options,'seed', get_seed())
+class Building(object):    
+
+    def __init__(self, pos=False, options=False):
+        if not options:
+            options = Map()
+
+        self.seed = options.seed or get_seed()
         np.random.seed(self.seed)
 
         #If position isn't set, use the player position
         if pos is False:
-            pos = mc.player.GetTilePos()
+            pos = mc.player.getTilePos()
         
         #If "force_height" not passed in as an option, then pick height of the terrain at the x,z point
-        if "force_height" not in options:
+        if not options.force_height:
             pos.y = mc.getHeight(pos.x, pos.z)
 
         self.center = pos
         self.x = pos.x
         self.y = pos.y
         self.z = pos.z
-        self.biome = opts(options,'biome', biome_at(pos)).title() #NOTE: Title-cases resume, PLAINS becomes Plains
+        self.biome = options.biome or biome_at(pos)
+        self.biome = self.biome.title() #NOTE: Title-cases biome, PLAINS becomes Plains
 
-        self.width = opts(options,'width', np.random.randint(8,30))
-        self.height = opts(options,'height', np.random.randint(6,10))
-        self.depth = opts(options,'depth', np.random.randint(8,30))
+        self.width = options.width or np.random.randint(8,30)
+        self.height = options.height or np.random.randint(6,10)
+        self.depth = options.depth or np.random.randint(8,30)
         
-        self.material = block.STONE.id #TODO: Change based on biome, have rand list
+        self.material = options.material or block.STONE.id #TODO: Change based on biome, have rand list
         
-        self.name = opts(options,'name', self.biome + " house")
-        self.polys = create_polys(self)
+        self.name = options.name or self.biome + " house"
+        self.polys = self.create_polys()
 
 
     def build(self):
@@ -78,47 +84,45 @@ class Building(object):
 
     def data(self):
         #TODO: Find how to return this as an iterable data object
-        d = {}
-        d['center'] = self['center']
-        d['biome'] = self['biome']
-        d['width'] = self['width']
-        d['height'] = self['height']
-        d['depth'] = self['depth']
-        d['material'] = self['material']
-        d['name'] = self['name']
+        d = Map()
+        d.center = self.center
+        d.biome = self.biome
+        d.width = self.width
+        d.height = self.height
+        d.depth = self.depth
+        d.material = self.material
+        d.name = self.name
         return d
 
-
+    def create_polys(building):
+        #NOTE: Currently, only creates a box
+        
+        sw = mcpi.vec3.Vec3(-math.floor(building.width/2), 0, -math.floor(building.depth/2))
+        se = mcpi.vec3.Vec3(-math.floor(building.width/2), 0, math.floor(building.depth/2))
+        ne = mcpi.vec3.Vec3(math.ceil(building.width/2), 0, math.ceil(building.depth/2))
+        nw = mcpi.vec3.Vec3(math.ceil(building.width/2), 0, -math.ceil(building.depth/2))
+        up = mcpi.vec3.Vec3(0, building.height, 0)
+        dn = mcpi.vec3.Vec3(0, -1, 0)
+        c = building.center
+        
+        polys = []
+        data_so_far = building.data()
+        polys.append(BuildingPoly('roof', c + sw + up, c + ne + up, data_so_far))
+        polys.append(BuildingPoly('wall', c + sw + dn, c + se + up, data_so_far.copy(direction="Front")))
+        polys.append(BuildingPoly('wall', c + se + dn, c + ne + up, data_so_far.copy(direction="Side")))
+        polys.append(BuildingPoly('wall', c + ne + dn, c + nw + up, data_so_far.copy(direction="Back")))
+        polys.append(BuildingPoly('wall', c + nw + dn, c + sw + up, data_so_far.copy(direction="Side")))
+        polys.append(BuildingPoly('foundation', c + sw + dn, c + ne + dn, data_so_far))
+        return polys
 
 # Recreate the building with same settings and latest rendering code
 def NewB(building):
     options = building.data()
-    newb = Building(options['center'], *options)
+    newb = Building(options['center'], options)
     building.clear()
     newb.build()
     return newb
 
-#TODO: Move these into a namespace
-def create_polys(building):
-    #NOTE: Currently, only creates a box
-    
-    sw = mcpi.vec3.Vec3(-math.floor(building.width/2), 0, -math.floor(building.depth/2))
-    se = mcpi.vec3.Vec3(-math.floor(building.width/2), 0, math.floor(building.depth/2))
-    ne = mcpi.vec3.Vec3(math.ceil(building.width/2), 0, math.ceil(building.depth/2))
-    nw = mcpi.vec3.Vec3(math.ceil(building.width/2), 0, -math.ceil(building.depth/2))
-    up = mcpi.vec3.Vec3(0, building.height, 0)
-    dn = mcpi.vec3.Vec3(0, -1, 0)
-    c = building.center
-
-    polys = []
-    data_so_far = building.data()
-    polys.append(BuildingPoly('roof', c + sw + up, c + ne + up, *data_so_far))
-    polys.append(BuildingPoly('wall', c + sw + dn, c + se + up, *data_so_far))
-    polys.append(BuildingPoly('wall', c + se + dn, c + ne + up, *data_so_far))
-    polys.append(BuildingPoly('wall', c + ne + dn, c + nw + up, *data_so_far))
-    polys.append(BuildingPoly('wall', c + nw + dn, c + sw + up, *data_so_far))
-    polys.append(BuildingPoly('foundation', c + sw + dn, c + ne + dn, *data_so_far))
-    return polys
 
 
 def biome_at(pos):
@@ -147,3 +151,59 @@ def opts(options, v_name, def_val=False):
         return options[v_name]
     else:
         return def_val
+
+
+
+# TreeDict like version of JavaScript objects
+class DotDict(dict):
+    def __init__(self, **kwds):
+        self.update(kwds)
+        self.__dict__ = self
+
+
+
+class Map(dict):
+    """
+    Example:
+    m = Map({'first_name': 'Eduardo'}, last_name='Pool', age=24, sports=['Soccer'])
+    """
+    def __init__(self, *args, **kwargs):
+        super(Map, self).__init__(*args, **kwargs)
+        for arg in args:
+            if isinstance(arg, dict):
+                for k, v in arg.items():
+                    self[k] = v
+
+        if kwargs:
+            for k, v in kwargs.items():
+                self[k] = v
+
+    def __getattr__(self, attr):
+        return self.get(attr)
+
+    def __setattr__(self, key, value):
+        self.__setitem__(key, value)
+
+    def __setitem__(self, key, value):
+        super(Map, self).__setitem__(key, value)
+        self.__dict__.update({key: value})
+
+    def __delattr__(self, item):
+        self.__delitem__(item)
+
+    def __delitem__(self, key):
+        super(Map, self).__delitem__(key)
+        del self.__dict__[key]
+
+    def extend (self, **new_keys):
+        for key in new_keys:
+            self[key] = new_keys[key]
+        return self
+
+    def copy (self, **new_keys):
+        item = Map({})
+        for key in self:
+            item[key] = self[key]
+        for key in new_keys:
+            item[key] = new_keys[key]
+        return item
