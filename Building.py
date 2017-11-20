@@ -11,7 +11,6 @@
 #   b.build
 #
 #   TODO: Pointy roof not high enough on one axis
-#   TODO: Edges not drawing with different material
 #   TODO: Doors not drawing with top half
 #
 ##############################################################################################################
@@ -34,9 +33,11 @@ class Feature(object):
         self.pos = pos
         self.facing = options.facing
         self.blocks = []
+        self.blocks_to_not_draw = []
 
         if kind == "door":
             self.blocks.append(Map(pos=V3(pos.x, pos.y, pos.z), id=block.DOOR_WOOD.id))
+            self.blocks_to_not_draw.append(V3(pos.x, pos.y+1, pos.z))
         if kind == "window":
             self.blocks.append(Map(pos=pos, id=block.GLASS_PANE.id, data=1))
         if kind == "bed":
@@ -46,7 +47,7 @@ class Feature(object):
         for item in self.blocks:
             if self.kind == "door":
                 #Create a wood holder under the door
-                helpers.create_block(V3(item.pos.x, item.pos.y+1, item.pos.z), block.AIR.id)
+                # helpers.create_block(V3(item.pos.x, item.pos.y+1, item.pos.z), block.AIR.id)
                 helpers.create_block(V3(item.pos.x, item.pos.y-1, item.pos.z), block.WOOD.id)
             helpers.create_block(item.pos, item.id, item.data)
 
@@ -118,14 +119,16 @@ class BuildingPoly(object):
             #else:
                 #Roof is flat, don't do anything
 
-                
-
     
     def draw(self):
         # helpers.create_block_filled_box(self.pos1, self.pos2, self.material)
-        helpers.create_blocks_from_pointlist(self.points, self.material)
+        blocks_to_not_draw = []
+        for feature in self.features:
+            blocks_to_not_draw += feature.blocks_to_not_draw;
+
+        helpers.create_blocks_from_pointlist(self.points, self.material, blocks_to_not_draw=blocks_to_not_draw)
         if self.material_edges:
-            helpers.create_blocks_from_pointlist(self.points_edges, self.material_edges)
+            helpers.create_blocks_from_pointlist(self.points_edges, self.material_edges, blocks_to_not_draw=blocks_to_not_draw)
 
         for feature in self.features:
             feature.draw()
@@ -151,7 +154,6 @@ class BuildingPoly(object):
         stro.append(" - Polygon: " + self.kind + " with " + str(self.vertices) + " points, height " + str(self.height) + ", and " +str(len(self.points)) +" blocks")
         for f in self.features:
             stro.append("  -- " + f.info())
-
         return stro
 
 #-----------------------
@@ -211,6 +213,7 @@ class Building(object):
         d.radius = self.radius
         d.sides = self.sides
         d.material = self.material
+        d.material_edges = self.material_edges
         d.name = self.name
         d.options = self.options
         return d

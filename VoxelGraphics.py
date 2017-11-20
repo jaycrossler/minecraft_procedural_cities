@@ -137,8 +137,10 @@ def poly_point_edges(face_points, options=Map()):
     top = points_along_poly(face_points, Map(side = "top"))
     bottom = points_along_poly(face_points, Map(side = "bottom"))
 
-    out = [top, bottom]
-    out.extend([left_x,right_x] if len(left_x) < len(left_z) else [left_z,right_z])
+    out = top
+    out.extend(bottom)
+    out.extend(left_x if len(left_x) < len(left_z) else left_z)
+    out.extend(right_x if len(right_x) < len(right_z) else right_z)
     return out
 
 

@@ -104,9 +104,19 @@ def create_box_centered_on(x,y,z,w,h,l, blocktype, data=None):
     else:
         mc.setBlocks(x-w, y, z-l, x+w, y+h, z+l, blocktype, data)
 
-def create_blocks_from_pointlist(points, blocktype, data=None):
+def create_blocks_from_pointlist(points, blocktype, data=None, blocks_to_not_draw=[]):
     for point in points:
-        create_block(point, blocktype, data)
+        draw_block = True
+        if (len(blocks_to_not_draw)>0):
+            #TODO: This could be more efficient
+            try:
+                if (blocks_to_not_draw.index(point)>-1): 
+                    draw_block = False
+            except ValueError:
+                draw_block = True
+
+        if draw_block:
+            create_block(point, blocktype, data)
 
 def choose_one(*argv):
     return argv[np.random.randint(0, len(argv)-1)]
