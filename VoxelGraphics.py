@@ -2,6 +2,7 @@
 # Procedural Building voxel drawing functions for MineCraft.  
 ##############################################################################################################
 
+# import mcpi
 import math
 import numpy as np
 from Map import Map
@@ -85,7 +86,7 @@ def points_spaced(points, options=Map()):
     if options.every == 1:
         new_points = points
     else:
-        for i, vec in enumerate(points,1):
+        for i, vec in enumerate(points):
             if i % options.every == 0:
                 new_points.append(vec)
 

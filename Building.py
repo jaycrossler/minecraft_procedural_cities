@@ -46,10 +46,12 @@ class Feature(object):
             self.blocks.append(Map(pos=V3(pos.x, pos.y, pos.z), id=block.DOOR_WOOD.id, data=door_code))
             self.blocks.append(Map(pos=V3(pos.x, pos.y+1, pos.z), id=block.DOOR_WOOD.id, data=8))
             # self.blocks_to_not_draw.append(V3(pos.x, pos.y+1, pos.z))
-        if kind == "window":
+        elif kind == "window":
             self.blocks.append(Map(pos=pos, id=block.GLASS_PANE.id, data=1))
-        if kind == "bed":
+        elif kind == "bed":
             self.blocks.append(Map(pos=pos, id=block.BED.id))
+        elif kind == "spacing":
+            self.blocks.append(Map(pos=pos, id=block.AIR.id))
     
     def draw(self):
         for item in self.blocks:
@@ -89,6 +91,14 @@ class BuildingPoly(object):
                 for vec in spaced_points+spaced_points2:
                     self.features.append(Feature("window", vec))
 
+            elif options.options.windows == "window_slits":
+
+                spaced_points = vg.points_spaced(self.bottom(), Map(every=3))
+                spaced_points = vg.extrude(spaced_points, Map(space_y = math.ceil(self.height/2)))
+                spaced_points2 = vg.extrude(spaced_points, Map(space_y = 1))
+                for vec in spaced_points+spaced_points2:
+                    self.features.append(Feature("spacing", vec))
+
             else:
                 spaced_points = vg.points_spaced(self.bottom(), Map(every=3))
                 spaced_points = vg.extrude(spaced_points, Map(space_y = math.ceil(self.height/2)))
@@ -116,19 +126,36 @@ class BuildingPoly(object):
                         roof_face = vg.unique_points(vg.getFace([V3(v.x, v.y+1, v.z) for v in triangle_face])) 
                         self.points = self.points.union(roof_face)
 
+            if str.startswith(options.options.roof, "battlement"):
+                height = options.options.roof_battlement_height or 1
+                spacing = options.options.roof_battlement_space or 2
+
+                for i,vec in enumerate(options.corner_vectors):
+                    next_roof_point = options.corner_vectors[(i+1)%len(options.corner_vectors)]
+                    #TODO: Add X,Z outward from center as option
+                    roof_line = vg.getLine(vec.x, vec.y+height, vec.z, next_roof_point.x, next_roof_point.y+height, next_roof_point.z)
+
+                    self.points = self.points.union(vg.points_spaced(roof_line, Map(every=spacing)))
     
     def draw(self):
-        # helpers.create_block_filled_box(self.pos1, self.pos2, self.material)
         blocks_to_not_draw = []
         for feature in self.features:
             blocks_to_not_draw += feature.blocks_to_not_draw;
 
         helpers.create_blocks_from_pointlist(self.points, self.material, blocks_to_not_draw=blocks_to_not_draw)
+
+    def draw_edges(self):
+        blocks_to_not_draw = []
+        for feature in self.features:
+            blocks_to_not_draw += feature.blocks_to_not_draw;
+
         if self.material_edges:
             helpers.create_blocks_from_pointlist(self.points_edges, self.material_edges, blocks_to_not_draw=blocks_to_not_draw)
 
+    def draw_features(self):
         for feature in self.features:
             feature.draw()
+
     
     def clear(self):
         material = block.GRASS.id if self.kind == "foundation" else block.AIR.id
@@ -193,10 +220,16 @@ class Building(object):
         self.name = options.name or self.biome + " house"
         self.polys = self.create_polys(options)
 
-
     def build(self):
         for poly in self.polys:
             poly.draw()
+
+        for poly in self.polys:
+            poly.draw_edges()
+
+        for poly in self.polys:
+            poly.draw_features()
+
 
     def clear(self):
         for poly in self.polys:
@@ -264,5 +297,11 @@ def NewB(building):
     return newb
 
 
+def t1():
+    return Building(False, Map(sides=4, height=7, radius=6, windows="window_line_double", roof="pointy"))
 
+def t2():
+    return Building(False, Map(sides=6, height=5, radius=8, windows="window_line", roof="pointy_lines", material=block.WOOL.id, material_edges=block.GOLD_BLOCK.id))
 
+def t3():
+    return Building(False, Map(sides=4, height=10, radius=5, windows="window_slits", roof="battlement", material=block.STONE_BRICK.id, material_edges=block.IRON_BLOCK.id))
