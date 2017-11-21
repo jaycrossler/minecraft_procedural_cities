@@ -10,9 +10,11 @@
 #   b = Building(V3(42,0,42), options)
 #   b.build
 #
-#   TODO: Pointy roof not high enough on one axis
-#   TODO: Doors not drawing with top half
+#   TODO: Pointy roof drawing weird on one axis
 #
+# Test Buildings:
+#   b = Building(False, Map(sides=4, height=7, radius=6, windows="window_line_double", roof="pointy"))
+#   b = Building(False, Map(sides=6, height=5, radius=8, windows="window_line", roof="pointy_lines", material=block.WOOL.id, material_edges=block.GOLD_BLOCK.id))
 ##############################################################################################################
 import mcpi
 import mcpi.block as block
@@ -20,7 +22,6 @@ import math
 import MinecraftHelpers as helpers
 import VoxelGraphics as vg
 from Map import Map
-# from mcpi.vec3 import Vec3 as point
 from V3 import V3
 
 helpers.connect()
@@ -32,12 +33,19 @@ class Feature(object):
         self.kind = kind
         self.pos = pos
         self.facing = options.facing
+        self.cardinality = options.cardinality
         self.blocks = []
         self.blocks_to_not_draw = []
 
         if kind == "door":
-            self.blocks.append(Map(pos=V3(pos.x, pos.y, pos.z), id=block.DOOR_WOOD.id))
-            self.blocks_to_not_draw.append(V3(pos.x, pos.y+1, pos.z))
+            if options.door_inside:
+                door_pattern = "swne"
+            else:
+                door_pattern = "nesw"
+            door_code = door_pattern.index(options.cardinality[-1:]) 
+            self.blocks.append(Map(pos=V3(pos.x, pos.y, pos.z), id=block.DOOR_WOOD.id, data=door_code))
+            self.blocks.append(Map(pos=V3(pos.x, pos.y+1, pos.z), id=block.DOOR_WOOD.id, data=8))
+            # self.blocks_to_not_draw.append(V3(pos.x, pos.y+1, pos.z))
         if kind == "window":
             self.blocks.append(Map(pos=pos, id=block.GLASS_PANE.id, data=1))
         if kind == "bed":
@@ -45,10 +53,6 @@ class Feature(object):
     
     def draw(self):
         for item in self.blocks:
-            if self.kind == "door":
-                #Create a wood holder under the door
-                # helpers.create_block(V3(item.pos.x, item.pos.y+1, item.pos.z), block.AIR.id)
-                helpers.create_block(V3(item.pos.x, item.pos.y-1, item.pos.z), block.WOOD.id)
             helpers.create_block(item.pos, item.id, item.data)
 
     def clear(self):
@@ -68,6 +72,7 @@ class BuildingPoly(object):
         self.material = options.material
         self.material_edges = options.material_edges
         self.height = vg.highest(vertices) - vg.lowest(vertices) + 1
+        self.cardinality = options.cardinality
         self.features = []
         self.points = vg.unique_points(vg.getFace(self.vertices))
         self.points_edges = vg.poly_point_edges(self.points)
@@ -92,32 +97,24 @@ class BuildingPoly(object):
 
             mid_points = vg.middle_of_line(self.bottom(), Map(center=True, max_width=2, point_per=10))
             for vec in mid_points:
-                self.features.append(Feature("door", vec))
+                self.features.append(Feature("door", vec, Map(cardinality=self.cardinality, door_inside=options.options.door_inside)))
 
         if kind=="roof":
-            if options.options.roof == "pointy_lines":
-                height = options.options.roof_pointy_height or math.ceil(self.radius/2)
-                pointy = V3(options.center.x, options.center.y+options.height+height, center.z)
-
-                for i,vec in enumerate(options.roof_vectors):
-                    roof_line = vg.getLine(vec.x, vec.y, vec.z, pointy.x, pointy.y, pointy.z)
-                    self.points_edges += roof_line
-
-            elif options.options.roof == "pointy":
+            if str.startswith(options.options.roof, "pointy"):
                 height = options.options.roof_pointy_height or options.radius
                 pointy = V3(options.center.x, options.center.y+options.height+height, options.center.z)
 
                 for i,vec in enumerate(options.corner_vectors):
-                    roof_line = vg.getLine(vec.x, vec.y, vec.z, pointy.x, pointy.y, pointy.z)
+                    roof_line = vg.getLine(vec.x, vec.y+1, vec.z, pointy.x, pointy.y+1, pointy.z)
                     self.points_edges += roof_line
 
-                    next_roof_point = options.corner_vectors[(i+1)%len(options.corner_vectors)]
+                    if not options.options.roof == "pointy_lines":
+                        next_roof_point = options.corner_vectors[(i+1)%len(options.corner_vectors)]
 
-                    #Triangle to pointy
-                    roof_face = vg.unique_points(vg.getFace([vec, pointy, next_roof_point])) 
-                    self.points = self.points.union(roof_face)
-            #else:
-                #Roof is flat, don't do anything
+                        #Triangle to pointy face
+                        triangle_face = [vec, pointy, next_roof_point]
+                        roof_face = vg.unique_points(vg.getFace([V3(v.x, v.y+1, v.z) for v in triangle_face])) 
+                        self.points = self.points.union(roof_face)
 
     
     def draw(self):
@@ -136,6 +133,7 @@ class BuildingPoly(object):
     def clear(self):
         material = block.GRASS.id if self.kind == "foundation" else block.AIR.id
         helpers.create_blocks_from_pointlist(self.points, material)
+        helpers.create_blocks_from_pointlist(self.points_edges, material)
         for feature in self.features:
             feature.clear()
 
@@ -182,7 +180,7 @@ class Building(object):
         self.y = pos.y
         self.z = pos.z
         self.biome = "Plains" #TODO: options.biome or helpers.biome_at(pos)
-        self.biome = self.biome.title() #NOTE: Title-cases biome, PLAINS becomes Plains
+        self.biome = self.biome.title() #Title-cases biome, PLAINS becomes Plains
 
         self.height = options.height or vg.rand_in_range(4,9)
         self.radius = options.radius or vg.rand_in_range(4,10)
@@ -244,9 +242,9 @@ class Building(object):
             corner_vectors.append(p1)
 
             facing = "front" if i == 1 else "side"
-            #TODO: Check if vertices_rounded does anything useful, and perhaps remove if not
-            vertices = vg.vertices_rounded([p1, p2, V3(p2.x, p2.y+h, p2.z), V3(p1.x, p1.y+h, p1.z)]) # 4 points straight up
-            p = BuildingPoly('wall', vertices, data_so_far.copy(facing=facing))
+            vertices = [p1, p2, V3(p2.x, p2.y+h, p2.z), V3(p1.x, p1.y+h, p1.z)] # 4 points straight up
+            c = vg.cardinality(p1,p2)
+            p = BuildingPoly('wall', vertices, data_so_far.copy(facing=facing, cardinality=c))
             polys.append(p)
 
         roof_vectors = [V3(v.x, v.y+h, v.z) for v in corner_vectors]

@@ -2,11 +2,9 @@
 # Procedural Building voxel drawing functions for MineCraft.  
 ##############################################################################################################
 
-# import mcpi
 import math
 import numpy as np
 from Map import Map
-# from mcpi.vec3 import Vec3 as point
 import MinecraftHelpers as helpers
 from numbers import Integral
 from V3 import *
@@ -55,10 +53,28 @@ def point_along_circle(center, radius, points, num, options=Map()):
 
     return V3(round(x,options.precision), round(y,options.precision), round(z,options.precision))
 
-def vertices_rounded(points):
-    # for i, v in enumerate(points):
-    #     points[i] = v.ifloor()
-    return points
+
+def angle_between(p1, p2):
+    return (math.atan2(p2.z-p1.z, p2.x-p1.x) * (180.0 / math.pi) + 360) % 360
+
+def cardinality(p1,p2):
+    angle = angle_between(p1,p2)
+    c = "e"
+    if angle > 22.5 and angle <= 67.5:
+        c = "se"
+    elif angle > 67.5 and angle <= 112.5:
+        c = "s"
+    elif angle > 112.5 and angle <= 157.5:
+        c = "sw"
+    elif angle > 157.5 and angle <= 202.5:
+        c = "w"
+    elif angle > 202.5 and angle <= 247.5:
+        c = "nw"
+    elif angle > 247.5 and angle <= 292.5:
+        c = "n"
+    elif angle > 292.5 and angle <= 337.5:
+        c = "ne"
+    return c
 
 def points_spaced(points, options=Map()):
     if not options.every:
