@@ -94,17 +94,30 @@ def points_spaced(points, options=Map()):
 
 
 def extrude(points, options=Map()):    
-    if not options.space_x:
-        options.space_x = 0
-    if not options.space_y:
-        options.space_y = 0
-    if not options.space_z:
-        options.space_z = 0
+    spacing = options.spacing or V3(0,0,0)
+    size = options.size or V3(0,0,0)
 
     new_points = []
 
-    for i, vec in enumerate(points, 1):
-        new_points.append(V3(vec.x + options.space_x, vec.y + options.space_y, vec.z + options.space_z))
+    if not spacing == V3(0,0,0):
+        for i, vec in enumerate(points, 1):
+            new_points.append(V3(vec.x + spacing.x, vec.y + spacing.y, vec.z + spacing.z))
+
+    #TODO: Should extrusion be affected by size?  Should x,y,z work independently?
+
+    if not size == V3(0,0,0):
+        for i, vec in enumerate(points, 1):
+            for x in range(abs(size.x)):
+                n = -1 if size.x < 0 else 1
+                new_points.append(V3(vec.x + (n * x), vec.y, vec.z))
+           
+            for y in range(abs(size.y)):
+                n = -1 if size.y < 0 else 1
+                new_points.append(V3(vec.x, vec.y + (n * y), vec.z))
+            
+            for z in range(abs(size.z)):
+                n = -1 if size.z < 0 else 1
+                new_points.append(V3(vec.x, vec.y, vec.z + (n * z)))
 
     return new_points
 
@@ -154,11 +167,34 @@ def poly_point_edges(face_points, options=Map()):
     top = points_along_poly(face_points, Map(side = "top"))
     bottom = points_along_poly(face_points, Map(side = "bottom"))
 
+    left = left_x if len(left_x) < len(left_z) else left_z
+    right = right_x if len(right_x) < len(right_z) else right_z
+
     out = top
     out.extend(bottom)
-    out.extend(left_x if len(left_x) < len(left_z) else left_z)
-    out.extend(right_x if len(right_x) < len(right_z) else right_z)
-    return out
+    out.extend(left)
+    out.extend(right)
+    return out, top, bottom, left, right
+
+
+def rectangular_face(p1, p2, h):
+    points = []
+    left_line = []
+    right_line = []
+    top_line = []
+    bottom_line = getLine(p1.x, p1.y, p1.z, p2.x, p2.y, p2.z)
+    width = len(bottom_line)
+
+    for y in range(h):
+        for i,vec in enumerate(bottom_line):
+            new_point = V3(vec.x, vec.y+y, vec.z)
+            #Add it to a line or the center point mass
+            if (y==h-1): top_line.append(new_point)
+            elif (i==0): left_line.append(new_point)
+            elif (i==width-1): right_line.append(new_point)
+            else: points.append(new_point)
+
+    return points, top_line, bottom_line, left_line, right_line
 
 
 def points_along_poly(face_points, options=Map()):

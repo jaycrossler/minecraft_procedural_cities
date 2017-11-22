@@ -11,6 +11,10 @@
 #   b.build
 #
 #   TODO: Pointy roof drawing weird on one axis
+#   TODO: Have floors with each allowing different polylgon/size settings
+#   TODO: Stairs or ladders between floors
+#   TODO: Building cost to create building
+#   TODO: Road network with buildings fitting in boxes
 #
 # Test Buildings:
 #   b = Building(False, Map(sides=4, height=7, radius=6, windows="window_line_double", roof="pointy"))
@@ -69,39 +73,57 @@ class Feature(object):
 class BuildingPoly(object):
     def __init__(self, kind, vertices, options=Map()):
         self.kind = kind
-        self.vertices = vertices
         self.facing = options.facing
         self.material = options.material
-        self.material_edges = options.material_edges
-        self.height = vg.highest(vertices) - vg.lowest(vertices) + 1
-        self.cardinality = options.cardinality
+        self.material_edges = options.material_edges #TODO: Different colors for different edges
         self.features = []
-        self.points = vg.unique_points(vg.getFace(self.vertices))
-        self.points_edges = vg.poly_point_edges(self.points)
 
+        if len(vertices) == 2:
+            #If two points are given, assume it's for the bottom line, then draw that as a wall
+
+            #TODO: Add width for the wall - how to add end lines to that?
+
+            p1 = vertices[0]
+            p2 = vertices[1]
+            h = options.height or 5
+            self.vertices = vertices_with_up = [p1, p2, V3(p2.x, p2.y+h, p2.z), V3(p1.x, p1.y+h, p1.z)] # points straight up
+            self.height = options.height or (vg.highest(vertices_with_up) - vg.lowest(vertices_with_up) + 1)
+            self.cardinality = vg.cardinality(p1,p2)
+            self.points, self.top_line, self.bottom_line, self.left_line, self.right_line = vg.rectangular_face(p1, p2, h)
+        else:
+            #It's a non-y-rectangular-shaped polygon, so use a different getFace builder function
+            self.vertices = vertices
+            self.height = options.height or (vg.highest(vertices) - vg.lowest(vertices) + 1)
+            self.cardinality = options.cardinality
+            self.points = vg.unique_points(vg.getFace(self.vertices))
+            x, self.top_line, self.bottom_line, self.left_line, self.right_line = vg.poly_point_edges(self.points)
+
+        self.points_edges = self.top_line + self.bottom_line + self.left_line + self.right_line
+
+        #TODO: Move all of the styling to other library files
         if kind=="wall":
             if options.options.windows == "window_line":
-                spaced_points = vg.extrude(self.bottom(), Map(space_y = math.ceil(self.height/2)))
+                spaced_points = vg.extrude(self.bottom(), Map(spacing = V3(0,math.ceil(self.height/2),0)))
                 for vec in spaced_points:
                     self.features.append(Feature("window", vec))
 
             elif options.options.windows == "window_line_double":
-                spaced_points = vg.extrude(self.bottom(), Map(space_y = math.floor(self.height/2)))
-                spaced_points2 = vg.extrude(spaced_points, Map(space_y = 1))
+                spaced_points = vg.extrude(self.bottom(), Map(spacing = V3(0,math.ceil(self.height/2),0)))
+                spaced_points2 = vg.extrude(spaced_points, Map(spacing = V3(0,1,0)))
                 for vec in spaced_points+spaced_points2:
                     self.features.append(Feature("window", vec))
 
             elif options.options.windows == "window_slits":
 
                 spaced_points = vg.points_spaced(self.bottom(), Map(every=3))
-                spaced_points = vg.extrude(spaced_points, Map(space_y = math.ceil(self.height/2)))
-                spaced_points2 = vg.extrude(spaced_points, Map(space_y = 1))
+                spaced_points = vg.extrude(spaced_points, Map(spacing = V3(0,math.ceil(self.height/2),0)))
+                spaced_points2 = vg.extrude(spaced_points, Map(spacing = V3(0,1,0)))
                 for vec in spaced_points+spaced_points2:
                     self.features.append(Feature("spacing", vec))
 
             else:
                 spaced_points = vg.points_spaced(self.bottom(), Map(every=3))
-                spaced_points = vg.extrude(spaced_points, Map(space_y = math.ceil(self.height/2)))
+                spaced_points = vg.extrude(spaced_points, Map(spacing = V3(0,math.ceil(self.height/2),0)))
                 for vec in spaced_points:
                     self.features.append(Feature("window", vec))
 
@@ -173,6 +195,18 @@ class BuildingPoly(object):
         if not hasattr(self, "top_line"):
             self.top_line = vg.points_along_poly(self.points, Map(side="top"))
         return self.top_line
+
+    def left(self):
+        if not hasattr(self, "left_line"):
+            self.left_line = vg.points_along_poly(self.points, Map(side="left_x"))
+        return self.left_line
+
+    def right(self):
+        if not hasattr(self, "right_line"):
+            self.right_line = vg.points_along_poly(self.points, Map(side="right_x"))
+        return self.right_line
+
+    #TODO: Inside and outside point?
 
     def info(self):
         stro = []
@@ -262,7 +296,6 @@ class Building(object):
 
     def create_polys(self, options):
 
-        h = self.height
         polys = []
         data_so_far = self.data()
 
@@ -275,14 +308,14 @@ class Building(object):
             corner_vectors.append(p1)
 
             facing = "front" if i == 1 else "side"
-            vertices = [p1, p2, V3(p2.x, p2.y+h, p2.z), V3(p1.x, p1.y+h, p1.z)] # 4 points straight up
-            c = vg.cardinality(p1,p2)
-            p = BuildingPoly('wall', vertices, data_so_far.copy(facing=facing, cardinality=c))
+            #TODO: Pass in point where front door is, determine facing from that
+            p = BuildingPoly('wall', [p1, p2], data_so_far.copy(height=self.height, facing=facing))
             polys.append(p)
 
-        roof_vectors = [V3(v.x, v.y+h, v.z) for v in corner_vectors]
+        roof_vectors = [V3(v.x, v.y+self.height, v.z) for v in corner_vectors]
         polys.append(BuildingPoly("roof", roof_vectors, data_so_far.copy(corner_vectors = roof_vectors)))
-        polys.insert(0,BuildingPoly("foundation", [V3(v.x, v.y-1, v.z) for v in corner_vectors], data_so_far.copy(corner_vectors = corner_vectors))) #add to be drawn first
+        #insert foundation so that it is drawn first:
+        polys.insert(0,BuildingPoly("foundation", [V3(v.x, v.y-1, v.z) for v in corner_vectors], data_so_far.copy(corner_vectors = corner_vectors))) 
 
         self.corner_vectors = corner_vectors
 
@@ -304,4 +337,4 @@ def t2():
     return Building(False, Map(sides=6, height=5, radius=8, windows="window_line", roof="pointy_lines", material=block.WOOL.id, material_edges=block.GOLD_BLOCK.id))
 
 def t3():
-    return Building(False, Map(sides=4, height=10, radius=5, windows="window_slits", roof="battlement", material=block.STONE_BRICK.id, material_edges=block.IRON_BLOCK.id))
+    return Building(False, Map(sides=4, height=20, radius=6, windows="window_slits", roof="battlement", material=block.STONE_BRICK.id, material_edges=block.IRON_BLOCK.id))
