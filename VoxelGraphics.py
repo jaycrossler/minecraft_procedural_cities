@@ -211,12 +211,20 @@ def rectangular_face(p1, p2, h):
 
     return points, top_line, bottom_line, left_line, right_line
 
+def next_to(p, num=1):
+    ps = []
+    ps.append(V3(p.x-num, p.y, p.z))
+    ps.append(V3(p.x+num, p.y, p.z))
+    ps.append(V3(p.x, p.y, p.z-num))
+    ps.append(V3(p.x, p.y, p.z+num))
+    return ps
+
 def rectangle_inner(p1, p2, num):
     p1, p2 = min_max_points(p1, p2)
     return V3(p1.x+num, p1.y, p1.z+num), V3(p2.x-num, p2.y, p2.z-num)
 
 def rectangle(p1, p2):
-    points = []
+    rim = []
     left_line = []
     right_line = []
     top_line = []
@@ -237,14 +245,14 @@ def rectangle(p1, p2):
                 elif (i==width-1): right_line.append(new_point)
                 else: inner_points.append(new_point)
     else:
-        print("ERROR - NOT YET IMPLEMENTED, TRYING TO MAKE A Non Y RECTANGLE")
+        print("ERROR - NOT YET IMPLEMENTED, TRYING TO MAKE A Non-Y RECTANGLE")
 
-    points.extend(top_line)
-    points.extend(x_line)
-    points.extend(left_line)
-    points.extend(right_line)
+    rim.extend(top_line)
+    rim.extend(x_line)
+    rim.extend(left_line)
+    rim.extend(right_line)
 
-    return points, inner_points #, top_line, x_line, left_line, right_line
+    return rim, inner_points #, top_line, x_line, left_line, right_line
 
 
 def up(v,amount=1):

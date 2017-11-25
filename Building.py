@@ -36,32 +36,92 @@ helpers.connect()
 #Testing location numbers
 corner1, corner2 = V3(-60, 0, 40), V3(120, 0, 200)
 mid1, mid2 = V3(0, 0, 60), V3(50, 0, 110)
+mid_point = V3(30,0,120)
+
+#-----------------------
+# Polygon helper class to store, build, and create blocks
+class Farmzone(object):
+    def __init__(self, p1, p2, options=Map()):
+        self.crop = options.crop or np.random.choice(["cane","wheat","carrot","potato"])
+        self.blocks = []
+
+        rim, inner_rec = rectangle(p1, p2)
+        for block in rim+inner_rec:
+            if not block in self.blocks and type(block) == V3:
+                self.blocks.append(block)
+
+        self.center = V3(round(abs(p2.x-p1.x)), p1.y, round(abs(p2.z-p1.z)))
+
+    def build(self):
+        for i, vec in enumerate(self.blocks):
+            if vec == self.center:
+                helpers.create_block(p1,block.WATER.id)
+                plus2 = vg.up(vec,3)
+                helpers.create_block(plus2,block.GLASS.id)
+                for v2 in vg.next_to(plus2):
+                    helpers.create_block(v2,block.TORCH.id)
+            else:
+                helpers.create_block(vec,block.FARMLAND.id)
+
+        if self.crop == "cane":
+            for i, p1 in enumerate(self.blocks):
+                if not vec == self.center:
+                    helpers.create_block(vg.up(p1),block.SUGAR_CANE.id)
+                    helpers.create_block(vg.up(p1,2),block.SUGAR_CANE.id)
+        elif self.crop == "wheat":
+            for i, p1 in enumerate(self.blocks):
+                if not vec == self.center:
+                    helpers.create_block(vg.up(p1),59)
+        elif self.crop == "carrot":
+            for i, p1 in enumerate(self.blocks):
+                if not vec == self.center:
+                    helpers.create_block(vg.up(p1),141)
+        elif self.crop == "potato":
+            for i, p1 in enumerate(self.blocks):
+                if not vec == self.center:
+                    helpers.create_block(vg.up(p1),142)
+
+
+    def clear(self):
+        for i, vec in enumerate(self.blocks):
+            if vec == self.center:
+                helpers.create_block(vec,block.GRASS.id)
+                plus2 = vg.up(vec,3)
+                for v2 in vg.next_to(plus2):
+                    helpers.create_block(v2,block.AIR.id)
+                helpers.create_block(plus2,block.AIR.id)
+            else:
+                helpers.create_block(vec,block.FARMLAND.id)
+
+        if self.crop == "cane":
+            for p1 in self.blocks:
+                helpers.create_block(vg.up(p1),block.AIR.id)
+                helpers.create_block(vg.up(p1,2),block.AIR.id)
+        elif self.crop in ["wheat","carrot","potato"]:
+            for i, p1 in enumerate(self.blocks):
+                if not vec == self.center:
+                    helpers.create_block(vg.up(p1),block.AIR.id)
 
 #-----------------------
 # Polygon helper class to store, build, and create blocks
 class Farmzones(object):
     def __init__(self, zones, options=Map()):
         min_size = options.min_size or 0
-        max_size = options.max_size or 7
-        self.road_blocks, self.farm_blocks = vg.partitions_to_blocks(zones, Map(min_size=min_size, max_size=max_size, or_mix=True))
-        self.style = options.style or "cane"
+        max_size = options.max_size or 9
+        self.farms = []
+
+        for part in zones:
+            valid = (min_size <= part.width <= max_size) or (min_size <= part.height <= max_size)
+            if valid:
+                self.farms.append(Farmzone(part.p1, part.p2))
 
     def build(self):
-        if self.style == "cane":
-            for i, p1 in enumerate(self.farm_blocks):
-                if (i % 8) == 0:
-                    helpers.create_block(p1,block.WATER.id)
-                else:
-                    helpers.create_block(p1,block.FARMLAND.id)
-                    helpers.create_block(V3(p1.x,p1.y+1,p1.z),block.SUGAR_CANE.id)
-                    helpers.create_block(V3(p1.x,p1.y+2,p1.z),block.SUGAR_CANE.id)
+        for farm in self.farms:
+            farm.build()
 
     def clear(self):
-        if self.style == "cane":
-            for p1 in self.farm_blocks:
-                helpers.create_block(p1,block.DIRT.id)
-                helpers.create_block(V3(p1.x,p1.y+1,p1.z),block.AIR.id)
-                helpers.create_block(V3(p1.x,p1.y+2,p1.z),block.AIR.id)
+        for farm in self.farms:
+            farm.clear()
 
 #-----------------------
 # Polygon helper class to store, build, and create blocks
@@ -329,7 +389,11 @@ class Building(object):
 
         return polys
 
-def prep():
+def prep(size=0):
+    if size > 0:
+        corner1 = V3(mid_point.x-size, mid_point.y, mid_point.z-size)
+        corner2 = V3(mid_point.x+size, mid_point.y, mid_point.z+size)
+
     helpers.debug("Bulldozing building zone...")
     helpers.create_block_filled_box(V3(corner1.x, corner1.y-1, corner1.z), V3(corner2.x, corner2.y-3, corner2.z), block.GRASS.id, data=None)
     helpers.create_block_filled_box(V3(corner1.x, corner1.y, corner1.z), V3(corner2.x, corner2.y+40, corner2.z), block.AIR.id, data=None)
@@ -344,7 +408,11 @@ def t2():
 def t3():
     return Building(False, Map(sides=4, height=20, radius=6, windows="window_slits", roof="battlement", material=block.STONE_BRICK.id, material_edges=block.IRON_BLOCK.id))
 
-def streets():
+def streets(size=0):
+    if size > 0:
+        mid1 = V3(mid_point.x-size, mid_point.y, mid_point.z-size)
+        mid2 = V3(mid_point.x+size, mid_point.y, mid_point.z+size)
+
     s = Streets(mid1, mid2, Map(minx=20, miny=20, style="blacktop", min_size=6))
     f = Farmzones(s.zones)
     n = Neighborhoods(s.zones)
