@@ -87,10 +87,13 @@ def draw_point_list(points, blocktype, data=None):
             mc.setBlock(p.x, p.y, p.z, blocktype, data)
 
 def create_block(p, blocktype, data=None):
-    if not data:
-        mc.setBlock(p.x, p.y, p.z, blocktype)
-    else:
-        mc.setBlock(p.x, p.y, p.z, blocktype, data)
+    try:
+        if not data:
+            mc.setBlock(p.x, p.y, p.z, blocktype)
+        else:
+            mc.setBlock(p.x, p.y, p.z, blocktype, data)
+    except AttributeError:
+        print("ERROR: Can't write block - didn't have valid x,y,z:", p, blocktype, "type", type(p))
 
 def create_block_filled_box(p1, p2, blocktype, data=None):
     if not data:
@@ -125,12 +128,11 @@ def choice(list):
     return np.random.choice(list)
 
 
-def bulldoze():
-    debug("Bulldozing 40x around player...")
-    player_pos = my_tile_pos()
+def bulldoze(player_pos = my_tile_pos(), radius=40):
+    debug("Bulldozing " + str(radius) + "x around player...")    
     debug(player_pos)
-    create_box_centered_on(player_pos.x, player_pos.y, player_pos.z, 40,40,40, block.AIR.id)
-    create_box_centered_on(player_pos.x, player_pos.y-1, player_pos.z, 40,1,40, block.GRASS.id)
+    create_box_centered_on(player_pos.x, player_pos.y, player_pos.z, radius,radius,radius, block.AIR.id)
+    create_box_centered_on(player_pos.x, player_pos.y-1, player_pos.z, radius,1,radius, block.GRASS.id)
     debug("...Finished bulldozing")
 
 def test_polyhedron():

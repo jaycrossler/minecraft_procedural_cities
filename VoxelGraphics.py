@@ -27,11 +27,21 @@ def rand_in_range(min, max):
     return np.random.randint(min,max)
 
 def point_along_circle(center, radius, points, num, options=Map()):
-    if not options.direction:
-        options.direction = "y"
+    #If it's a rectangle, send in the points passed in
+    if points==4 and options.p1 and options.p2:
+        p1 = options.p1
+        p2 = options.p2
+        num = num%4
+        if num == 0: return V3(min(p1.x,p2.x), p1.y, min(p1.z, p2.z))
+        elif num == 1: return V3(max(p1.x,p2.x), p1.y, min(p1.z, p2.z))
+        elif num == 2: return V3(max(p1.x,p2.x), p1.y, max(p1.z, p2.z))
+        elif num == 3: return V3(min(p1.x,p2.x), p1.y, max(p1.z, p2.z))
 
+    #Otherwise, find the points based on how far along a circle it is
     if not options.precision:
         options.precision = 1
+    if not options.direction:
+        options.direction = "y"
 
     # If aiming to have a 17x17 building (center + 8 in both directions),
     #   set r=8 and multiply so that the radius entered is 11.3
@@ -47,10 +57,15 @@ def point_along_circle(center, radius, points, num, options=Map()):
     #find the angle 
     theta = (options.rotation + (num/points)) * 2 * math.pi
 
+    width = ((2 * options.width) / radius) or 1
+    depth = ((2 * options.depth) / radius) or 1
+
     if options.direction is "y":
-        x = center.x + (radius * math.cos(theta))
+        x = center.x + (radius * math.cos(theta) * width)
         y = center.y
-        z = center.z + (radius * math.sin(theta))
+        z = center.z + (radius * math.sin(theta) * depth)
+    else:
+        print("NOT YET IMPLEMENTED - circle points along X,Z axis")
 
     return V3(round(x,options.precision), round(y,options.precision), round(z,options.precision))
 
@@ -196,6 +211,40 @@ def rectangular_face(p1, p2, h):
 
     return points, top_line, bottom_line, left_line, right_line
 
+def rectangle_inner(p1, p2, num):
+    p1, p2 = min_max_points(p1, p2)
+    return V3(p1.x+num, p1.y, p1.z+num), V3(p2.x-num, p2.y, p2.z-num)
+
+def rectangle(p1, p2):
+    points = []
+    left_line = []
+    right_line = []
+    top_line = []
+    inner_points = []
+
+    #TODO: Work with multiple axis
+    if p1.y == p2.y:
+        #Flat on ground (Y Axis)
+        x_line = getLine(p1.x, p1.y, p1.z, p2.x, p1.y, p1.z)
+        width = len(x_line)
+        h = abs(p2.z-p1.z)
+
+        for z in range(h):
+            for i,vec in enumerate(x_line):
+                new_point = V3(vec.x, vec.y, vec.z+z)
+                if (z==h-1): top_line.append(new_point)
+                elif (i==0): left_line.append(new_point)
+                elif (i==width-1): right_line.append(new_point)
+                else: inner_points.append(new_point)
+    else:
+        print("ERROR - NOT YET IMPLEMENTED, TRYING TO MAKE A Non Y RECTANGLE")
+
+    points.extend(top_line)
+    points.extend(x_line)
+    points.extend(left_line)
+    points.extend(right_line)
+
+    return points, inner_points #, top_line, x_line, left_line, right_line
 
 def points_along_poly(face_points, options=Map()):
     side = options.side or "bottom"
@@ -272,6 +321,78 @@ def unique_points(point_generator):
         if p not in done:
             done.add(p)
     return done    
+
+def rand_triangular(low,mid,high):
+    return round(np.random.triangular(low,mid,high))
+
+def min_max_points(p1, p2):
+    x_min = min(p1.x, p2.x)
+    x_max = max(p1.x, p2.x)
+    z_min = min(p1.z, p2.z)
+    z_max = max(p1.z, p2.z)
+    p1 = V3(x_min, p1.y, z_min)
+    p2 = V3(x_max, p2.y, z_max)
+    return p1, p2    
+
+def partition(p1, p2, min_x=10, min_z=10, rate=1.01, rate_dec=.01, iterations=0):
+    #Take a square, and recursively break in down until it's around min_x, min_z
+    p1, p2 = min_max_points(p1, p2)
+
+    recs = []
+    width = p2.x-p1.x+1
+    height = p2.z-p1.z+1
+
+    #If the square is too small, return just the square
+    if width < min_x or height < min_z or np.random.rand() > rate:
+        #print(iterations, "Too small, returning ", p1, p2, "w:", width, "h:", height)
+        return [Map(p1=p1,p2=p2,iteration=iterations,smallest=True, width=width, height=height)]
+
+    #Otherwise, cut the square into smaller pieces
+    if width > height:
+        mid = rand_triangular(0,width/2,width)
+
+        pmid1 = V3(p1.x+mid, p1.y, p2.z)
+        pmid2 = V3(p1.x+mid, p1.y, p1.z)
+
+        #print(iterations, "Cutting length wise, size ", width, "x", height, "at mid", mid)
+        recs.extend(partition(p1, pmid1, min_x, min_z, rate-rate_dec, rate_dec, iterations+1))
+        recs.extend(partition(pmid2, p2, min_x, min_z, rate-rate_dec, rate_dec, iterations+1))
+    else:
+        mid = rand_triangular(0,height/2,height)
+
+        pmid1 = V3(p2.x, p1.y, p1.z+mid)
+        pmid2 = V3(p1.x, p1.y, p1.z+mid)
+
+        #print(iterations, "Cutting height wise, size ", width, "x", height, "at mid", mid)
+        recs.extend(partition(p1, pmid1, min_x, min_z, rate-rate_dec, rate_dec, iterations+1))
+        recs.extend(partition(pmid2, p2, min_x, min_z, rate-rate_dec, rate_dec, iterations+1))
+
+    return recs
+
+def partitions_to_blocks(partitions, options=Map()):
+    blocks = []
+    inner_blocks = []
+    min_size = options.min_size or 0
+    max_size = options.max_size or 1000
+
+    for part in partitions:
+        if options.or_mix:
+            valid = (min_size <= part.width <= max_size) or (min_size <= part.height <= max_size)
+        else:
+            valid = (min_size <= part.width <= max_size) and (min_size <= part.height <= max_size)
+
+        if valid:
+            p1 = part.p1
+            p2 = part.p2
+            rec, inner_rec = rectangle(p1, p2)
+            for block in rec:
+                if not block in blocks and type(block) == V3:
+                    blocks.append(block)
+            for block in inner_rec:
+                if not block in blocks and type(block) == V3:
+                    inner_blocks.append(block)
+
+    return blocks, inner_blocks
 
 #Initially based on scripts from:
 #https://github.com/nebogeo/creative-kids-coding-cornwall/blob/master/minecraft/python/dbscode_minecraft.py
@@ -447,20 +568,20 @@ def pitchMatrix(angleDegrees):
 
 def get2DTriangle(a,b,c):
     """get the points of the 2D triangle"""
-    minX = {}
+    min_x = {}
     maxX = {}
 
     for line in (traverse2D(a,b), traverse2D(b,c), traverse2D(a,c)):
         for p in line:
-            minX0 = minX.get(p[1])
-            if minX0 == None:
-                minX[p[1]] = p[0]
+            min_x0 = min_x.get(p[1])
+            if min_x0 == None:
+                min_x[p[1]] = p[0]
                 maxX[p[1]] = p[0]
                 yield(p)
-            elif p[0] < minX0:
-                for x in range(p[0],minX0):
+            elif p[0] < min_x0:
+                for x in range(p[0],min_x0):
                     yield(x,p[1])
-                minX[p[1]] = p[0]
+                min_x[p[1]] = p[0]
             else:
                 maxX0 = maxX[p[1]]
                 if maxX0 < p[0]:

@@ -8,13 +8,15 @@
 # or
 #   options = Map(name="Mansion", height=20, radius=5, sides=6)
 #   b = Building(V3(42,0,42), options)
-#   b.build
+#   b.build()
 #
 #   TODO: Pointy roof drawing weird on one axis
 #   TODO: Have floors with each allowing different polylgon/size settings
 #   TODO: Stairs or ladders between floors
 #   TODO: Building cost to create building
-#   TODO: Road network with buildings fitting in boxes
+#   TODO: Largest neighborhood building is castle or tower
+#   TODO: Add a river running through town
+#   TODO: Buildings and roads along terrain
 #
 # Test Buildings:
 #   b = Building(False, Map(sides=4, height=7, radius=6, windows="window_line_double", roof="pointy"))
@@ -29,6 +31,97 @@ from Map import Map
 from V3 import V3
 
 helpers.connect()
+
+#Testing location numbers
+corner1, corner2 = V3(-60, 0, 40), V3(120, 0, 200)
+mid1, mid2 = V3(0, 0, 60), V3(50, 0, 110)
+
+#-----------------------
+# Polygon helper class to store, build, and create blocks
+class Farmzones(object):
+    def __init__(self, zones, options=Map()):
+        min_size = options.min_size or 0
+        max_size = options.max_size or 7
+        self.road_blocks, self.farm_blocks = vg.partitions_to_blocks(zones, Map(min_size=min_size, max_size=max_size, or_mix=True))
+        self.style = options.style or "cane"
+
+    def build(self):
+        if self.style == "cane":
+            for i, p1 in enumerate(self.farm_blocks):
+                if (i % 8) == 0:
+                    helpers.create_block(p1,block.WATER.id)
+                else:
+                    helpers.create_block(p1,block.FARMLAND.id)
+                    helpers.create_block(V3(p1.x,p1.y+1,p1.z),block.SUGAR_CANE.id)
+                    helpers.create_block(V3(p1.x,p1.y+2,p1.z),block.SUGAR_CANE.id)
+
+    def clear(self):
+        if self.style == "cane":
+            for p1 in self.farm_blocks:
+                helpers.create_block(p1,block.DIRT.id)
+                helpers.create_block(V3(p1.x,p1.y+1,p1.z),block.AIR.id)
+                helpers.create_block(V3(p1.x,p1.y+2,p1.z),block.AIR.id)
+
+#-----------------------
+# Polygon helper class to store, build, and create blocks
+class Neighborhoods(object):
+    def __init__(self, zones, options=Map()):
+        min_size = options.min_size or 9
+        self.style = options.style
+        self.buildings = []
+        self.zones = []
+
+        for part in zones:
+            if (min_size <= part.width) and (min_size <= part.height):
+                self.zones.append(part)
+                p1 = V3(part.p1.x, part.p1.y+1, part.p1.z)
+                p2 = V3(part.p2.x, part.p2.y+1, part.p2.z)
+                p1, p2 = rectangle_inner(p1, p2,2)
+                self.buildings.append(Building(False, Map(p1=p1, p2=p2)))
+
+    def build(self):
+        for b in self.buildings:
+            b.build()
+
+    def clear(self):
+        for b in self.buildings:
+            b.clear()
+
+#-----------------------
+# Polygon helper class to store, build, and create blocks
+class Streets(object):
+    def __init__(self, p1, p2, options=Map()):
+        self.p1 = p1
+        self.p2 = p2
+        self.minx = options.minx or 7
+        self.minz = options.minz or 7
+        self.style = options.style or "blacktop"
+
+        self.options = options
+        # self.blocks_on_side = []
+        # self.inner_zones = []
+
+        self.zones = vg.partition(V3(p1.x, p1.y-1, p1.z), V3(p2.x, p2.y-1, p2.z), self.minx, self.minz)
+        #TODO: Set width 1 or 2
+        #TODO: shrink rect by 1 and draw perimeter
+
+        self.blocks, x = vg.partitions_to_blocks(self.zones, options)
+
+
+    def build(self,min_size=0):
+        if self.style == "blacktop":
+            color = block.OBSIDIAN.id
+        else:
+            color = block.DIRT.id
+
+        for pos in self.blocks:
+            helpers.create_block(pos, color)
+
+
+    def clear(self):
+        for pos in self.blocks:
+            helpers.create_block(pos, block.GRASS.id)
+
 
 #-----------------------
 # Polygon helper class to store, build, and create blocks
@@ -132,7 +225,7 @@ class BuildingPoly(object):
                 self.features.append(Feature("door", vec, Map(cardinality=self.cardinality, door_inside=options.options.door_inside)))
 
         if kind=="roof":
-            if str.startswith(options.options.roof, "pointy"):
+            if options.options.roof and str.startswith(options.options.roof, "pointy"):
                 height = options.options.roof_pointy_height or options.radius
                 pointy = V3(options.center.x, options.center.y+options.height+height, options.center.z)
 
@@ -148,7 +241,7 @@ class BuildingPoly(object):
                         roof_face = vg.unique_points(vg.getFace([V3(v.x, v.y+1, v.z) for v in triangle_face])) 
                         self.points = self.points.union(roof_face)
 
-            if str.startswith(options.options.roof, "battlement"):
+            if options.options.roof and str.startswith(options.options.roof, "battlement"):
                 height = options.options.roof_battlement_height or 1
                 spacing = options.options.roof_battlement_space or 2
 
@@ -217,35 +310,42 @@ class BuildingPoly(object):
 
 #-----------------------
 # Main class for creating a building along with settings
-class Building(object):    
-
+class Building(object):
     def __init__(self, pos=False, options=Map()):
         if not helpers.mc:
             helpers.mc = helpers.connect()
 
         self.seed = options.seed or vg.get_seed()
         vg.init_with_seed(self.seed)
+        self.sides = options.sides or 4
 
-        #If position isn't set, use the player position
-        if pos is False:
-            pos = helpers.my_tile_pos()
-        
+        if options.p1 and options.p2:
+            p1, p2 = vg.min_max_points(options.p1, options.p2)
+            options.width = abs(p2.x - p1.x) - 2
+            options.depth = abs(p2.z - p1.z) - 2
+            options.radius = math.floor(min(options.width, options.depth)/2)
+            pos = V3(round((p1.x+p2.x)/2) , p1.y, round((p1.z+p2.z)/2))
+            if options.sides == 4:
+                options.p1 = p1
+                options.p2 = p2
+        else:
+            #If position isn't set, use the player position
+            if pos is False:
+                pos = helpers.my_tile_pos()
+            
         #If "force_height" not passed in as an option, then pick height of the terrain at the x,z point
         # if not options.force_height:
         #     setattr(pos, "y", helpers.get_height(pos))
 
         self.options = options
+        self.radius = options.radius or vg.rand_in_range(4,10)
         self.center = V3(pos.x, pos.y, pos.z)
 
-        self.x = pos.x
-        self.y = pos.y
-        self.z = pos.z
         self.biome = "Plains" #TODO: options.biome or helpers.biome_at(pos)
         self.biome = self.biome.title() #Title-cases biome, PLAINS becomes Plains
 
-        self.height = options.height or vg.rand_in_range(4,9)
-        self.radius = options.radius or vg.rand_in_range(4,10)
-        self.sides = options.sides or 4
+        rand_max = max(math.ceil(self.radius*2.5), 6)
+        self.height = options.height or vg.rand_in_range(4,rand_max)
         self.corner_vectors = []
 
         self.material = options.material or block.STONE.id #TODO: Change based on biome, have rand list
@@ -263,7 +363,6 @@ class Building(object):
 
         for poly in self.polys:
             poly.draw_features()
-
 
     def clear(self):
         for poly in self.polys:
@@ -294,8 +393,7 @@ class Building(object):
         else:
             return stro
 
-    def create_polys(self, options):
-
+    def create_polys(self, options=Map()):
         polys = []
         data_so_far = self.data()
 
@@ -303,8 +401,8 @@ class Building(object):
 
         corner_vectors = []
         for i in range(0, sides):
-            p1 = vg.point_along_circle(self.center, self.radius, sides, i, Map(align_to_cells=True))
-            p2 = vg.point_along_circle(self.center, self.radius, sides, i+1, Map(align_to_cells=True))
+            p1 = vg.point_along_circle(self.center, self.radius, sides, i, Map(align_to_cells=True, width=options.width, depth=options.depth, p1=options.p1, p2=options.p2))
+            p2 = vg.point_along_circle(self.center, self.radius, sides, i+1, Map(align_to_cells=True, width=options.width, depth=options.depth, p1=options.p1, p2=options.p2))
             corner_vectors.append(p1)
 
             facing = "front" if i == 1 else "side"
@@ -321,14 +419,11 @@ class Building(object):
 
         return polys
 
-# Recreate the building with same settings and latest rendering code
-def NewB(building):
-    options = building.data()
-    newb = Building(options["center"], options)
-    building.clear()
-    newb.build()
-    return newb
-
+def prep():
+    helpers.debug("Bulldozing building zone...")
+    helpers.create_block_filled_box(V3(corner1.x, corner1.y-1, corner1.z), V3(corner2.x, corner2.y-3, corner2.z), block.GRASS.id, data=None)
+    helpers.create_block_filled_box(V3(corner1.x, corner1.y, corner1.z), V3(corner2.x, corner2.y+40, corner2.z), block.AIR.id, data=None)
+    helpers.debug("...Finished bulldozing")
 
 def t1():
     return Building(False, Map(sides=4, height=7, radius=6, windows="window_line_double", roof="pointy"))
@@ -338,3 +433,12 @@ def t2():
 
 def t3():
     return Building(False, Map(sides=4, height=20, radius=6, windows="window_slits", roof="battlement", material=block.STONE_BRICK.id, material_edges=block.IRON_BLOCK.id))
+
+def streets():
+    s = Streets(mid1, mid2, Map(minx=20, miny=20, style="blacktop", min_size=6))
+    f = Farmzones(s.zones)
+    n = Neighborhoods(s.zones)
+    s.build()
+    f.build()
+    n.build()
+    return s, f, n
