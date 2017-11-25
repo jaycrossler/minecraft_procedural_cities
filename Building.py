@@ -27,6 +27,7 @@ import mcpi.block as block
 import math
 import MinecraftHelpers as helpers
 import VoxelGraphics as vg
+import BuildingStyler as bs
 from Map import Map
 from V3 import V3
 
@@ -122,45 +123,6 @@ class Streets(object):
         for pos in self.blocks:
             helpers.create_block(pos, block.GRASS.id)
 
-
-#-----------------------
-# Polygon helper class to store, build, and create blocks
-class Feature(object):
-    def __init__(self, kind, pos, options=Map()):
-        self.kind = kind
-        self.pos = pos
-        self.facing = options.facing
-        self.cardinality = options.cardinality
-        self.blocks = []
-        self.blocks_to_not_draw = []
-
-        if kind == "door":
-            if options.door_inside:
-                door_pattern = "swne"
-            else:
-                door_pattern = "nesw"
-            door_code = door_pattern.index(options.cardinality[-1:]) 
-            self.blocks.append(Map(pos=V3(pos.x, pos.y, pos.z), id=block.DOOR_WOOD.id, data=door_code))
-            self.blocks.append(Map(pos=V3(pos.x, pos.y+1, pos.z), id=block.DOOR_WOOD.id, data=8))
-            # self.blocks_to_not_draw.append(V3(pos.x, pos.y+1, pos.z))
-        elif kind == "window":
-            self.blocks.append(Map(pos=pos, id=block.GLASS_PANE.id, data=1))
-        elif kind == "bed":
-            self.blocks.append(Map(pos=pos, id=block.BED.id))
-        elif kind == "spacing":
-            self.blocks.append(Map(pos=pos, id=block.AIR.id))
-    
-    def draw(self):
-        for item in self.blocks:
-            helpers.create_block(item.pos, item.id, item.data)
-
-    def clear(self):
-        for item in self.blocks:
-            helpers.create_block(item.pos, block.AIR.id)
-
-    def info(self):
-        return "Feature: " + self.kind + " with " + str(len(self.blocks)) +" blocks"
-
 #-----------------------
 # Polygon helper class to store, build, and create blocks
 class BuildingPoly(object):
@@ -175,7 +137,6 @@ class BuildingPoly(object):
             #If two points are given, assume it's for the bottom line, then draw that as a wall
 
             #TODO: Add width for the wall - how to add end lines to that?
-
             p1 = vertices[0]
             p2 = vertices[1]
             h = options.height or 5
@@ -193,65 +154,9 @@ class BuildingPoly(object):
 
         self.points_edges = self.top_line + self.bottom_line + self.left_line + self.right_line
 
-        #TODO: Move all of the styling to other library files
-        if kind=="wall":
-            if options.options.windows == "window_line":
-                spaced_points = vg.extrude(self.bottom(), Map(spacing = V3(0,math.ceil(self.height/2),0)))
-                for vec in spaced_points:
-                    self.features.append(Feature("window", vec))
+        #Style the polygon based on kind and options
+        self = bs.building_poly_styler(self, kind, options)
 
-            elif options.options.windows == "window_line_double":
-                spaced_points = vg.extrude(self.bottom(), Map(spacing = V3(0,math.ceil(self.height/2),0)))
-                spaced_points2 = vg.extrude(spaced_points, Map(spacing = V3(0,1,0)))
-                for vec in spaced_points+spaced_points2:
-                    self.features.append(Feature("window", vec))
-
-            elif options.options.windows == "window_slits":
-
-                spaced_points = vg.points_spaced(self.bottom(), Map(every=3))
-                spaced_points = vg.extrude(spaced_points, Map(spacing = V3(0,math.ceil(self.height/2),0)))
-                spaced_points2 = vg.extrude(spaced_points, Map(spacing = V3(0,1,0)))
-                for vec in spaced_points+spaced_points2:
-                    self.features.append(Feature("spacing", vec))
-
-            else:
-                spaced_points = vg.points_spaced(self.bottom(), Map(every=3))
-                spaced_points = vg.extrude(spaced_points, Map(spacing = V3(0,math.ceil(self.height/2),0)))
-                for vec in spaced_points:
-                    self.features.append(Feature("window", vec))
-
-            mid_points = vg.middle_of_line(self.bottom(), Map(center=True, max_width=2, point_per=10))
-            for vec in mid_points:
-                self.features.append(Feature("door", vec, Map(cardinality=self.cardinality, door_inside=options.options.door_inside)))
-
-        if kind=="roof":
-            if options.options.roof and str.startswith(options.options.roof, "pointy"):
-                height = options.options.roof_pointy_height or options.radius
-                pointy = V3(options.center.x, options.center.y+options.height+height, options.center.z)
-
-                for i,vec in enumerate(options.corner_vectors):
-                    roof_line = vg.getLine(vec.x, vec.y+1, vec.z, pointy.x, pointy.y+1, pointy.z)
-                    self.points_edges += roof_line
-
-                    if not options.options.roof == "pointy_lines":
-                        next_roof_point = options.corner_vectors[(i+1)%len(options.corner_vectors)]
-
-                        #Triangle to pointy face
-                        triangle_face = [vec, pointy, next_roof_point]
-                        roof_face = vg.unique_points(vg.getFace([V3(v.x, v.y+1, v.z) for v in triangle_face])) 
-                        self.points = self.points.union(roof_face)
-
-            if options.options.roof and str.startswith(options.options.roof, "battlement"):
-                height = options.options.roof_battlement_height or 1
-                spacing = options.options.roof_battlement_space or 2
-
-                for i,vec in enumerate(options.corner_vectors):
-                    next_roof_point = options.corner_vectors[(i+1)%len(options.corner_vectors)]
-                    #TODO: Add X,Z outward from center as option
-                    roof_line = vg.getLine(vec.x, vec.y+height, vec.z, next_roof_point.x, next_roof_point.y+height, next_roof_point.z)
-
-                    self.points = self.points.union(vg.points_spaced(roof_line, Map(every=spacing)))
-    
     def draw(self):
         blocks_to_not_draw = []
         for feature in self.features:
@@ -339,19 +244,24 @@ class Building(object):
 
         self.options = options
         self.radius = options.radius or vg.rand_in_range(4,10)
+        self.options = bs.random_options(self.options)
         self.center = V3(pos.x, pos.y, pos.z)
 
-        self.biome = "Plains" #TODO: options.biome or helpers.biome_at(pos)
-        self.biome = self.biome.title() #Title-cases biome, PLAINS becomes Plains
+        self.biome = "Plains" #TODO: self.biome.title(options.biome or helpers.biome_at(pos))
 
         rand_max = max(math.ceil(self.radius*2.5), 6)
         self.height = options.height or vg.rand_in_range(4,rand_max)
         self.corner_vectors = []
 
-        self.material = options.material or block.STONE.id #TODO: Change based on biome, have rand list
+        self.material = options.material or block.STONE.id 
         self.material_edges = options.material_edges or block.IRON_BLOCK.id #TODO: Change based on biome, have rand list
         
         self.name = options.name or self.biome + " house"
+
+        #Style the polygon based on kind and options
+        self = bs.building_styler(self, options)
+
+        #Create the walls and major polygons
         self.polys = self.create_polys(options)
 
     def build(self):

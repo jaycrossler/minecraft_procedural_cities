@@ -246,9 +246,12 @@ def rectangle(p1, p2):
 
     return points, inner_points #, top_line, x_line, left_line, right_line
 
+
+def up(v,amount=1):
+    return V3(v.x, v.y+amount, v.z)
+
 def points_along_poly(face_points, options=Map()):
     side = options.side or "bottom"
-
     points = []
 
     #Y searching
