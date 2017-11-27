@@ -28,13 +28,14 @@ import math
 import MinecraftHelpers as helpers
 import VoxelGraphics as vg
 import BuildingStyler as bs
+import BuildingPoly as bp
+import Castle as castle
 from Map import Map
 from V3 import V3
 
 helpers.connect()
 
 #Testing location numbers
-corner1, corner2 = V3(-60, 0, 40), V3(120, 0, 200)
 mid1, mid2 = V3(0, 0, 60), V3(50, 0, 110)
 mid_point = V3(30,0,120)
 
@@ -55,7 +56,7 @@ class Farmzone(object):
     def build(self):
         for i, vec in enumerate(self.blocks):
             if vec == self.center:
-                helpers.create_block(p1,block.WATER.id)
+                helpers.create_block(p1,block.WATER.id) #TODO: Add rows of water
                 plus2 = vg.up(vec,3)
                 helpers.create_block(plus2,block.GLASS.id)
                 for v2 in vg.next_to(plus2):
@@ -71,16 +72,15 @@ class Farmzone(object):
         elif self.crop == "wheat":
             for i, p1 in enumerate(self.blocks):
                 if not vec == self.center:
-                    helpers.create_block(vg.up(p1),59)
+                    helpers.create_block(vg.up(p1),59,0x7)
         elif self.crop == "carrot":
             for i, p1 in enumerate(self.blocks):
                 if not vec == self.center:
-                    helpers.create_block(vg.up(p1),141)
+                    helpers.create_block(vg.up(p1),141,0x7)
         elif self.crop == "potato":
             for i, p1 in enumerate(self.blocks):
                 if not vec == self.center:
-                    helpers.create_block(vg.up(p1),142)
-
+                    helpers.create_block(vg.up(p1),142,0x7)
 
     def clear(self):
         for i, vec in enumerate(self.blocks):
@@ -111,9 +111,10 @@ class Farmzones(object):
         self.farms = []
 
         for part in zones:
-            valid = (min_size <= part.width <= max_size) or (min_size <= part.height <= max_size)
+            valid = (min_size <= part.width <= max_size) or (min_size <= part.depth <= max_size)
             if valid:
-                self.farms.append(Farmzone(part.p1, part.p2))
+                p1, p2 = vg.rectangle_inner(part.p1, part.p2, 1)
+                self.farms.append(Farmzone(p1, p2))
 
     def build(self):
         for farm in self.farms:
@@ -133,10 +134,10 @@ class Neighborhoods(object):
         self.zones = []
 
         for part in zones:
-            if (min_size <= part.width) and (min_size <= part.height):
+            if (min_size <= part.width) and (min_size <= part.depth):
                 self.zones.append(part)
-                p1 = V3(part.p1.x, part.p1.y+1, part.p1.z)
-                p2 = V3(part.p2.x, part.p2.y+1, part.p2.z)
+                p1 = vg.up(part.p1,1)
+                p2 = vg.up(part.p2,1)
                 p1, p2 = rectangle_inner(p1, p2,2)
                 self.buildings.append(Building(False, Map(p1=p1, p2=p2)))
 
@@ -152,22 +153,21 @@ class Neighborhoods(object):
 # Polygon helper class to store, build, and create blocks
 class Streets(object):
     def __init__(self, p1, p2, options=Map()):
-        self.p1 = p1
-        self.p2 = p2
+        self.p1 = vg.up(p1,-1)
+        self.p2 = vg.up(p2,-1)
         self.minx = options.minx or 7
         self.minz = options.minz or 7
         self.style = options.style or "blacktop"
 
         self.options = options
-        # self.blocks_on_side = []
-        # self.inner_zones = []
 
-        self.zones = vg.partition(V3(p1.x, p1.y-1, p1.z), V3(p2.x, p2.y-1, p2.z), self.minx, self.minz)
-        #TODO: Set width 1 or 2
-        #TODO: shrink rect by 1 and draw perimeter
+        if options.layout == "castle":
+            self.zones = castle.build_castle_streetmap(self.p1, self.p2, options)
+        else:
+            #TODO: Set width 1 or 2
+            self.zones = vg.partition(self.p1, self.p2, self.minx, self.minz)
 
         self.blocks, x = vg.partitions_to_blocks(self.zones, options)
-
 
     def build(self,min_size=0):
         if self.style == "blacktop":
@@ -178,100 +178,10 @@ class Streets(object):
         for pos in self.blocks:
             helpers.create_block(pos, color)
 
-
     def clear(self):
         for pos in self.blocks:
             helpers.create_block(pos, block.GRASS.id)
 
-#-----------------------
-# Polygon helper class to store, build, and create blocks
-class BuildingPoly(object):
-    def __init__(self, kind, vertices, options=Map()):
-        self.kind = kind
-        self.facing = options.facing
-        self.material = options.material
-        self.material_edges = options.material_edges #TODO: Different colors for different edges
-        self.features = []
-
-        if len(vertices) == 2:
-            #If two points are given, assume it's for the bottom line, then draw that as a wall
-
-            #TODO: Add width for the wall - how to add end lines to that?
-            p1 = vertices[0]
-            p2 = vertices[1]
-            h = options.height or 5
-            self.vertices = vertices_with_up = [p1, p2, V3(p2.x, p2.y+h, p2.z), V3(p1.x, p1.y+h, p1.z)] # points straight up
-            self.height = options.height or (vg.highest(vertices_with_up) - vg.lowest(vertices_with_up) + 1)
-            self.cardinality = vg.cardinality(p1,p2)
-            self.points, self.top_line, self.bottom_line, self.left_line, self.right_line = vg.rectangular_face(p1, p2, h)
-        else:
-            #It's a non-y-rectangular-shaped polygon, so use a different getFace builder function
-            self.vertices = vertices
-            self.height = options.height or (vg.highest(vertices) - vg.lowest(vertices) + 1)
-            self.cardinality = options.cardinality
-            self.points = vg.unique_points(vg.getFace(self.vertices))
-            x, self.top_line, self.bottom_line, self.left_line, self.right_line = vg.poly_point_edges(self.points)
-
-        self.points_edges = self.top_line + self.bottom_line + self.left_line + self.right_line
-
-        #Style the polygon based on kind and options
-        self = bs.building_poly_styler(self, kind, options)
-
-    def draw(self):
-        blocks_to_not_draw = []
-        for feature in self.features:
-            blocks_to_not_draw += feature.blocks_to_not_draw;
-
-        helpers.create_blocks_from_pointlist(self.points, self.material, blocks_to_not_draw=blocks_to_not_draw)
-
-    def draw_edges(self):
-        blocks_to_not_draw = []
-        for feature in self.features:
-            blocks_to_not_draw += feature.blocks_to_not_draw;
-
-        if self.material_edges:
-            helpers.create_blocks_from_pointlist(self.points_edges, self.material_edges, blocks_to_not_draw=blocks_to_not_draw)
-
-    def draw_features(self):
-        for feature in self.features:
-            feature.draw()
-
-    
-    def clear(self):
-        material = block.GRASS.id if self.kind == "foundation" else block.AIR.id
-        helpers.create_blocks_from_pointlist(self.points, material)
-        helpers.create_blocks_from_pointlist(self.points_edges, material)
-        for feature in self.features:
-            feature.clear()
-
-    def bottom(self):
-        if not hasattr(self, "bottom_line"):
-            self.bottom_line = vg.points_along_poly(self.points, Map(side="bottom"))
-        return self.bottom_line
-
-    def top(self):
-        if not hasattr(self, "top_line"):
-            self.top_line = vg.points_along_poly(self.points, Map(side="top"))
-        return self.top_line
-
-    def left(self):
-        if not hasattr(self, "left_line"):
-            self.left_line = vg.points_along_poly(self.points, Map(side="left_x"))
-        return self.left_line
-
-    def right(self):
-        if not hasattr(self, "right_line"):
-            self.right_line = vg.points_along_poly(self.points, Map(side="right_x"))
-        return self.right_line
-
-    #TODO: Inside and outside point?
-
-    def info(self):
-        stro = []
-        stro.append(" - Polygon: " + self.kind + " with " + str(self.vertices) + " points, height " + str(self.height) + ", and " +str(len(self.points)) +" blocks")
-        for f in self.features:
-            stro.append("  -- " + f.info())
-        return stro
 
 #-----------------------
 # Main class for creating a building along with settings
@@ -297,7 +207,7 @@ class Building(object):
             #If position isn't set, use the player position
             if pos is False:
                 pos = helpers.my_tile_pos()
-            
+
         #If "force_height" not passed in as an option, then pick height of the terrain at the x,z point
         # if not options.force_height:
         #     setattr(pos, "y", helpers.get_height(pos))
@@ -309,13 +219,13 @@ class Building(object):
 
         self.biome = "Plains" #TODO: self.biome.title(options.biome or helpers.biome_at(pos))
 
-        rand_max = max(math.ceil(self.radius*2.5), 6)
+        rand_max = min(max(math.ceil(self.radius*2.5), 6),40) #keep buildings between 4-40 height
         self.height = options.height or vg.rand_in_range(4,rand_max)
         self.corner_vectors = []
 
-        self.material = options.material or block.STONE.id 
+        self.material = options.material or block.STONE.id
         self.material_edges = options.material_edges or block.IRON_BLOCK.id #TODO: Change based on biome, have rand list
-        
+
         self.name = options.name or self.biome + " house"
 
         #Style the polygon based on kind and options
@@ -377,26 +287,31 @@ class Building(object):
 
             facing = "front" if i == 1 else "side"
             #TODO: Pass in point where front door is, determine facing from that
-            p = BuildingPoly('wall', [p1, p2], data_so_far.copy(height=self.height, facing=facing))
+            p = bp.BuildingPoly('wall', [p1, p2], data_so_far.copy(height=self.height, facing=facing))
             polys.append(p)
 
-        roof_vectors = [V3(v.x, v.y+self.height, v.z) for v in corner_vectors]
-        polys.append(BuildingPoly("roof", roof_vectors, data_so_far.copy(corner_vectors = roof_vectors)))
+        roof_vectors = [vg.up(v,self.height) for v in corner_vectors]
+        polys.append(bp.BuildingPoly("roof", roof_vectors, data_so_far.copy(corner_vectors = roof_vectors)))
         #insert foundation so that it is drawn first:
-        polys.insert(0,BuildingPoly("foundation", [V3(v.x, v.y-1, v.z) for v in corner_vectors], data_so_far.copy(corner_vectors = corner_vectors))) 
+        polys.insert(0,bp.BuildingPoly("foundation", [vg.up(v,-1) for v in corner_vectors], data_so_far.copy(corner_vectors = corner_vectors)))
 
         self.corner_vectors = corner_vectors
 
         return polys
 
+#--------------------------------------------------------------------
+# Testing functions
+#
 def prep(size=0):
     if size > 0:
         corner1 = V3(mid_point.x-size, mid_point.y, mid_point.z-size)
         corner2 = V3(mid_point.x+size, mid_point.y, mid_point.z+size)
+    else:
+        corner1, corner2 = V3(-60, 0, 40), V3(120, 0, 200)
 
     helpers.debug("Bulldozing building zone...")
-    helpers.create_block_filled_box(V3(corner1.x, corner1.y-1, corner1.z), V3(corner2.x, corner2.y-3, corner2.z), block.GRASS.id, data=None)
-    helpers.create_block_filled_box(V3(corner1.x, corner1.y, corner1.z), V3(corner2.x, corner2.y+40, corner2.z), block.AIR.id, data=None)
+    helpers.create_block_filled_box(vg.up(corner1,-1), vg.up(corner2,-3), block.GRASS.id, data=None)
+    helpers.create_block_filled_box(vg.up(corner1,0), vg.up(corner2,40), block.AIR.id, data=None)
     helpers.debug("...Finished bulldozing")
 
 def t1():
@@ -412,11 +327,21 @@ def streets(size=0):
     if size > 0:
         mid1 = V3(mid_point.x-size, mid_point.y, mid_point.z-size)
         mid2 = V3(mid_point.x+size, mid_point.y, mid_point.z+size)
+    else:
+        mid1, mid2 = V3(0, 0, 60), V3(50, 0, 110)
 
-    s = Streets(mid1, mid2, Map(minx=20, miny=20, style="blacktop", min_size=6))
-    f = Farmzones(s.zones)
-    n = Neighborhoods(s.zones)
+    s = Streets(mid1, mid2, Map(minx=20, miny=20, style="blacktop", layout="castle", min_size=6))
+
+    zones = [x for x in s.zones if not x.largest]
+    f = Farmzones(zones)
+    n = Neighborhoods(zones)
+
+    castle1 = [x for x in s.zones if x.largest][0]
+    c = castle.Castle(False,castle1)
+
     s.build()
     f.build()
     n.build()
-    return s, f, n
+    c.build()
+
+    return s, f, n, c

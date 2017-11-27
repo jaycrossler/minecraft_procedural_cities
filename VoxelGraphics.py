@@ -1,5 +1,5 @@
 #############################################################################################################
-# Procedural Building voxel drawing functions for MineCraft.  
+# Procedural Building voxel drawing functions for MineCraft.
 ##############################################################################################################
 
 # import mcpi
@@ -54,7 +54,7 @@ def point_along_circle(center, radius, points, num, options=Map()):
     if not options.rotation:
         options.rotation = 0
 
-    #find the angle 
+    #find the angle
     theta = (options.rotation + (num/points)) * 2 * math.pi
 
     width = ((2 * options.width) / radius) or 1
@@ -108,7 +108,7 @@ def points_spaced(points, options=Map()):
     return new_points
 
 
-def extrude(points, options=Map()):    
+def extrude(points, options=Map()):
     spacing = options.spacing or V3(0,0,0)
     size = options.size or V3(0,0,0)
 
@@ -125,11 +125,11 @@ def extrude(points, options=Map()):
             for x in range(abs(size.x)):
                 n = -1 if size.x < 0 else 1
                 new_points.append(V3(vec.x + (n * x), vec.y, vec.z))
-           
+
             for y in range(abs(size.y)):
                 n = -1 if size.y < 0 else 1
                 new_points.append(V3(vec.x, vec.y + (n * y), vec.z))
-            
+
             for z in range(abs(size.z)):
                 n = -1 if size.z < 0 else 1
                 new_points.append(V3(vec.x, vec.y, vec.z + (n * z)))
@@ -331,7 +331,7 @@ def unique_points(point_generator):
     for p in point_generator:
         if p not in done:
             done.add(p)
-    return done    
+    return done
 
 def rand_triangular(low,mid,high):
     return round(np.random.triangular(low,mid,high))
@@ -343,38 +343,115 @@ def min_max_points(p1, p2):
     z_max = max(p1.z, p2.z)
     p1 = V3(x_min, p1.y, z_min)
     p2 = V3(x_max, p2.y, z_max)
-    return p1, p2    
+    return p1, p2
 
-def partition(p1, p2, min_x=10, min_z=10, rate=1.01, rate_dec=.01, iterations=0):
+def dists(p1, p2, inclusive=True):
+    #returns voxel distances between points
+    inc = 1 if inclusive else 0
+
+    width = abs(p2.x - p1.x)+inc
+    height = abs(p2.y - p1.y)+inc
+    depth = abs(p2.z - p1.z)+inc
+
+    return width, height, depth
+
+def ninths(p1, p2, preset_w, preset_z, double=True):
+    #takes [preset1, preset2] rectangle out of [p1,p2] rectangle, then partitions the rest
+    partitions = []
+
+    #TODO: Don't always centralize
+    show_t = show_b = show_l = show_r = False
+
+    width, null, depth = dists(p1, p2)
+    if width > (preset_w+2):
+        show_l = show_r = True
+    elif width > (preset_w+1):
+        show_l = True
+
+    if depth > (preset_z+2):
+        show_t = show_b = True
+    elif depth > (preset_z+1):
+        show_t = True
+
+    preset_w = min(preset_w, width -1)
+    preset_z = min(preset_z, depth -1)
+
+    w_h = math.floor(((width - preset_w)/2))
+    d_h = math.floor(((depth - preset_z)/2))
+
+    x1 = p1.x
+    x2 = p1.x + w_h
+    x3 = p1.x + w_h + preset_w
+    x4 = p2.x
+
+    a = p1.z
+    b = p1.z + d_h
+    c = p1.z + d_h + preset_z
+    d = p2.z
+
+    # a1 - a2 - a3 - a4
+    # b1 - b2 - b3 - b4
+    # c1 - c2 - c3 - c4
+    # d1 - d2 - d3 - d2
+
+    padding = 0 if (double==False or w_h==0 or d_h==0) else 1
+
+    #First Row
+    if show_t and show_l: partitions.append(Map(p1 = V3(x1, p1.y, a), p2 = V3(x2-padding, p1.y, b-padding)))
+    if show_t: partitions.append(Map(p1 = V3(x2, p1.y, a), p2 = V3(x3-padding, p1.y, b-padding)))
+    if show_t and show_r: partitions.append(Map(p1 = V3(x3, p1.y, a), p2 = V3(x4, p1.y, b-padding)))
+    #Mid Row
+    if show_l: partitions.append(Map(p1 = V3(x1, p1.y, b), p2 = V3(x2-padding, p1.y, c-padding)))
+    partitions.append(Map(p1 = V3(x2, p1.y, b), p2 = V3(x3-padding, p1.y, c-padding), largest=True))
+    if show_r: partitions.append(Map(p1 = V3(x3, p1.y, b), p2 = V3(x4, p1.y, c-padding)))
+    #Bottom Row
+    if show_b and show_l: partitions.append(Map(p1 = V3(x1, p1.y, c), p2 = V3(x2-padding, p1.y, d)))
+    if show_b: partitions.append(Map(p1 = V3(x2, p1.y, c), p2 = V3(x3-padding, p1.y, d)))
+    if show_b and show_r: partitions.append(Map(p1 = V3(x3, p1.y, c), p2 = V3(x4, p1.y, d)))
+
+    #Add in width and depth info
+    out=[]
+    for i, ninth in enumerate(partitions):
+        ninth.iteration = 0
+        ninth.width, null, ninth.depth = dists(ninth.p1, ninth.p2)
+        if (ninth.width) > 1 and (ninth.depth) > 1:
+            out.append(ninth)
+
+    return out
+
+def partition(p1, p2, min_x=10, min_z=10, rate=1.01, rate_dec=.01, iterations=0, ignore_small=False):
     #Take a square, and recursively break in down until it's around min_x, min_z
     p1, p2 = min_max_points(p1, p2)
 
     recs = []
     width = p2.x-p1.x+1
-    height = p2.z-p1.z+1
+    depth = p2.z-p1.z+1
 
     #If the square is too small, return just the square
-    if width < min_x or height < min_z or np.random.rand() > rate:
-        #print(iterations, "Too small, returning ", p1, p2, "w:", width, "h:", height)
-        return [Map(p1=p1,p2=p2,iteration=iterations,smallest=True, width=width, height=height)]
+    if width < min_x or depth < min_z or np.random.rand() > rate:
+        #print(iterations, "Too small, returning ", p1, p2, "w:", width, "h:", depth)
+        if False: #ignore_small:
+            return []
+        else:
+            return [Map(p1=p1,p2=p2,iteration=iterations,smallest=True, width=width, depth=depth)]
 
     #Otherwise, cut the square into smaller pieces
-    if width > height:
+    if width > depth:
         mid = rand_triangular(0,width/2,width)
 
         pmid1 = V3(p1.x+mid, p1.y, p2.z)
         pmid2 = V3(p1.x+mid, p1.y, p1.z)
 
-        #print(iterations, "Cutting length wise, size ", width, "x", height, "at mid", mid)
+        #print(iterations, "Cutting length wise, size ", width, "x", depth, "at mid", mid)
         recs.extend(partition(p1, pmid1, min_x, min_z, rate-rate_dec, rate_dec, iterations+1))
         recs.extend(partition(pmid2, p2, min_x, min_z, rate-rate_dec, rate_dec, iterations+1))
     else:
-        mid = rand_triangular(0,height/2,height)
+        mid = rand_triangular(0,depth/2,depth)
 
         pmid1 = V3(p2.x, p1.y, p1.z+mid)
         pmid2 = V3(p1.x, p1.y, p1.z+mid)
 
-        #print(iterations, "Cutting height wise, size ", width, "x", height, "at mid", mid)
+        #print(iterations, "Cutting depth wise, size ", width, "x", depth, "at mid", mid)
         recs.extend(partition(p1, pmid1, min_x, min_z, rate-rate_dec, rate_dec, iterations+1))
         recs.extend(partition(pmid2, p2, min_x, min_z, rate-rate_dec, rate_dec, iterations+1))
 
@@ -388,9 +465,9 @@ def partitions_to_blocks(partitions, options=Map()):
 
     for part in partitions:
         if options.or_mix:
-            valid = (min_size <= part.width <= max_size) or (min_size <= part.height <= max_size)
+            valid = (min_size <= part.width <= max_size) or (min_size <= part.depth <= max_size)
         else:
-            valid = (min_size <= part.width <= max_size) and (min_size <= part.height <= max_size)
+            valid = (min_size <= part.width <= max_size) and (min_size <= part.depth <= max_size)
 
         if valid:
             p1 = part.p1
@@ -415,7 +492,7 @@ def box(pos, size, options=Map()):
         options.create_now = False
 
     points = []
-    if options.create_now:        
+    if options.create_now:
         helpers.create_block_filled_box(pos.x,pos.y,pos.z,
                 pos.x+size.x-1,pos.y+size.y-1,
                 pos.z+size.z-1,
@@ -489,7 +566,7 @@ def toblerone(t,pos,size):
     if not options.create_now:
         options.create_now = False
 
-    points = []    
+    points = []
     for y in reversed(range(0,int(size.y))):
         for z in range(0, int(size.z)):
             for x in range(0, int(size.x)):
@@ -915,5 +992,3 @@ def getLine(x1, y1, z1, x2, y2, z2):
 #                     if (x0,y0,z0) not in done:
 #                         self.mc.setBlock(x0,y0,z0,block)
 #                         done.add((x0,y0,z0))
-
-

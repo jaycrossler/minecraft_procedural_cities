@@ -34,7 +34,7 @@ def my_pos():
 
 def my_tile_pos():
     try:
-        pos = mc.player.getTilePos()        
+        pos = mc.player.getTilePos()
     except mcpi.connection.RequestError:
         print("CONNECTION ERROR #1 - Can't get Player Tile Pos")
         pos =  V3(0,0,0)
@@ -43,7 +43,7 @@ def my_tile_pos():
 def get_height(pos):
     out = 0
     try:
-        # pos.y = mc.getHeight(pos.x, pos.z)       
+        # pos.y = mc.getHeight(pos.x, pos.z)
         out = mc.getHeight(pos.x, pos.z)
     except mcpi.connection.RequestError:
         print("CONNECTION ERROR #2 - Can't get Height at tile")
@@ -80,10 +80,10 @@ def read_block(p):
 
 def draw_point_list(points, blocktype, data=None):
     if not data:
-        for p in points:    
+        for p in points:
             mc.setBlock(p.x, p.y, p.z, blocktype)
     else:
-        for p in points:    
+        for p in points:
             mc.setBlock(p.x, p.y, p.z, blocktype, data)
 
 def create_block(p, blocktype, data=None):
@@ -113,7 +113,7 @@ def create_blocks_from_pointlist(points, blocktype, data=None, blocks_to_not_dra
         if (len(blocks_to_not_draw)>0):
             #TODO: This could be more efficient
             try:
-                if (blocks_to_not_draw.index(point)>-1): 
+                if (blocks_to_not_draw.index(point)>-1):
                     draw_block = False
             except ValueError:
                 draw_block = True
@@ -128,16 +128,17 @@ def choice(list):
     return np.random.choice(list)
 
 
-def bulldoze(player_pos = my_tile_pos(), radius=40):
-    debug("Bulldozing " + str(radius) + "x around player...")    
+def bulldoze(player_pos = my_tile_pos(), radius=40, ground=True):
+    debug("Bulldozing " + str(radius) + "x around player...")
     debug(player_pos)
     create_box_centered_on(player_pos.x, player_pos.y, player_pos.z, radius,radius,radius, block.AIR.id)
-    create_box_centered_on(player_pos.x, player_pos.y-1, player_pos.z, radius,1,radius, block.GRASS.id)
+    if ground:
+        create_box_centered_on(player_pos.x, player_pos.y-1, player_pos.z, radius,1,radius, block.GRASS.id)
     debug("...Finished bulldozing")
 
 def test_polyhedron():
     import VoxelGraphics as vg
-    
+
     pos = my_pos()
     points = vg.getFace([(pos.x,pos.y,pos.z),(pos.x+20,pos.y+20,pos.z),(pos.x+20,pos.y+20,pos.z+20),
          (pos.x,pos.y,pos.z+20)])
@@ -156,4 +157,3 @@ def test_polyhedron():
         vertices.append((pos.x+x1,pos.y,pos.z+z1))
     points = vg.getFace(vertices)
     draw_point_list(points, block.STAINED_GLASS_BLUE)
-
