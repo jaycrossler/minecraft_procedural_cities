@@ -14,7 +14,6 @@
 #   TODO: Have floors with each allowing different polylgon/size settings
 #   TODO: Stairs or ladders between floors
 #   TODO: Building cost to create building
-#   TODO: Largest neighborhood building is castle or tower
 #   TODO: Add a river running through town
 #   TODO: Buildings and roads along terrain
 #
@@ -30,6 +29,7 @@ import VoxelGraphics as vg
 import BuildingStyler as bs
 import BuildingPoly as bp
 import Castle as castle
+import numpy as np
 from Map import Map
 from V3 import V3
 
@@ -46,57 +46,65 @@ class Farmzone(object):
         self.crop = options.crop or np.random.choice(["cane","wheat","carrot","potato"])
         self.blocks = []
 
-        rim, inner_rec = rectangle(p1, p2)
+        rim, inner_rec = vg.rectangle(p1, p2)
         for block in rim+inner_rec:
             if not block in self.blocks and type(block) == V3:
                 self.blocks.append(block)
 
-        self.center = V3(round(abs(p2.x-p1.x)), p1.y, round(abs(p2.z-p1.z)))
+        self.center = V3(round(abs(p2.x+p1.x)/2), p1.y, round(abs(p2.z+p1.z)/2))
 
     def build(self):
         for i, vec in enumerate(self.blocks):
-            if vec == self.center:
-                helpers.create_block(p1,block.WATER.id) #TODO: Add rows of water
-                plus2 = vg.up(vec,3)
-                helpers.create_block(plus2,block.GLASS.id)
-                for v2 in vg.next_to(plus2):
-                    helpers.create_block(v2,block.TORCH.id)
+            if self.crop=="cane":
+                if (vec.x % 3) == 0:
+                    helpers.create_block(vec,block.WATER.id)
+                else:
+                    helpers.create_block(vec,block.DIRT.id)
             else:
-                helpers.create_block(vec,block.FARMLAND.id)
+                #All other types of crops
+                if vec == self.center:
+                    helpers.create_block(vec,block.WATER.id)
+                    plus2 = vg.up(vec,3)
+                    helpers.create_block(plus2,block.GLOWSTONE_BLOCK.id)
+                    for v2 in vg.next_to(plus2):
+                        helpers.create_block(v2,block.TORCH.id)
+                else:
+                    helpers.create_block(vec,block.FARMLAND.id)
 
         if self.crop == "cane":
-            for i, p1 in enumerate(self.blocks):
-                if not vec == self.center:
-                    helpers.create_block(vg.up(p1),block.SUGAR_CANE.id)
-                    helpers.create_block(vg.up(p1,2),block.SUGAR_CANE.id)
+            for i, vec in enumerate(self.blocks):
+                if not (vec.x % 3) == 0:
+                    canes = np.random.randint(1,4)
+                    helpers.create_block(vg.up(vec),block.SUGAR_CANE.id)
+                    if canes>1: helpers.create_block(vg.up(vec,2),block.SUGAR_CANE.id)
+                    if canes>2: helpers.create_block(vg.up(vec,3),block.SUGAR_CANE.id)
         elif self.crop == "wheat":
-            for i, p1 in enumerate(self.blocks):
+            for i, vec in enumerate(self.blocks):
                 if not vec == self.center:
-                    helpers.create_block(vg.up(p1),59,0x7)
+                    helpers.create_block(vg.up(vec),59,np.random.randint(0,8))
         elif self.crop == "carrot":
-            for i, p1 in enumerate(self.blocks):
+            for i, vec in enumerate(self.blocks):
                 if not vec == self.center:
-                    helpers.create_block(vg.up(p1),141,0x7)
+                    helpers.create_block(vg.up(vec),141,np.random.randint(0,8))
         elif self.crop == "potato":
-            for i, p1 in enumerate(self.blocks):
+            for i, vec in enumerate(self.blocks):
                 if not vec == self.center:
-                    helpers.create_block(vg.up(p1),142,0x7)
+                    helpers.create_block(vg.up(vec),142,np.random.randint(0,8))
 
     def clear(self):
         for i, vec in enumerate(self.blocks):
+            helpers.create_block(vec,block.GRASS.id)
             if vec == self.center:
-                helpers.create_block(vec,block.GRASS.id)
                 plus2 = vg.up(vec,3)
                 for v2 in vg.next_to(plus2):
                     helpers.create_block(v2,block.AIR.id)
                 helpers.create_block(plus2,block.AIR.id)
-            else:
-                helpers.create_block(vec,block.FARMLAND.id)
 
         if self.crop == "cane":
             for p1 in self.blocks:
                 helpers.create_block(vg.up(p1),block.AIR.id)
                 helpers.create_block(vg.up(p1,2),block.AIR.id)
+                helpers.create_block(vg.up(p1,3),block.AIR.id)
         elif self.crop in ["wheat","carrot","potato"]:
             for i, p1 in enumerate(self.blocks):
                 if not vec == self.center:
@@ -138,7 +146,7 @@ class Neighborhoods(object):
                 self.zones.append(part)
                 p1 = vg.up(part.p1,1)
                 p2 = vg.up(part.p2,1)
-                p1, p2 = rectangle_inner(p1, p2,2)
+                p1, p2 = vg.rectangle_inner(p1, p2,2)
                 self.buildings.append(Building(False, Map(p1=p1, p2=p2)))
 
     def build(self):

@@ -496,10 +496,21 @@ def partitions_to_blocks(partitions, options=Map()):
 
 def circle (center, radius, tight=.7, axis="y", filled=False, thickness=1):
     #Tight defines how constricted the circle is
-    def func(x,y,z):
-        c = math.sqrt(x*x+z*z)
-        return c<(radius-tight) and (True if filled else (c>=(radius-thickness-tight)))
-    return evaluate_3d_range(center,-radius,radius,0,1,-radius,radius,func)
+    if axis=="y":
+        def func(x,y,z):
+            c = math.sqrt(x*x+z*z)
+            return c<(radius-tight) and (True if filled else (c>=(radius-thickness-tight)))
+        return evaluate_3d_range(center,-radius,radius,0,1,-radius,radius,func)
+    elif axis=="x":
+        def func(x,y,z):
+            c = math.sqrt(y*y+z*z)
+            return c<(radius-tight) and (True if filled else (c>=(radius-thickness-tight)))
+        return evaluate_3d_range(center,0,1,-radius,radius,-radius,radius,func)
+    else:
+        def func(x,y,z):
+            c = math.sqrt(x*x+y*y)
+            return c<(radius-tight) and (True if filled else (c>=(radius-thickness-tight)))
+        return evaluate_3d_range(center,-radius,radius,-radius,radius,0,1,func)
 
 def box (corner, size, filled=False, thickness=1):
     def func(x,y,z):
