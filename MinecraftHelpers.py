@@ -86,7 +86,7 @@ def draw_point_list(points, blocktype, data=None):
         for p in points:
             mc.setBlock(p.x, p.y, p.z, blocktype, data)
 
-def create_block(p, blocktype, data=None):
+def create_block(p, blocktype=block.STONE.id, data=None):
     try:
         if not data:
             mc.setBlock(p.x, p.y, p.z, blocktype)
@@ -95,19 +95,19 @@ def create_block(p, blocktype, data=None):
     except AttributeError:
         print("ERROR: Can't write block - didn't have valid x,y,z:", p, blocktype, "type", type(p))
 
-def create_block_filled_box(p1, p2, blocktype, data=None):
+def create_block_filled_box(p1, p2, blocktype=block.STONE.id, data=None):
     if not data:
         mc.setBlocks(p1.x, p1.y, p1.z, p2.x, p2.y, p2.z, blocktype)
     else:
         mc.setBlocks(p1.x, p1.y, p1.z, p2.x, p2.y, p2.z, blocktype, data)
 
-def create_box_centered_on(x,y,z,w,h,l, blocktype, data=None):
+def create_box_centered_on(x,y,z,w,h,l, blocktype=block.STONE.id, data=None):
     if not data:
         mc.setBlocks(x-w, y, z-l, x+w, y+h, z+l, blocktype)
     else:
         mc.setBlocks(x-w, y, z-l, x+w, y+h, z+l, blocktype, data)
 
-def create_blocks_from_pointlist(points, blocktype, data=None, blocks_to_not_draw=[]):
+def create_blocks_from_pointlist(points, blocktype=block.STONE.id, data=None, blocks_to_not_draw=[]):
     for point in points:
         draw_block = True
         if (len(blocks_to_not_draw)>0):

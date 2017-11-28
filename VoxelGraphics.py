@@ -486,8 +486,6 @@ def partitions_to_blocks(partitions, options=Map()):
 #https://github.com/nebogeo/creative-kids-coding-cornwall/blob/master/minecraft/python/dbscode_minecraft.py
 def box(pos, size, options=Map()):
     # size should be a vec3
-    if not options.material:
-        options.material = block.STONE.id
     if not options.create_now:
         options.create_now = False
 
@@ -505,8 +503,6 @@ def box(pos, size, options=Map()):
     return points
 
 def sphere(pos, radius, options=Map()):
-    if not options.material:
-        options.material = block.STONE.id
     if not options.create_now:
         options.create_now = False
 
@@ -523,8 +519,6 @@ def sphere(pos, radius, options=Map()):
     return points
 
 def cylinder(pos, radius, height, options=Map()):
-    if not options.material:
-        options.material = block.STONE.id
     if not options.create_now:
         options.create_now = False
 
@@ -542,8 +536,6 @@ def cylinder(pos, radius, height, options=Map()):
     return points
 
 def cone(pos, radius, height, options=Map()):
-    if not options.material:
-        options.material = block.STONE.id
     if not options.create_now:
         options.create_now = False
 
@@ -560,9 +552,7 @@ def cone(pos, radius, height, options=Map()):
                         points.append(V3(pos.x+x,pos.y+y,pos.z+z))
     return points
 
-def toblerone(t,pos,size):
-    if not options.material:
-        options.material = block.STONE.id
+def toblerone(t,pos,size, options=Map()):
     if not options.create_now:
         options.create_now = False
 

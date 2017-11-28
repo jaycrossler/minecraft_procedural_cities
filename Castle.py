@@ -36,22 +36,45 @@ class Castle(Building):
         data_so_far = self.data()
 
         sides = 4
+        castle_wall_height = options.castle_wall_height or 12
+        castle_inner_wall_height = options.castle_inner_wall_height or 18
+
+        width, null, depth = vg.dists(options.p1, options.p2)
+
+        if width > 23 and depth > 23:
+            castle_walls = True
+            inner_p1, inner_p2 = vg.rectangle_inner(options.p1, options.p2, 6)
+        else:
+            casle_walls = False
+            inner_p1, inner_p2 = options.p1, options.p2
+
+        if castle_walls:
+            for i in range(0, sides):
+                w1 = vg.point_along_circle(False, False, sides, i, Map(p1=options.p1, p2=options.p2))
+                w2 = vg.point_along_circle(False, False, sides, i+1, Map(p1=options.p1, p2=options.p2))
+
+                facing = "front" if i == 1 else "side"
+                poly = bp.BuildingPoly('castle_outer_wall', [w1, w2], data_so_far.copy(height=castle_wall_height, facing=facing))
+                polys.append(poly)
+
+                poly = bp.BuildingPoly('castle_wall_tower', [w1], data_so_far.copy(height=castle_wall_height, facing=facing))
+                polys.append(poly)
 
         corner_vectors = []
         for i in range(0, sides):
-            p1 = vg.point_along_circle(False, False, sides, i, Map(p1=options.p1, p2=options.p2))
-            p2 = vg.point_along_circle(False, False, sides, i+1, Map(p1=options.p1, p2=options.p2))
-            corner_vectors.append(p1)
+            w1 = vg.point_along_circle(False, False, sides, i, Map(p1=inner_p1, p2=inner_p2))
+            w2 = vg.point_along_circle(False, False, sides, i+1, Map(p1=inner_p1, p2=inner_p2))
+            corner_vectors.append(w1)
 
             facing = "front" if i == 1 else "side"
-            #TODO: Pass in point where front door is, determine facing from that
-            p = bp.BuildingPoly('wall', [p1, p2], data_so_far.copy(height=self.height, facing=facing))
-            polys.append(p)
+            poly = bp.BuildingPoly('wall', [w1, w2], data_so_far.copy(height=castle_inner_wall_height, facing=facing))
+            polys.append(poly)
 
-        # roof_vectors = [vg.up(v,self.height) for v in corner_vectors]
-        # polys.append(BuildingPoly("roof", roof_vectors, data_so_far.copy(corner_vectors = roof_vectors)))
+
+        roof_vectors = [vg.up(v,castle_inner_wall_height) for v in corner_vectors]
+        polys.append(bp.BuildingPoly("roof", roof_vectors, data_so_far.copy(corner_vectors = roof_vectors)))
         #insert foundation so that it is drawn first:
-        # polys.insert(0,BuildingPoly("foundation", [vg.up(v,-1) for v in corner_vectors], data_so_far.copy(corner_vectors = corner_vectors)))
+        polys.insert(0,bp.BuildingPoly("foundation", [vg.up(v,-1) for v in corner_vectors], data_so_far.copy(corner_vectors = corner_vectors)))
 
         self.corner_vectors = corner_vectors
 

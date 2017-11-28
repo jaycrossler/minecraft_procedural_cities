@@ -1,5 +1,5 @@
 #############################################################################################################
-# Procedural Building voxel drawing functions for MineCraft.  
+# Procedural Building voxel drawing functions for MineCraft.
 ##############################################################################################################
 
 import math
@@ -26,7 +26,7 @@ class Feature(object):
                 door_pattern = "swne"
             else:
                 door_pattern = "nesw"
-            door_code = door_pattern.index(options.cardinality[-1:]) 
+            door_code = door_pattern.index(options.cardinality[-1:])
             self.blocks.append(Map(pos=V3(pos.x, pos.y, pos.z), id=block.DOOR_WOOD.id, data=door_code))
             self.blocks.append(Map(pos=V3(pos.x, pos.y+1, pos.z), id=block.DOOR_WOOD.id, data=8))
             # self.blocks_to_not_draw.append(V3(pos.x, pos.y+1, pos.z))
@@ -36,7 +36,7 @@ class Feature(object):
             self.blocks.append(Map(pos=pos, id=block.BED.id))
         elif kind == "spacing":
             self.blocks.append(Map(pos=pos, id=block.AIR.id))
-    
+
     def draw(self):
         for item in self.blocks:
             helpers.create_block(item.pos, item.id, item.data)
@@ -82,7 +82,6 @@ def random_options(options=Map()):
     if not options.outside:
         options.outside = np.random.choice(["flowers","trees","grass","fence",False])
 
-
     return options
 
 #-----------------------
@@ -92,6 +91,10 @@ def building_poly_styler(obj, kind, options=Map()):
         return building_poly_styler_wall(obj, options)
     elif kind=="roof":
         return building_poly_styler_roof(obj, options)
+    elif kind=="castle_outer_wall":
+        return building_poly_styler_castle_outer_wall(obj, options)
+    elif kind=="castle_wall_tower":
+        return building_poly_styler_castle_wall_tower(obj, options)
 
 # -----------------------
 def building_styler(obj, options=Map()):
@@ -134,7 +137,7 @@ def building_poly_styler_roof(obj, options=Map()):
 
                 #Triangle to pointy face
                 triangle_face = [vec, pointy, next_roof_point]
-                roof_face = vg.unique_points(vg.getFace([V3(v.x, v.y+1, v.z) for v in triangle_face])) 
+                roof_face = vg.unique_points(vg.getFace([V3(v.x, v.y+1, v.z) for v in triangle_face]))
                 obj.points = obj.points.union(roof_face)
 
     if options.options.roof and str.startswith(options.options.roof, "battlement"):
@@ -149,6 +152,7 @@ def building_poly_styler_roof(obj, options=Map()):
             obj.points = obj.points.union(vg.points_spaced(roof_line, Map(every=spacing)))
 
     return obj
+
 
 # -----------------------
 def building_poly_styler_wall(obj, options):
@@ -181,5 +185,33 @@ def building_poly_styler_wall(obj, options):
     mid_points = vg.middle_of_line(obj.bottom(), Map(center=True, max_width=2, point_per=10))
     for vec in mid_points:
         obj.features.append(Feature("door", vec, Map(cardinality=obj.cardinality, door_inside=options.options.door_inside)))
+
+    return obj
+
+# -----------------------
+def building_poly_styler_castle_outer_wall(obj, options):
+
+    height = options.options.roof_battlement_height or 1
+    spacing = options.options.roof_battlement_space or 2
+
+    #TODO: Add in inner and outer, create walkway and arrow slits
+
+    #TODO: Add X,Z outward from center as option
+    roof_line = vg.getLine(options.p1.x, options.p1.y+height, options.p1.z, options.p2.x, options.p2.y+height, options.p2.z)
+    obj.points.extend(vg.points_spaced(roof_line, Map(every=spacing)))
+
+    mid_points = vg.middle_of_line(obj.bottom(), Map(center=True, max_width=2, point_per=10))
+    for vec in mid_points:
+        obj.features.append(Feature("door", vec, Map(cardinality=obj.cardinality, door_inside=options.options.door_inside)))
+
+    return obj
+
+# -----------------------
+def building_poly_styler_castle_wall_tower(obj, options):
+
+    height = options.options.roof_battlement_height or 1
+    spacing = options.options.roof_battlement_space or 2
+
+    #TODO: Add in battlements, wood roof, stairway, torches
 
     return obj
