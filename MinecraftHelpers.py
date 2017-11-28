@@ -35,6 +35,8 @@ def my_pos():
 def my_tile_pos():
     try:
         pos = mc.player.getTilePos()
+        height = get_height(pos)
+        pos.y = height
     except mcpi.connection.RequestError:
         print("CONNECTION ERROR #1 - Can't get Player Tile Pos")
         pos =  V3(0,0,0)
@@ -157,3 +159,33 @@ def test_polyhedron():
         vertices.append((pos.x+x1,pos.y,pos.z+z1))
     points = vg.getFace(vertices)
     draw_point_list(points, block.STAINED_GLASS_BLUE)
+
+
+def xfrange(start, stop, step):
+    i = 0
+    while start + i * step < stop:
+        yield start + i * step
+        i += 1
+
+def test_drawing_function(func, min_x_step=3, max_x_step=11, min_z_step=0, max_z_step=1, z_jumps=1, higher=0, thickness=1, filled=False):
+    pos = my_tile_pos()
+    pos = V3(pos.x, pos.y + higher, pos.z)
+
+    all_points=[]
+    x_counter = 0
+    for x in range (min_x_step,max_x_step):
+        x_counter += (2*x) + 3
+        for i,z in enumerate(xfrange(min_z_step, max_z_step, z_jumps)):
+            points = func(V3(pos.x + x_counter, pos.y, pos.z + (i * (max_x_step*1.8))), x, z, filled=filled, thickness=thickness)
+            draw_point_list(points=points, blocktype=block.GLOWSTONE_BLOCK)
+            all_points+=points
+
+    class Temp():
+        def __init__(self, points):
+            self.points = points
+
+        def clear(self):
+            for p in self.points:
+                create_block(p, block.AIR.id)
+
+    return Temp(all_points)

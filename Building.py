@@ -345,3 +345,18 @@ def streets(size=0):
     c.build()
 
     return s, f, n, c
+
+def test_circles(thickness=1):
+    return helpers.test_drawing_function(vg.circle, 1, 7, 0, 0.8, 0.1, thickness=2)
+
+def test_box(thickness=1):
+    return helpers.test_drawing_function(vg.box, 1, 7, thickness=2)
+
+def test_sphere(thickness=1):
+    return helpers.test_drawing_function(vg.sphere, 1, 8, 0, 0.8, 0.1, higher=8, thickness=2)
+
+def test_cylinder(thickness=1):
+    return helpers.test_drawing_function(vg.cylinder, 1, 7, 0, 0.8, 0.1, thickness=2)
+
+def test_cone(thickness=1):
+    return helpers.test_drawing_function(vg.cone, 1, 7, 0, 0.8, 0.1, thickness=2)

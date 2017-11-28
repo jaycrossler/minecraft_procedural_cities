@@ -69,6 +69,15 @@ def point_along_circle(center, radius, points, num, options=Map()):
 
     return V3(round(x,options.precision), round(y,options.precision), round(z,options.precision))
 
+def evaluate_3d_range(pos, x_min, x_max, y_min, y_max, z_min, z_max, func):
+    #Evaluate a range of x,y,z and return points that match func
+    points = []
+    for y in range(y_min, y_max):
+        for z in range(z_min, z_max):
+            for x in range(x_min, x_max):
+                if func(x,y,z):
+                    points.append(V3(pos.x+x,pos.y+y,pos.z+z))
+    return points
 
 def angle_between(p1, p2):
     return (math.atan2(p2.z-p1.z, p2.x-p1.x) * (180.0 / math.pi) + 360) % 360
@@ -484,73 +493,110 @@ def partitions_to_blocks(partitions, options=Map()):
 
 #Initially based on scripts from:
 #https://github.com/nebogeo/creative-kids-coding-cornwall/blob/master/minecraft/python/dbscode_minecraft.py
-def box(pos, size, options=Map()):
-    # size should be a vec3
-    if not options.create_now:
-        options.create_now = False
 
-    points = []
-    if options.create_now:
-        helpers.create_block_filled_box(pos.x,pos.y,pos.z,
-                pos.x+size.x-1,pos.y+size.y-1,
-                pos.z+size.z-1,
-                options.material, options.data)
-    else:
-        for y in reversed(range(0,int(size.y))):
-          for z in range(0, int(size.z)):
-              for x in range(0, int(size.x)):
-                  points.append(V3(pos.x+x,pos.y+y,pos.z+z))
-    return points
+def circle (center, radius, tight=.7, axis="y", filled=False, thickness=1):
+    #Tight defines how constricted the circle is
+    def func(x,y,z):
+        c = math.sqrt(x*x+z*z)
+        return c<(radius-tight) and (True if filled else (c>=(radius-thickness-tight)))
+    return evaluate_3d_range(center,-radius,radius,0,1,-radius,radius,func)
 
-def sphere(pos, radius, options=Map()):
-    if not options.create_now:
-        options.create_now = False
+def box (corner, size, filled=False, thickness=1):
+    def func(x,y,z):
+        def edge(i):
+            return i<thickness or i>=(size-thickness)
+        return True if filled else (edge(x) or edge(y) or edge(z))
+    return evaluate_3d_range(corner,0,size,0,size,0,size,func)
 
-    points = []
-    radius_range=int(radius)
-    for y in range(-radius_range, radius_range):
-        for z in range(-radius_range, radius_range):
-            for x in range(-radius_range, radius_range):
-                if math.sqrt(x*x+y*y+z*z)<radius:
-                    if options.create_now:
-                        helpers.create_block(V3(pos.x+x,pos.y+y,pos.z+z), options.material)
-                    else:
-                        points.append(V3(pos.x+x,pos.y+y,pos.z+z))
-    return points
+def sphere (center, radius, tight=.5, filled=False, thickness=1):
+    def func(x,y,z):
+        c = math.sqrt(x*x+y*y+z*z)
+        return c<(radius-tight) and (True if filled else (c>=(radius-thickness-tight)))
+    return evaluate_3d_range(center,-radius,radius,-radius,radius,-radius,radius,func)
 
-def cylinder(pos, radius, height, options=Map()):
-    if not options.create_now:
-        options.create_now = False
+def cylinder (center, radius, tight=.5, height=10, filled=False, thickness=1):
+    def func(x,y,z):
+        c = math.sqrt(x*x+z*z)
+        return c<(radius-tight) and (True if filled else (c>=(radius-thickness-tight) or y<thickness or y>=(height-thickness)))
+    return evaluate_3d_range(center,-radius,radius,0,height,-radius,radius,func)
 
-    points = []
-    radius_range=int(radius)
-    height_range=int(height)
-    for y in range(0, height_range):
-        for z in range(-radius_range, radius_range):
-            for x in range(-radius_range, radius_range):
-                if math.sqrt(x*x+z*z)<radius:
-                    if options.create_now:
-                        helpers.create_block(V3(pos.x+x,pos.y+y,pos.z+z), options.material)
-                    else:
-                        points.append(V3(pos.x+x,pos.y+y,pos.z+z))
-    return points
+def cone (center, radius, tight=.4, height=10, filled=False, thickness=1):
+    def func(x,y,z):
+        c = math.sqrt(x*x+z*z)
+        outer = c<((radius*(1-y/float(height)))-tight)
+        inner = c>=((radius*(1-y/float(height)))-tight-thickness)
+        return outer and (True if filled else (y<thickness or inner))
+    return evaluate_3d_range(center,-radius,radius,0,height,-radius,radius,func)
 
-def cone(pos, radius, height, options=Map()):
-    if not options.create_now:
-        options.create_now = False
+# def box(pos, size, options=Map()):
+#     # size should be a vec3
+#     if not options.create_now:
+#         options.create_now = False
+#
+#     points = []
+#     if options.create_now:
+#         helpers.create_block_filled_box(pos.x,pos.y,pos.z,
+#                 pos.x+size.x-1,pos.y+size.y-1,
+#                 pos.z+size.z-1,
+#                 options.material, options.data)
+#     else:
+#         for y in reversed(range(0,int(size.y))):
+#           for z in range(0, int(size.z)):
+#               for x in range(0, int(size.x)):
+#                   points.append(V3(pos.x+x,pos.y+y,pos.z+z))
+#     return points
+#
+# def sphere(pos, radius, options=Map()):
+#     if not options.create_now:
+#         options.create_now = False
+#
+#     points = []
+#     radius_range=int(radius)
+#     for y in range(-radius_range, radius_range):
+#         for z in range(-radius_range, radius_range):
+#             for x in range(-radius_range, radius_range):
+#                 if math.sqrt(x*x+y*y+z*z)<radius:
+#                     if options.create_now:
+#                         helpers.create_block(V3(pos.x+x,pos.y+y,pos.z+z), options.material)
+#                     else:
+#                         points.append(V3(pos.x+x,pos.y+y,pos.z+z))
+#     return points
+#
+# def cylinder(pos, radius, height, options=Map()):
+#     if not options.create_now:
+#         options.create_now = False
+#
+#     points = []
+#     radius_range=int(radius)
+#     height_range=int(height)
+#     for y in range(0, height_range):
+#         for z in range(-radius_range, radius_range):
+#             for x in range(-radius_range, radius_range):
+#                 if math.sqrt(x*x+z*z)<radius:
+#                     if options.create_now:
+#                         helpers.create_block(V3(pos.x+x,pos.y+y,pos.z+z), options.material)
+#                     else:
+#                         points.append(V3(pos.x+x,pos.y+y,pos.z+z))
+#     return points
 
-    points = []
-    radius=int(radius)
-    height=int(height)
-    for y in range(0, height):
-        for z in range(-radius, radius):
-            for x in range(-radius, radius):
-                if math.sqrt(x*x+z*z)<(radius*(1-y/float(height))):
-                    if options.create_now:
-                        helpers.create_block(V3(pos.x+x,pos.y+y,pos.z+z), options.material)
-                    else:
-                        points.append(V3(pos.x+x,pos.y+y,pos.z+z))
-    return points
+# def cone(pos, radius, height, options=Map()):
+#     if not options.create_now:
+#         options.create_now = False
+#
+#     points = []
+#     radius=int(radius)
+#     height=int(height)
+#     for y in range(0, height):
+#         for z in range(-radius, radius):
+#             for x in range(-radius, radius):
+#                 if math.sqrt(x*x+z*z)<(radius*(1-y/float(height))):
+#                     if options.create_now:
+#                         helpers.create_block(V3(pos.x+x,pos.y+y,pos.z+z), options.material)
+#                     else:
+#                         points.append(V3(pos.x+x,pos.y+y,pos.z+z))
+#     return points
+
+
 
 def toblerone(t,pos,size, options=Map()):
     if not options.create_now:
