@@ -222,10 +222,10 @@ def rectangular_face(p1, p2, h):
 
 def next_to(p, num=1):
     ps = []
-    ps.append(V3(p.x-num, p.y, p.z))
-    ps.append(V3(p.x+num, p.y, p.z))
-    ps.append(V3(p.x, p.y, p.z-num))
-    ps.append(V3(p.x, p.y, p.z+num))
+    ps.append(Map(point=V3(p.x-num, p.y, p.z), dir=4))
+    ps.append(Map(point=V3(p.x+num, p.y, p.z), dir=3))
+    ps.append(Map(point=V3(p.x, p.y, p.z-num), dir=1))
+    ps.append(Map(point=V3(p.x, p.y, p.z+num), dir=2))
     return ps
 
 def rectangle_inner(p1, p2, num):
@@ -337,9 +337,18 @@ def points_along_poly(face_points, options=Map()):
 
 def unique_points(point_generator):
     done = set()
-    for p in point_generator:
-        if p not in done:
-            done.add(p)
+
+    if (type(point_generator) == list):
+        #multiple generators
+        for gen in point_generator:
+            for p in gen:
+                if p not in done:
+                    done.add(p)
+    else:
+        #just one generator
+        for p in point_generator:
+            if p not in done:
+                done.add(p)
     return done
 
 def rand_triangular(low,mid,high):
@@ -442,7 +451,7 @@ def partition(p1, p2, min_x=10, min_z=10, rate=1.01, rate_dec=.01, iterations=0,
         if False: #ignore_small:
             return []
         else:
-            return [Map(p1=p1,p2=p2,iteration=iterations,smallest=True, width=width, depth=depth)]
+            return [Map(p1=p1,p2=p2,iteration=iterations,width=width, depth=depth)]
 
     #Otherwise, cut the square into smaller pieces
     if width > depth:
@@ -491,9 +500,6 @@ def partitions_to_blocks(partitions, options=Map()):
 
     return blocks, inner_blocks
 
-#Initially based on scripts from:
-#https://github.com/nebogeo/creative-kids-coding-cornwall/blob/master/minecraft/python/dbscode_minecraft.py
-
 def circle (center, radius, tight=.7, axis="y", filled=False, thickness=1):
     #Tight defines how constricted the circle is
     if axis=="y":
@@ -512,7 +518,7 @@ def circle (center, radius, tight=.7, axis="y", filled=False, thickness=1):
             return c<(radius-tight) and (True if filled else (c>=(radius-thickness-tight)))
         return evaluate_3d_range(center,-radius,radius,-radius,radius,0,1,func)
 
-def box (corner, size, filled=False, thickness=1):
+def box (corner, size, tight=1, filled=False, thickness=1):
     def func(x,y,z):
         def edge(i):
             return i<thickness or i>=(size-thickness)
@@ -539,75 +545,56 @@ def cone (center, radius, tight=.4, height=10, filled=False, thickness=1):
         return outer and (True if filled else (y<thickness or inner))
     return evaluate_3d_range(center,-radius,radius,0,height,-radius,radius,func)
 
-# def box(pos, size, options=Map()):
-#     # size should be a vec3
-#     if not options.create_now:
-#         options.create_now = False
-#
-#     points = []
-#     if options.create_now:
-#         helpers.create_block_filled_box(pos.x,pos.y,pos.z,
-#                 pos.x+size.x-1,pos.y+size.y-1,
-#                 pos.z+size.z-1,
-#                 options.material, options.data)
-#     else:
-#         for y in reversed(range(0,int(size.y))):
-#           for z in range(0, int(size.z)):
-#               for x in range(0, int(size.x)):
-#                   points.append(V3(pos.x+x,pos.y+y,pos.z+z))
-#     return points
-#
-# def sphere(pos, radius, options=Map()):
-#     if not options.create_now:
-#         options.create_now = False
-#
-#     points = []
-#     radius_range=int(radius)
-#     for y in range(-radius_range, radius_range):
-#         for z in range(-radius_range, radius_range):
-#             for x in range(-radius_range, radius_range):
-#                 if math.sqrt(x*x+y*y+z*z)<radius:
-#                     if options.create_now:
-#                         helpers.create_block(V3(pos.x+x,pos.y+y,pos.z+z), options.material)
-#                     else:
-#                         points.append(V3(pos.x+x,pos.y+y,pos.z+z))
-#     return points
-#
-# def cylinder(pos, radius, height, options=Map()):
-#     if not options.create_now:
-#         options.create_now = False
-#
-#     points = []
-#     radius_range=int(radius)
-#     height_range=int(height)
-#     for y in range(0, height_range):
-#         for z in range(-radius_range, radius_range):
-#             for x in range(-radius_range, radius_range):
-#                 if math.sqrt(x*x+z*z)<radius:
-#                     if options.create_now:
-#                         helpers.create_block(V3(pos.x+x,pos.y+y,pos.z+z), options.material)
-#                     else:
-#                         points.append(V3(pos.x+x,pos.y+y,pos.z+z))
-#     return points
+def triangular_prism_faces(p1,p2,height,width=3,radius=False,sloped=False,filled=False, base=False, ends=False):
+    radius = radius or (((width-1)/2) if width>1 else 1)
+    if radius<0:
+        return []
 
-# def cone(pos, radius, height, options=Map()):
-#     if not options.create_now:
-#         options.create_now = False
-#
-#     points = []
-#     radius=int(radius)
-#     height=int(height)
-#     for y in range(0, height):
-#         for z in range(-radius, radius):
-#             for x in range(-radius, radius):
-#                 if math.sqrt(x*x+z*z)<(radius*(1-y/float(height))):
-#                     if options.create_now:
-#                         helpers.create_block(V3(pos.x+x,pos.y+y,pos.z+z), options.material)
-#                     else:
-#                         points.append(V3(pos.x+x,pos.y+y,pos.z+z))
-#     return points
+    #Find the 6 points that form triangles around p1 and p2
+    corner_vecs = line_thick_into_corners(p1.x,p1.z,p2.x,p2.z,radius)
+    p1_1 = V3(corner_vecs[0].x, p1.y, corner_vecs[0].y)
+    p1_2 = V3(p1.x, p1.y+height, p1.z)
+    p1_3 = V3(corner_vecs[1].x, p1.y, corner_vecs[1].y)
+
+    p2_3 = V3(corner_vecs[2].x, p2.y, corner_vecs[2].y)
+    p2_2 = V3(p2.x, p2.y+height, p2.z)
+    p2_1 = V3(corner_vecs[3].x, p2.y, corner_vecs[3].y)
+
+    faces = []
+    faces.append(getFace([p1_1, p1_2, p2_2, p2_1]))
+    faces.append(getFace([p1_3, p1_2, p2_2, p2_3]))
+    if base: faces.append(getFace([p1_1, p1_3, p2_3, p2_1]))
+    if ends:
+        faces.append(getFace([p1_1, p1_2, p1_3]))
+        faces.append(getFace([p2_1, p2_2, p2_3]))
+
+    if filled and (round(radius)>=0):
+        faces.extend(triangular_prism_faces(p1,p2,height=height,radius=radius-1,sloped=sloped))
+
+    return faces
 
 
+def line_thick_into_corners(x1,y1,x2,y2,thickness=1):
+    angle = math.atan2(y2-y1, x2-x1)
+    p0 = Map(x=0, y=0)
+    p1 = Map(x=0, y=0)
+    p2 = Map(x=0, y=0)
+    p3 = Map(x=0, y=0)
+
+    p0.x = round(x1 + thickness*math.cos(angle+math.pi/2),4)
+    p0.y = round(y1 + thickness*math.sin(angle+math.pi/2),4)
+    p1.x = round(x1 + thickness*math.cos(angle-math.pi/2),4)
+    p1.y = round(y1 + thickness*math.sin(angle-math.pi/2),4)
+    p2.x = round(x2 + thickness*math.cos(angle-math.pi/2),4)
+    p2.y = round(y2 + thickness*math.sin(angle-math.pi/2),4)
+    p3.x = round(x2 + thickness*math.cos(angle+math.pi/2),4)
+    p3.y = round(y2 + thickness*math.sin(angle+math.pi/2),4)
+
+    return [p0,p1,p2,p3]
+
+
+#Initially based on scripts from:
+#https://github.com/nebogeo/creative-kids-coding-cornwall/blob/master/minecraft/python/dbscode_minecraft.py
 
 def toblerone(t,pos,size, options=Map()):
     if not options.create_now:

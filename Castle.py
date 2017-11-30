@@ -16,6 +16,7 @@ from V3 import *
 # Polygon helper class to store, build, and create blocks
 class Castle(Building):
     def __init__(self, pos=False, options=Map()):
+        options.outside = "none"
         super(self.__class__, self).__init__(pos, options)
         self.kind = options.kind or "old stone"
 
@@ -39,37 +40,56 @@ class Castle(Building):
         castle_wall_height = options.castle_wall_height or 12
         castle_inner_wall_height = options.castle_inner_wall_height or 18
 
-        width, null, depth = vg.dists(options.p1, options.p2)
+        p1 = vg.up(options.p1,1)
+        p2 = vg.up(options.p2,1)
 
-        if width > 23 and depth > 23:
-            castle_walls = True
-            inner_p1, inner_p2 = vg.rectangle_inner(options.p1, options.p2, 6)
-        else:
-            casle_walls = False
-            inner_p1, inner_p2 = options.p1, options.p2
+        # castle_farm = width > 19 and depth > 17
 
-        if castle_walls:
+        width, null, depth = vg.dists(p1, p2)
+        print("starting ps",p1,p2, "wxd:", width, depth)
+        if (width > 22) and (depth > 22):
+            #keep moat width between 4 and 10
+            if (width > 26) and (depth > 26):
+                moat_width = round(min((width+depth/2)-26, 10))
+            else:
+                moat_width = 4
+
+            outside_vectors = []
             for i in range(0, sides):
-                w1 = vg.point_along_circle(False, False, sides, i, Map(p1=options.p1, p2=options.p2))
-                w2 = vg.point_along_circle(False, False, sides, i+1, Map(p1=options.p1, p2=options.p2))
+                w1 = vg.point_along_circle(False, False, sides, i, Map(p1=vg.up(p1,-1), p2=vg.up(p2,-1)))
+
+            poly = bp.BuildingPoly("moat", outside_vectors, data_so_far.copy(inner_width=moat_width, material=block.WATER.id, height=1, skip_edges=True, skip_features=True))
+            polys.append(poly)
+            print("--moat", outside_vectors)
+            p1, p2 = vg.rectangle_inner(p1,p2, moat_width)
+
+        width, null, depth = vg.dists(p1, p2)
+        print("tower ps",p1,p2, "wxd:", width, depth)
+        if (width > 17) and (depth > 17):
+            p1, p2 = vg.rectangle_inner(p1,p2, 4)
+            for i in range(0, sides):
+                w1 = vg.point_along_circle(False, False, sides, i, Map(p1=p1, p2=p2))
+                w2 = vg.point_along_circle(False, False, sides, i+1, Map(p1=p1, p2=p2))
 
                 facing = "front" if i == 1 else "side"
-                poly = bp.BuildingPoly('castle_outer_wall', [w1, w2], data_so_far.copy(height=castle_wall_height, facing=facing))
+                poly = bp.BuildingPoly("castle_outer_wall", [w1, w2], data_so_far.copy(height=castle_wall_height, facing=facing, thickness=3))
                 polys.append(poly)
+                print("--tower line", w1, w2)
 
-                poly = bp.BuildingPoly('castle_wall_tower', [w1], data_so_far.copy(height=castle_wall_height, facing=facing))
+                poly = bp.BuildingPoly("tower", [w1], data_so_far.copy(style="castle_wall_tower", height=castle_wall_height, facing=facing, thickness=5))
                 polys.append(poly)
+                print("--tower", w1)
 
         corner_vectors = []
+        p1, p2 = vg.rectangle_inner(p1,p2, 4)
         for i in range(0, sides):
-            w1 = vg.point_along_circle(False, False, sides, i, Map(p1=inner_p1, p2=inner_p2))
-            w2 = vg.point_along_circle(False, False, sides, i+1, Map(p1=inner_p1, p2=inner_p2))
+            w1 = vg.point_along_circle(False, False, sides, i, Map(p1=p1, p2=p2))
+            w2 = vg.point_along_circle(False, False, sides, i+1, Map(p1=p1, p2=p2))
             corner_vectors.append(w1)
 
             facing = "front" if i == 1 else "side"
-            poly = bp.BuildingPoly('wall', [w1, w2], data_so_far.copy(height=castle_inner_wall_height, facing=facing))
+            poly = bp.BuildingPoly("wall", [w1, w2], data_so_far.copy(height=castle_inner_wall_height, facing=facing))
             polys.append(poly)
-
 
         roof_vectors = [vg.up(v,castle_inner_wall_height) for v in corner_vectors]
         polys.append(bp.BuildingPoly("roof", roof_vectors, data_so_far.copy(corner_vectors = roof_vectors)))
@@ -88,10 +108,10 @@ def build_castle_streetmap(p1,p2,options=Map()):
     #Find a large central rectangle for the castle
     if width < 25 or depth < 25:
         castle_x = options.min_x or width
-        castle_z = options.min_z or width
+        castle_z = options.min_z or depth
     else:
-        rand_x = max(25,math.ceil(width * .7))
-        rand_z = max(25,math.ceil(depth * .7))
+        rand_x = max(25,math.ceil(width * .75))
+        rand_z = max(25,math.ceil(depth * .75))
         castle_x = options.min_x or min(width, np.random.randint(24,rand_x))
         castle_z = options.min_z or min(depth, np.random.randint(24,rand_z))
 

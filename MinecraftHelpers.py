@@ -32,11 +32,12 @@ def my_pos():
         pos =  V3(0,0,0)
     return V3(pos.x, pos.y, pos.z)
 
-def my_tile_pos():
+def my_tile_pos(clamp_to_ground=True):
     try:
         pos = mc.player.getTilePos()
-        height = get_height(pos)
-        pos.y = height
+        if clamp_to_ground:
+            height = get_height(pos)
+            pos.y = height
     except mcpi.connection.RequestError:
         print("CONNECTION ERROR #1 - Can't get Player Tile Pos")
         pos =  V3(0,0,0)
@@ -130,7 +131,7 @@ def choice(list):
     return np.random.choice(list)
 
 
-def bulldoze(player_pos = my_tile_pos(), radius=40, ground=True):
+def bulldoze(player_pos = my_pos(), radius=40, ground=True):
     debug("Bulldozing " + str(radius) + "x around player...")
     debug(player_pos)
     create_box_centered_on(player_pos.x, player_pos.y, player_pos.z, radius,radius,radius, block.AIR.id)
@@ -168,7 +169,7 @@ def xfrange(start, stop, step):
         i += 1
 
 def test_drawing_function(func, min_x_step=3, max_x_step=11, min_z_step=0, max_z_step=1, z_jumps=1, higher=0, thickness=1, filled=False):
-    pos = my_tile_pos()
+    pos = my_tile_pos(False)
     pos = V3(pos.x, pos.y + higher, pos.z)
 
     all_points=[]

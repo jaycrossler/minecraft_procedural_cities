@@ -32,6 +32,7 @@ import Castle as castle
 import numpy as np
 from Map import Map
 from V3 import V3
+import time
 
 helpers.connect()
 
@@ -43,7 +44,7 @@ mid_point = V3(30,0,120)
 # Polygon helper class to store, build, and create blocks
 class Farmzone(object):
     def __init__(self, p1, p2, options=Map()):
-        self.crop = options.crop or np.random.choice(["cane","wheat","carrot","potato"])
+        self.crop = options.crop or np.random.choice(["cane","wheat","carrot","potato","cactus"])
         self.blocks = []
 
         rim, inner_rec = vg.rectangle(p1, p2)
@@ -60,6 +61,11 @@ class Farmzone(object):
                     helpers.create_block(vec,block.WATER.id)
                 else:
                     helpers.create_block(vec,block.DIRT.id)
+            elif self.crop=="cactus":
+                if ((vec.x + vec.z) % 2) == 0:
+                    helpers.create_block(vec,block.AIR.id)
+                else:
+                    helpers.create_block(vec,block.SAND.id)
             else:
                 #All other types of crops
                 if vec == self.center:
@@ -67,7 +73,7 @@ class Farmzone(object):
                     plus2 = vg.up(vec,3)
                     helpers.create_block(plus2,block.GLOWSTONE_BLOCK.id)
                     for v2 in vg.next_to(plus2):
-                        helpers.create_block(v2,block.TORCH.id)
+                        helpers.create_block(v2.point, block.TORCH.id, v2.dir)
                 else:
                     helpers.create_block(vec,block.FARMLAND.id)
 
@@ -78,6 +84,14 @@ class Farmzone(object):
                     helpers.create_block(vg.up(vec),block.SUGAR_CANE.id)
                     if canes>1: helpers.create_block(vg.up(vec,2),block.SUGAR_CANE.id)
                     if canes>2: helpers.create_block(vg.up(vec,3),block.SUGAR_CANE.id)
+        elif self.crop == "cactus":
+            for i, vec in enumerate(self.blocks):
+                if ((vec.x + vec.z) % 2) == 1:
+                    helpers.create_block(vec,block.SAND.id)
+                    cacs = np.random.randint(1,4)
+                    helpers.create_block(vg.up(vec),block.CACTUS.id)
+                    if cacs>1: helpers.create_block(vg.up(vec,2),block.CACTUS.id)
+                    if cacs>2: helpers.create_block(vg.up(vec,3),block.CACTUS.id)
         elif self.crop == "wheat":
             for i, vec in enumerate(self.blocks):
                 if not vec == self.center:
@@ -97,10 +111,10 @@ class Farmzone(object):
             if vec == self.center:
                 plus2 = vg.up(vec,3)
                 for v2 in vg.next_to(plus2):
-                    helpers.create_block(v2,block.AIR.id)
+                    helpers.create_block(v2.point, block.AIR.id)
                 helpers.create_block(plus2,block.AIR.id)
 
-        if self.crop == "cane":
+        if self.crop in ["cane","cactus"]:
             for p1 in self.blocks:
                 helpers.create_block(vg.up(p1),block.AIR.id)
                 helpers.create_block(vg.up(p1,2),block.AIR.id)
@@ -114,15 +128,11 @@ class Farmzone(object):
 # Polygon helper class to store, build, and create blocks
 class Farmzones(object):
     def __init__(self, zones, options=Map()):
-        min_size = options.min_size or 0
-        max_size = options.max_size or 9
         self.farms = []
 
         for part in zones:
-            valid = (min_size <= part.width <= max_size) or (min_size <= part.depth <= max_size)
-            if valid:
-                p1, p2 = vg.rectangle_inner(part.p1, part.p2, 1)
-                self.farms.append(Farmzone(p1, p2))
+            # p1, p2 = vg.rectangle_inner(part.p1, part.p2, 1)
+            self.farms.append(Farmzone(part.p1, part.p2))
 
     def build(self):
         for farm in self.farms:
@@ -136,18 +146,16 @@ class Farmzones(object):
 # Polygon helper class to store, build, and create blocks
 class Neighborhoods(object):
     def __init__(self, zones, options=Map()):
-        min_size = options.min_size or 9
         self.style = options.style
         self.buildings = []
         self.zones = []
 
         for part in zones:
-            if (min_size <= part.width) and (min_size <= part.depth):
-                self.zones.append(part)
-                p1 = vg.up(part.p1,1)
-                p2 = vg.up(part.p2,1)
-                p1, p2 = vg.rectangle_inner(p1, p2,2)
-                self.buildings.append(Building(False, Map(p1=p1, p2=p2)))
+            self.zones.append(part)
+            p1 = vg.up(part.p1,1)
+            p2 = vg.up(part.p2,1)
+            p1, p2 = vg.rectangle_inner(p1, p2,2)
+            self.buildings.append(Building(False, Map(p1=p1, p2=p2)))
 
     def build(self):
         for b in self.buildings:
@@ -160,22 +168,17 @@ class Neighborhoods(object):
 #-----------------------
 # Polygon helper class to store, build, and create blocks
 class Streets(object):
-    def __init__(self, p1, p2, options=Map()):
-        self.p1 = vg.up(p1,-1)
-        self.p2 = vg.up(p2,-1)
-        self.minx = options.minx or 7
-        self.minz = options.minz or 7
+    def __init__(self, zones, options=Map()):
+    #TODO: Set width 1 or 2 of roads
+
         self.style = options.style or "blacktop"
+        for z in zones:
+            z.p1 = vg.up(z.p1,-1)
+            z.p2 = vg.up(z.p2,-1)
 
+        self.zones = zones
         self.options = options
-
-        if options.layout == "castle":
-            self.zones = castle.build_castle_streetmap(self.p1, self.p2, options)
-        else:
-            #TODO: Set width 1 or 2
-            self.zones = vg.partition(self.p1, self.p2, self.minx, self.minz)
-
-        self.blocks, x = vg.partitions_to_blocks(self.zones, options)
+        self.blocks, self.inner_blocks = vg.partitions_to_blocks(zones, options)
 
     def build(self,min_size=0):
         if self.style == "blacktop":
@@ -247,10 +250,12 @@ class Building(object):
             poly.draw()
 
         for poly in self.polys:
-            poly.draw_edges()
+            if not poly.options.skip_edges:
+                poly.draw_edges()
 
         for poly in self.polys:
-            poly.draw_features()
+            if not poly.options.skip_features:
+                poly.draw_features()
 
     def clear(self):
         for poly in self.polys:
@@ -310,7 +315,7 @@ class Building(object):
 #--------------------------------------------------------------------
 # Testing functions
 #
-def prep(size=0):
+def prep(size=0, ground=True):
     if size > 0:
         corner1 = V3(mid_point.x-size, mid_point.y, mid_point.z-size)
         corner2 = V3(mid_point.x+size, mid_point.y, mid_point.z+size)
@@ -318,9 +323,27 @@ def prep(size=0):
         corner1, corner2 = V3(-60, 0, 40), V3(120, 0, 200)
 
     helpers.debug("Bulldozing building zone...")
-    helpers.create_block_filled_box(vg.up(corner1,-1), vg.up(corner2,-3), block.GRASS.id, data=None)
-    helpers.create_block_filled_box(vg.up(corner1,0), vg.up(corner2,40), block.AIR.id, data=None)
+    if ground: helpers.create_block_filled_box(vg.up(corner1,-1), vg.up(corner2,-3), block.GRASS.id, data=None)
+    helpers.create_block_filled_box(vg.up(corner1,0), vg.up(corner2,70), block.AIR.id, data=None)
     helpers.debug("...Finished bulldozing")
+
+def clear(size=0):
+    if size > 0:
+        corner1 = V3(mid_point.x-size, mid_point.y, mid_point.z-size)
+        corner2 = V3(mid_point.x+size, mid_point.y, mid_point.z+size)
+    else:
+        corner1, corner2 = V3(-60, 0, 40), V3(120, 0, 200)
+
+    helpers.debug("Removing Everything...(fly in 10 seconds)")
+    helpers.create_block_filled_box(vg.up(corner1,-5), vg.up(corner2,50), block.AIR.id, data=None)
+
+    helpers.debug("...Adding Grass...")
+    helpers.create_block_filled_box(vg.up(corner1,-1), vg.up(corner2,-1), block.GRASS.id, data=None)
+
+    helpers.debug("...Stone underneath...")
+    helpers.create_block_filled_box(vg.up(corner1,-2), vg.up(corner2,-5), block.STONE.id, data=None)
+    helpers.debug("...Finished")
+
 
 def t1():
     return Building(False, Map(sides=4, height=7, radius=6, windows="window_line_double", roof="pointy"))
@@ -331,40 +354,76 @@ def t2():
 def t3():
     return Building(False, Map(sides=4, height=20, radius=6, windows="window_slits", roof="battlement", material=block.STONE_BRICK.id, material_edges=block.IRON_BLOCK.id))
 
-def streets(size=0):
+def streets(size=0, layout="castle"):
     if size > 0:
         mid1 = V3(mid_point.x-size, mid_point.y, mid_point.z-size)
         mid2 = V3(mid_point.x+size, mid_point.y, mid_point.z+size)
     else:
         mid1, mid2 = V3(0, 0, 60), V3(50, 0, 110)
 
-    s = Streets(mid1, mid2, Map(minx=20, miny=20, style="blacktop", layout="castle", min_size=6))
+    print("Building zone and streetmap using layout:", layout)
+    if layout == "castle":
+        all_zones = castle.build_castle_streetmap(mid1, mid2, Map(min_x=60, min_z=60))
+    else:
+        all_zones = vg.partition(mid1, mid2, Map(minx=7, minz=7))
 
-    zones = [x for x in s.zones if not x.largest]
-    f = Farmzones(zones)
-    n = Neighborhoods(zones)
+    farm_zones = []
+    building_zones = []
+    castle_zone = False
 
-    castle1 = [x for x in s.zones if x.largest][0]
-    c = castle.Castle(False,castle1)
+    #Sort zones
+    for zone in all_zones:
+        if zone.width < 8 or zone.depth < 8:
+            farm_zones.append(zone)
+        # elif zone.largest:
+        #     if not castle_zone:
+        #         castle_zone = zone
+        #     else:
+        #         building_zones.append(zone)
+        else: #if zone.width < 24 and zone.depth < 24:
+            building_zones.append(zone)
 
+    if not castle_zone:
+        largest = 0
+        largest_index = -1
+        for i, zone in enumerate(building_zones):
+            size = (zone.width * zone.depth) + min(zone.width,zone.depth)**2
+            if size>largest:
+                largest = size
+                largest_index = i
+                castle_zone = zone
+        building_zones.pop(largest_index)
+
+    # Turn zones into creations
+    s = Streets(all_zones, Map(style="blacktop"))
+    f = Farmzones(farm_zones)
+    n = Neighborhoods(building_zones)
+    c = castle.Castle(options=castle_zone)
+
+    z = [all_zones,farm_zones,building_zones,castle_zone]
+
+    #Build the creations
     s.build()
     f.build()
     n.build()
     c.build()
 
-    return s, f, n, c
+    return s, f, n, c, z
 
 def test_circles(thickness=1):
-    return helpers.test_drawing_function(vg.circle, 1, 7, 0, 0.8, 0.1, thickness=2)
+    return helpers.test_drawing_function(vg.circle, 1, 7, 0, 0.8, 0.1, thickness=thickness)
 
 def test_box(thickness=1):
-    return helpers.test_drawing_function(vg.box, 1, 7, thickness=2)
+    return helpers.test_drawing_function(vg.box, 1, 7, thickness=thickness)
 
 def test_sphere(thickness=1):
-    return helpers.test_drawing_function(vg.sphere, 1, 8, 0, 0.8, 0.1, higher=8, thickness=2)
+    return helpers.test_drawing_function(vg.sphere, 1, 8, 0, 0.8, 0.1, higher=8, thickness=thickness)
 
 def test_cylinder(thickness=1):
-    return helpers.test_drawing_function(vg.cylinder, 1, 7, 0, 0.8, 0.1, thickness=2)
+    return helpers.test_drawing_function(vg.cylinder, 1, 7, 0, 0.8, 0.1, thickness=thickness)
 
 def test_cone(thickness=1):
-    return helpers.test_drawing_function(vg.cone, 1, 7, 0, 0.8, 0.1, thickness=2)
+    return helpers.test_drawing_function(vg.cone, 1, 7, 0, 0.8, 0.1, thickness=thickness)
+
+def jump():
+    helpers.mc.player.setPos(mid_point)

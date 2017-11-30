@@ -18,8 +18,10 @@ class BuildingPoly(object):
         self.material = options.material
         self.material_edges = options.material_edges #TODO: Different colors for different edges
         self.features = []
+        self.options = options
 
-
+        #Build default points, vertices, and settings for every poly
+        #these might get changed later with a styler (in building_poly_styler)
         if len(vertices) == 1:
             p1 = vertices[0]
             radius = options.tower_radius or 4
@@ -31,16 +33,22 @@ class BuildingPoly(object):
 
         elif len(vertices) == 2:
             #If two points are given, assume it's for the bottom line, then draw that as a wall
-
             #TODO: Add width for the wall - how to add end lines to that?
             options.p1 = p1 = vertices[0]
             options.p2 = p2 = vertices[1]
             h = options.height or 5
-            self.vertices = vertices_with_up = [p1, p2, vg.up(p2,h), vg.up(p1,h)] # points straight up
-            self.height = options.height or (vg.highest(vertices_with_up) - vg.lowest(vertices_with_up) + 1)
+            if h > 1:
+                self.vertices = vertices_with_up = [p1, p2, vg.up(p2,h), vg.up(p1,h)] # points straight up
+                self.height = options.height or (vg.highest(vertices_with_up) - vg.lowest(vertices_with_up) + 1)
+                self.points, self.top_line, self.bottom_line, self.left_line, self.right_line = vg.rectangular_face(p1, p2, h)
+                self.points_edges = self.top_line + self.bottom_line + self.left_line + self.right_line
+            else:
+                self.vertices = [p1, p2] # points straight up
+                self.height = h
+                self.points_edges = self.points = self.top_line = self.bottom_line = vg.getLine(p1.x, p1.y, p1.z, p2.x, p2.y, p2.z)
+                self.left_line = self.points[0]
+                self.right_line = self.points[-1]
             self.cardinality = vg.cardinality(p1,p2)
-            self.points, self.top_line, self.bottom_line, self.left_line, self.right_line = vg.rectangular_face(p1, p2, h)
-            self.points_edges = self.top_line + self.bottom_line + self.left_line + self.right_line
         else:
             #It's a non-y-rectangular-shaped polygon, so use a different getFace builder function
             self.vertices = vertices
@@ -49,7 +57,6 @@ class BuildingPoly(object):
             self.points = vg.unique_points(vg.getFace(self.vertices))
             null, self.top_line, self.bottom_line, self.left_line, self.right_line = vg.poly_point_edges(self.points)
             self.points_edges = self.top_line + self.bottom_line + self.left_line + self.right_line
-
 
         #Style the polygon based on kind and options
         self = bs.building_poly_styler(self, kind, options)
@@ -104,7 +111,6 @@ class BuildingPoly(object):
 
     def info(self):
         stro = []
-        stro.append(" - Polygon: " + self.kind + " with " + str(self.vertices) + " points, height " + str(self.height) + ", and " +str(len(self.points)) +" blocks")
-        for f in self.features:
-            stro.append("  -- " + f.info())
+        stro.append(" - BuildingPoly: " + self.kind + " with " + str(self.vertices) + " points, height " + str(self.height) + ", and " +str(len(self.points)) +" blocks (" + str(self.width) + " x " + str(self.depth) + ")")
+        stro.append(" -- Features:" + str(len(self.features)))
         return stro

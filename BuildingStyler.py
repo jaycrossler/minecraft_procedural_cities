@@ -54,6 +54,9 @@ def random_options(options=Map()):
         options.windows = np.random.choice(["window_line_double", "window_line", "window_slits"])
     if not options.roof:
         options.roof = np.random.choice(["pointy", "pointy_lines", "battlement", False])
+    if not options.moat:
+        options.moat = np.random.choice(["clear", "icy", "weeds"])
+
     if not options.material:
         options.color_scheme = r = np.random.choice(["gold_white", "grey_iron", "grey_stone", "blue_white"])
         if r == "gold_white":
@@ -91,6 +94,8 @@ def building_poly_styler(obj, kind, options=Map()):
         return building_poly_styler_wall(obj, options)
     elif kind=="roof":
         return building_poly_styler_roof(obj, options)
+    elif kind=="moat":
+        return building_poly_styler_moat(obj, options)
     elif kind=="castle_outer_wall":
         return building_poly_styler_castle_outer_wall(obj, options)
     elif kind=="castle_wall_tower":
@@ -100,7 +105,7 @@ def building_poly_styler(obj, kind, options=Map()):
 def building_styler(obj, options=Map()):
     #TODO: Move these create blocks to add a Feature or BuildingFeature
     if options.outside and options.p1 and options.p2:
-        p1, p2 = vg.rectangle_inner(options.p1, options.p2, -1)
+        p1, p2 = vg.rectangle_inner(options.p1, options.p2, options.outside_width or -1)
         rec, none = vg.rectangle(p1, p2)
         material = False
         if options.outside == "flowers":
@@ -118,6 +123,7 @@ def building_styler(obj, options=Map()):
         elif options.outside == "fence":
             for i,v in enumerate(rec):
                 helpers.create_block(v,block.FENCE.id)
+
     return obj
 
 
@@ -153,7 +159,60 @@ def building_poly_styler_roof(obj, options=Map()):
 
     return obj
 
+# -----------------------
+def building_poly_styler_moat(obj, options=Map()):
+    #TODO: FINISH
+    moat_type = options.options.moat or "clear"
+    thickness = options.options.inner_width or 5
+    radius = (thickness-1)/2 if (thickness>1) else 2
+    height = -1 * abs(options.options.moat_depth or (options.inner_width-1))
 
+    #TODO: Not only rectangular
+    p1, p2 = vg.min_max_points(options.options.p1, options.options.p2)
+
+    c1 = V3(p1.x+radius,p1.y,p1.z+radius)
+    c2 = V3(p2.x-radius,p2.y,p1.z+radius)
+    c3 = V3(p2.x-radius,p2.y,p1.z-radius)
+    c4 = V3(p1.x+radius,p1.y,p1.z-radius)
+
+    points = []
+    points.extend(vg.unique_points(vg.triangular_prism_faces(c1,c2,height,width=thickness,filled=True)))
+    points.extend(vg.unique_points(vg.triangular_prism_faces(c2,c3,height,width=thickness,filled=True)))
+    points.extend(vg.unique_points(vg.triangular_prism_faces(c3,c4,height,width=thickness,filled=True)))
+    points.extend(vg.unique_points(vg.triangular_prism_faces(c4,c1,height,width=thickness,filled=True)))
+
+    obj.points = points
+    obj.points_edges = []
+
+    obj.material=block.WATER.id;
+    # if moat_type=="ice":
+
+    # inner_p1, inner_p2 = vg.rectangle_inner(p1,p2, thickness)
+    #
+    # corner_vectors = []
+    # for i in range(0, sides):
+    #     outer = vg.point_along_circle(False, False, sides, i, Map(p1=p1, p2=p2))
+    #     inner = vg.point_along_circle(False, False, sides, i, Map(p1=inner_p1, p2=inner_p2))
+    #     corner_vectors.append(Map(outer=outer, inner=inner, num=i))
+    #
+    #
+    # for i,vec in enumerate(corner_vectors):
+    #     next_vec = corner_vectors[(i+1)%len(corner_vectors)]
+    #
+    #
+    #
+    #     line = vg.getLine(vec.x, vec.y+1, vec.z, pointy.x, pointy.y+1, pointy.z)
+    #     obj.points_edges += roof_line
+    #
+    #     if not options.options.roof == "pointy_lines":
+    #
+    #         #Triangle to pointy face
+    #         triangle_face = [vec, pointy, next_roof_point]
+    #         roof_face = vg.unique_points(vg.getFace([V3(v.x, v.y+1, v.z) for v in triangle_face]))
+    #         obj.points = obj.points.union(roof_face)
+    #
+
+    return obj
 # -----------------------
 def building_poly_styler_wall(obj, options):
 
