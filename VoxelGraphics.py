@@ -562,6 +562,65 @@ def cone (center, radius, tight=.4, height=10, filled=False, thickness=1):
         return outer and (True if filled else (y<thickness or inner))
     return evaluate_3d_range(center,-radius,radius,0,height,-radius,radius,func)
 
+def triangular_prism(p1,p2,height,radius=2,sloped=False):
+    #TODO: Not allways filled (use rects)
+    p1, p2 = min_max_points(p1, p2)
+
+    slope = abs(radius/height)
+
+    faces = []
+    h = 0
+    while radius > 0:
+        if (sloped):
+            p1,p2 = move_points_together(p1,p2,1)
+
+        corner_vecs = line_thick_into_corners(p1.x,p1.z,p2.x,p2.z,radius)
+        p1_1 = V3(corner_vecs[0].x, p1.y+h, corner_vecs[0].y)
+        p1_3 = V3(corner_vecs[1].x, p1.y+h, corner_vecs[1].y)
+
+        p2_3 = V3(corner_vecs[2].x, p2.y+h, corner_vecs[2].y)
+        p2_1 = V3(corner_vecs[3].x, p2.y+h, corner_vecs[3].y)
+        faces.append(getFace([p1_1, p1_3, p2_3, p2_1]))
+
+        radius -= slope
+        h+=1 if height > 0 else -1
+
+    return unique_points(faces)
+
+def move_points_together(p1,p2,dist=1):
+    diff = p2-p1
+
+    p1x = p1.x
+    p2x = p2.x
+    p1y = p1.y
+    p2y = p2.y
+    p1z = p1.z
+    p2z = p2.z
+
+    if diff.x > 0:
+        p1x += dist
+        p2x -= dist
+    elif diff.x < 0:
+        p1x -= dist
+        p2x += dist
+
+    if diff.y > 0:
+        p1y += dist
+        p2y -= dist
+    elif diff.y < 0:
+        p1y -= dist
+        p2y += dist
+
+    if diff.z > 0:
+        p1z += dist
+        p2z -= dist
+    elif diff.z < 0:
+        p1z -= dist
+        p2z += dist
+
+    return V3(p1x,p1y,p1z), V3(p2x,p2y,p2z)
+
+#TODO: Is this working?  Maybe too complex and low quality
 def triangular_prism_faces(p1,p2,height,width=3,radius=False,sloped=False,filled=False, base=False, ends=False):
     radius = radius or (((width-1)/2) if width>1 else 1)
     if radius<0:

@@ -163,54 +163,20 @@ def building_poly_styler_roof(obj, options=Map()):
 def building_poly_styler_moat(obj, options=Map()):
     #TODO: FINISH
     moat_type = options.options.moat or "clear"
-    thickness = options.options.inner_width or 5
-    radius = (thickness-1)/2 if (thickness>1) else 2
-    height = -1 * abs(options.options.moat_depth or (options.inner_width-1))
+    radius = options.moat_width or 2
+    height = -1 * abs(options.moat_depth or (radius+1))
 
-    #TODO: Not only rectangular
-    p1, p2 = vg.min_max_points(options.options.p1, options.options.p2)
-
-    c1 = V3(p1.x+radius,p1.y,p1.z+radius)
-    c2 = V3(p2.x-radius,p2.y,p1.z+radius)
-    c3 = V3(p2.x-radius,p2.y,p1.z-radius)
-    c4 = V3(p1.x+radius,p1.y,p1.z-radius)
-
-    points = []
-    points.extend(vg.unique_points(vg.triangular_prism_faces(c1,c2,height,width=thickness,filled=True)))
-    points.extend(vg.unique_points(vg.triangular_prism_faces(c2,c3,height,width=thickness,filled=True)))
-    points.extend(vg.unique_points(vg.triangular_prism_faces(c3,c4,height,width=thickness,filled=True)))
-    points.extend(vg.unique_points(vg.triangular_prism_faces(c4,c1,height,width=thickness,filled=True)))
+    points= []
+    for i,vec in enumerate(obj.vertices):
+        next_vec = obj.vertices[(i+1)%len(obj.vertices)]
+        # print("---MOAT LINE:", vec, next_vec, height, radius)
+        points.extend(vg.triangular_prism(vec, next_vec, height=height, radius=radius, sloped=True))
 
     obj.points = points
     obj.points_edges = []
 
     obj.material=block.WATER.id;
     # if moat_type=="ice":
-
-    # inner_p1, inner_p2 = vg.rectangle_inner(p1,p2, thickness)
-    #
-    # corner_vectors = []
-    # for i in range(0, sides):
-    #     outer = vg.point_along_circle(False, False, sides, i, Map(p1=p1, p2=p2))
-    #     inner = vg.point_along_circle(False, False, sides, i, Map(p1=inner_p1, p2=inner_p2))
-    #     corner_vectors.append(Map(outer=outer, inner=inner, num=i))
-    #
-    #
-    # for i,vec in enumerate(corner_vectors):
-    #     next_vec = corner_vectors[(i+1)%len(corner_vectors)]
-    #
-    #
-    #
-    #     line = vg.getLine(vec.x, vec.y+1, vec.z, pointy.x, pointy.y+1, pointy.z)
-    #     obj.points_edges += roof_line
-    #
-    #     if not options.options.roof == "pointy_lines":
-    #
-    #         #Triangle to pointy face
-    #         triangle_face = [vec, pointy, next_roof_point]
-    #         roof_face = vg.unique_points(vg.getFace([V3(v.x, v.y+1, v.z) for v in triangle_face]))
-    #         obj.points = obj.points.union(roof_face)
-    #
 
     return obj
 # -----------------------
@@ -272,5 +238,7 @@ def building_poly_styler_castle_wall_tower(obj, options):
     spacing = options.options.roof_battlement_space or 2
 
     #TODO: Add in battlements, wood roof, stairway, torches
+    points = vg.cylinder(options.center, radius=3, height=obj.height or 10)
+    obj.points.extend(points)
 
     return obj

@@ -23,10 +23,10 @@ class BuildingPoly(object):
         #Build default points, vertices, and settings for every poly
         #these might get changed later with a styler (in building_poly_styler)
         if len(vertices) == 1:
-            p1 = vertices[0]
+            self.center = options.center = p1 = vertices[0]
             radius = options.tower_radius or 4
             self.height = h = options.height or 8
-            self.points = vg.cylinder(p1, radius, h)
+            self.points = []
             self.points_edges = [] #TODO: Use bottom and top circles for edges?
             #TODO: Temp holder:
             self.vertices = vertices_with_up = [p1, p1, vg.up(p1,h), vg.up(p1,h)] # points straight up

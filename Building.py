@@ -266,8 +266,8 @@ def city(size=0, layout="castle"):
 
     #Build the creations
     s.build()
-    f.build()
-    n.build()
+#    f.build()
+#    n.build()
     c.build()
 
     return s, f, n, c, z

@@ -54,37 +54,39 @@ class Castle(Building):
             else:
                 moat_width = 4
 
+            p1, p2 = vg.rectangle_inner(p1,p2, moat_width/2)
             outside_vectors = []
             for i in range(0, sides):
-                w1 = vg.point_along_circle(False, False, sides, i, Map(p1=vg.up(p1,-1), p2=vg.up(p2,-1)))
+                w1 = vg.point_along_circle(False, False, sides, i, Map(p1=vg.up(p1,-1), p2=vg.up(p2,-1), align_to_cells=True))
+                outside_vectors.append(w1)
 
-            poly = bp.BuildingPoly("moat", outside_vectors, data_so_far.copy(inner_width=moat_width, material=block.WATER.id, height=1, skip_edges=True, skip_features=True))
+            poly = bp.BuildingPoly("moat", outside_vectors, data_so_far.copy(moat_width=(moat_width/2)-1, material=block.WATER.id, height=1, skip_edges=True, skip_features=True))
             polys.append(poly)
             print("--moat", outside_vectors)
-            p1, p2 = vg.rectangle_inner(p1,p2, moat_width)
+            p1, p2 = vg.rectangle_inner(p1,p2, moat_width/2)
 
         width, null, depth = vg.dists(p1, p2)
         print("tower ps",p1,p2, "wxd:", width, depth)
         if (width > 17) and (depth > 17):
             p1, p2 = vg.rectangle_inner(p1,p2, 4)
             for i in range(0, sides):
-                w1 = vg.point_along_circle(False, False, sides, i, Map(p1=p1, p2=p2))
-                w2 = vg.point_along_circle(False, False, sides, i+1, Map(p1=p1, p2=p2))
+                w1 = vg.point_along_circle(False, False, sides, i, Map(p1=p1, p2=p2, align_to_cells=True))
+                w2 = vg.point_along_circle(False, False, sides, i+1, Map(p1=p1, p2=p2, align_to_cells=True))
 
                 facing = "front" if i == 1 else "side"
                 poly = bp.BuildingPoly("castle_outer_wall", [w1, w2], data_so_far.copy(height=castle_wall_height, facing=facing, thickness=3))
                 polys.append(poly)
                 print("--tower line", w1, w2)
 
-                poly = bp.BuildingPoly("tower", [w1], data_so_far.copy(style="castle_wall_tower", height=castle_wall_height, facing=facing, thickness=5))
+                poly = bp.BuildingPoly("castle_wall_tower", [w1], data_so_far.copy(style="castle_wall_tower", height=castle_wall_height, facing=facing, radius=3))
                 polys.append(poly)
                 print("--tower", w1)
 
         corner_vectors = []
         p1, p2 = vg.rectangle_inner(p1,p2, 4)
         for i in range(0, sides):
-            w1 = vg.point_along_circle(False, False, sides, i, Map(p1=p1, p2=p2))
-            w2 = vg.point_along_circle(False, False, sides, i+1, Map(p1=p1, p2=p2))
+            w1 = vg.point_along_circle(False, False, sides, i, Map(p1=p1, p2=p2, align_to_cells=True))
+            w2 = vg.point_along_circle(False, False, sides, i+1, Map(p1=p1, p2=p2, align_to_cells=True))
             corner_vectors.append(w1)
 
             facing = "front" if i == 1 else "side"
