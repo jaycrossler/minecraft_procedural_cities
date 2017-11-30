@@ -207,6 +207,61 @@ def test_cylinder(thickness=1):
 def test_cone(thickness=1):
     return test_drawing_function(vg.cone, 1, 7, 0, 0.8, 0.1, thickness=thickness)
 
+def test_shapes(line=True):
+    def draw(func, pos, radius=5, height=8):
+        points = func(V3(pos.x, pos.y, pos.z), radius, .7, height=height)
+
+        g = 95
+        b_colors = [block.GLOWSTONE_BLOCK,g,g,g,g,g,g,g,g,g,g,g,g]
+        colors = [False,0,0,14,14,1,4,5,3,11,2,10,10]
+
+        for elev in range(0,13):
+            colored_points = []
+            for point in points:
+                if point.y == elev:
+                    colored_points.append(point)
+            draw_point_list(points=colored_points, blocktype=b_colors[elev], data=colors[elev])
+        return points
+
+    pos = my_tile_pos()
+
+    buff = 10
+    higher = 8
+
+    all_points = []
+    if line==True:
+        p1 = V3(pos.x+buff, pos.y, pos.z)
+        p2 = V3(pos.x+(buff*1.8), pos.y, pos.z-4)
+        p3 = V3(pos.x+(buff*3.3), pos.y, pos.z)
+        p4 = V3(pos.x+(buff*4.5), pos.y, pos.z)
+    else:
+        p1 = V3(pos.x+buff, pos.y, pos.z)
+        p2 = V3(pos.x-4, pos.y, pos.z+buff)
+        p3 = V3(pos.x, pos.y, pos.z-buff)
+        p4 = V3(pos.x-buff, pos.y, pos.z)
+
+    all_points.extend(draw(vg.circle, p1))
+    all_points.extend(draw(vg.sphere, vg.up(p1,higher-1)))
+
+    all_points.extend(draw(vg.square, p2, radius=8))
+    all_points.extend(draw(vg.box, vg.up(p2,higher/2), radius=8))
+
+    all_points.extend(draw(vg.circle, p3))
+    all_points.extend(draw(vg.cone, vg.up(p3,higher/2), height=9))
+
+    all_points.extend(draw(vg.circle, p4))
+    all_points.extend(draw(vg.cylinder, vg.up(p4,higher/2)))
+
+    class Temp():
+        def __init__(self, points):
+            self.points = points
+
+        def clear(self):
+            for p in self.points:
+                create_block(p, block.AIR.id)
+    return Temp(all_points)
+
+
 mid1, mid2 = V3(0, 0, 60), V3(50, 0, 110)
 mid_point = V3(30,0,120)
 

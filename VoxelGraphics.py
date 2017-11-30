@@ -500,7 +500,24 @@ def partitions_to_blocks(partitions, options=Map()):
 
     return blocks, inner_blocks
 
-def circle (center, radius, tight=.7, axis="y", filled=False, thickness=1):
+def square (corner, size, tight=1, height=10, axis="y", filled=False, thickness=1):
+    def edge(i):
+        return i<thickness or i>=(size-thickness)
+
+    if axis=="y":
+        def func(x,y,z):
+            return True if filled else (edge(x) or edge(z))
+        return evaluate_3d_range(corner,0,size,0,1,0,size,func)
+    elif axis=="x":
+        def func(x,y,z):
+            return True if filled else (edge(y) or edge(z))
+        return evaluate_3d_range(corner,0,1,0,size,0,size,func)
+    else:
+        def func(x,y,z):
+            return True if filled else (edge(x) or edge(y))
+        return evaluate_3d_range(corner,0,size,0,size,0,1,func)
+
+def circle (center, radius, tight=.7, height=10, axis="y", filled=False, thickness=1):
     #Tight defines how constricted the circle is
     if axis=="y":
         def func(x,y,z):
@@ -518,14 +535,14 @@ def circle (center, radius, tight=.7, axis="y", filled=False, thickness=1):
             return c<(radius-tight) and (True if filled else (c>=(radius-thickness-tight)))
         return evaluate_3d_range(center,-radius,radius,-radius,radius,0,1,func)
 
-def box (corner, size, tight=1, filled=False, thickness=1):
+def box (corner, size, tight=1, height=10, filled=False, thickness=1):
     def func(x,y,z):
         def edge(i):
             return i<thickness or i>=(size-thickness)
         return True if filled else (edge(x) or edge(y) or edge(z))
     return evaluate_3d_range(corner,0,size,0,size,0,size,func)
 
-def sphere (center, radius, tight=.5, filled=False, thickness=1):
+def sphere (center, radius, tight=.5, height=10, filled=False, thickness=1):
     def func(x,y,z):
         c = math.sqrt(x*x+y*y+z*z)
         return c<(radius-tight) and (True if filled else (c>=(radius-thickness-tight)))
