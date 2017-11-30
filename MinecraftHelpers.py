@@ -7,6 +7,7 @@ import mcpi.block as block
 import math
 import numpy as np
 from V3 import V3
+import VoxelGraphics as vg
 
 # Minecraft connection link
 mc = False
@@ -190,3 +191,53 @@ def test_drawing_function(func, min_x_step=3, max_x_step=11, min_z_step=0, max_z
                 create_block(p, block.AIR.id)
 
     return Temp(all_points)
+
+def test_circles(thickness=1):
+    return test_drawing_function(vg.circle, 1, 7, 0, 0.8, 0.1, thickness=thickness)
+
+def test_box(thickness=1):
+    return test_drawing_function(vg.box, 1, 7, thickness=thickness)
+
+def test_sphere(thickness=1):
+    return test_drawing_function(vg.sphere, 1, 8, 0, 0.8, 0.1, higher=8, thickness=thickness)
+
+def test_cylinder(thickness=1):
+    return test_drawing_function(vg.cylinder, 1, 7, 0, 0.8, 0.1, thickness=thickness)
+
+def test_cone(thickness=1):
+    return test_drawing_function(vg.cone, 1, 7, 0, 0.8, 0.1, thickness=thickness)
+
+mid1, mid2 = V3(0, 0, 60), V3(50, 0, 110)
+mid_point = V3(30,0,120)
+
+def home():
+    mc.player.setPos(mid_point)
+
+def prep(size=0, ground=True):
+    if size > 0:
+        corner1 = V3(mid_point.x-size, mid_point.y, mid_point.z-size)
+        corner2 = V3(mid_point.x+size, mid_point.y, mid_point.z+size)
+    else:
+        corner1, corner2 = V3(-60, 0, 40), V3(120, 0, 200)
+
+    debug("Bulldozing building zone...")
+    if ground: create_block_filled_box(vg.up(corner1,-1), vg.up(corner2,-3), block.GRASS.id, data=None)
+    create_block_filled_box(vg.up(corner1,0), vg.up(corner2,70), block.AIR.id, data=None)
+    debug("...Finished bulldozing")
+
+def clear(size=0):
+    if size > 0:
+        corner1 = V3(mid_point.x-size, mid_point.y, mid_point.z-size)
+        corner2 = V3(mid_point.x+size, mid_point.y, mid_point.z+size)
+    else:
+        corner1, corner2 = V3(-60, 0, 40), V3(120, 0, 200)
+
+    debug("Removing Everything...(fly in 10 seconds)")
+    create_block_filled_box(vg.up(corner1,-5), vg.up(corner2,50), block.AIR.id, data=None)
+
+    debug("...Adding Grass...")
+    create_block_filled_box(vg.up(corner1,-1), vg.up(corner2,-1), block.GRASS.id, data=None)
+
+    debug("...Stone underneath...")
+    create_block_filled_box(vg.up(corner1,-2), vg.up(corner2,-5), block.STONE.id, data=None)
+    debug("...Finished")
