@@ -76,11 +76,11 @@ class Castle(Building):
                 facing = "front" if i == 1 else "side"
                 poly = bp.BuildingPoly("castle_outer_wall", [w1, w2], data_so_far.copy(height=castle_wall_height, facing=facing, thickness=3))
                 polys.append(poly)
-                print("--tower line", w1, w2)
+                # print("--tower line", w1, w2)
 
-                poly = bp.BuildingPoly("castle_wall_tower", [w1], data_so_far.copy(style="castle_wall_tower", height=castle_wall_height, facing=facing, radius=3))
+                poly = bp.BuildingPoly("castle_wall_tower", [w1], data_so_far.copy(style="castle_wall_tower", height=castle_wall_height, facing=facing, radius=3, material=block.STONE.id))
                 polys.append(poly)
-                print("--tower", w1)
+                # print("--tower", w1)
 
         corner_vectors = []
         p1, p2 = vg.rectangle_inner(p1,p2, 4)

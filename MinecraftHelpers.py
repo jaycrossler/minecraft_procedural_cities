@@ -140,6 +140,15 @@ def bulldoze(player_pos = my_pos(), radius=40, ground=True):
         create_box_centered_on(player_pos.x, player_pos.y-1, player_pos.z, radius,1,radius, block.GRASS.id)
     debug("...Finished bulldozing")
 
+def spheredoze(player_pos = my_tile_pos(False), radius=40, ground=True):
+    debug("Bulldozing " + str(radius) + "x around player...")
+    debug(player_pos)
+
+    all_points = vg.sphere(center=player_pos, radius=radius)
+    draw_point_list(points=all_points, blocktype=block.AIR.id)
+
+    debug("...Finished bulldozing")
+
 def test_polyhedron():
     import VoxelGraphics as vg
 
@@ -170,7 +179,8 @@ def xfrange(start, stop, step):
         i += 1
 
 def test_drawing_function(func, min_x_step=3, max_x_step=11, min_z_step=0, max_z_step=1, z_jumps=1, higher=0, thickness=1, filled=False):
-    pos = my_tile_pos(False)
+    home()
+    pos = my_tile_pos()
     pos = V3(pos.x, pos.y + higher, pos.z)
 
     all_points=[]
@@ -207,7 +217,10 @@ def test_cylinder(thickness=1):
 def test_cone(thickness=1):
     return test_drawing_function(vg.cone, 1, 7, 0, 0.8, 0.1, thickness=thickness)
 
-def test_shapes(line=True):
+def test_pyramid(thickness=1):
+    return test_drawing_function(vg.rectangular_pyramid, 1, 7, 0, 0.8, 0.1, thickness=thickness)
+
+def test_shapes(line=True, buff = 13):
     def draw(func, pos, radius=5, height=8):
         points = func(V3(pos.x, pos.y, pos.z), radius, .7, height=height)
 
@@ -225,32 +238,38 @@ def test_shapes(line=True):
 
     pos = my_tile_pos()
 
-    buff = 10
+
     higher = 8
 
     all_points = []
     if line==True:
         p1 = V3(pos.x+buff, pos.y, pos.z)
-        p2 = V3(pos.x+(buff*1.8), pos.y, pos.z-4)
+        p2 = V3(pos.x+(buff*1.8), pos.y, pos.z)
         p3 = V3(pos.x+(buff*3.3), pos.y, pos.z)
         p4 = V3(pos.x+(buff*4.5), pos.y, pos.z)
+        p5 = V3(pos.x+(buff*5.7), pos.y, pos.z)
     else:
         p1 = V3(pos.x+buff, pos.y, pos.z)
-        p2 = V3(pos.x-4, pos.y, pos.z+buff)
+        p2 = V3(pos.x, pos.y, pos.z)
         p3 = V3(pos.x, pos.y, pos.z-buff)
         p4 = V3(pos.x-buff, pos.y, pos.z)
+        p5 = V3(pos.x, pos.y, pos.z+buff)
 
     all_points.extend(draw(vg.circle, p1))
-    all_points.extend(draw(vg.sphere, vg.up(p1,higher-1)))
+    all_points.extend(draw(vg.sphere, vg.up(p1,higher), radius=5))
 
-    all_points.extend(draw(vg.square, p2, radius=8))
-    all_points.extend(draw(vg.box, vg.up(p2,higher/2), radius=8))
+    all_points.extend(draw(vg.square, p2))
+    all_points.extend(draw(vg.box, vg.up(p2,higher), radius=4))
 
     all_points.extend(draw(vg.circle, p3))
     all_points.extend(draw(vg.cone, vg.up(p3,higher/2), height=9))
 
     all_points.extend(draw(vg.circle, p4))
     all_points.extend(draw(vg.cylinder, vg.up(p4,higher/2)))
+
+    all_points.extend(draw(vg.square, p5))
+    all_points.extend(draw(vg.rectangular_pyramid, vg.up(p5,higher/2), height=8))
+
 
     class Temp():
         def __init__(self, points):
