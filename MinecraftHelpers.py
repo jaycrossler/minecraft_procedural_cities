@@ -8,6 +8,7 @@ import math
 import numpy as np
 from V3 import V3
 import VoxelGraphics as vg
+import Blocks
 
 # Minecraft connection link
 mc = False
@@ -26,12 +27,40 @@ mc = connect()
 def debug(msg):
     mc.postToChat(str(msg))
 
-def my_pos():
+def my_pos(trunc=True):
     try:
         pos = mc.player.getPos()
     except mcpi.connection.RequestError:
         pos =  V3(0,0,0)
-    return V3(pos.x, pos.y, pos.z)
+    if trunc:
+        return V3(math.floor(pos.x), math.floor(pos.y), math.floor(pos.z))
+    else:
+        return V3(pos.x, pos.y, pos.z)
+
+def my_dir():
+    try:
+        d = mc.player.getDirection()
+    except mcpi.connection.RequestError:
+        d =  V3(0,0,0)
+    return V3(d.x, d.y, d.z)
+
+def my_rot():
+    try:
+        d = mc.player.getRotation()
+    except mcpi.connection.RequestError:
+        d =  0
+
+    out = ""
+    if d > 315 or d < 45:
+        out = "s"
+    elif d < 135:
+        out = "e"
+    elif d < 225:
+        out = "n"
+    elif d < 315:
+        out = "w"
+
+    return out
 
 def my_tile_pos(clamp_to_ground=True):
     try:
@@ -130,6 +159,49 @@ def choose_one(*argv):
 
 def choice(list):
     return np.random.choice(list)
+
+def pos_in_front(dist=1):
+    pos = my_pos()
+    d = my_dir()
+    x = round(pos.x + (d.x * dist))
+    y = round(pos.y + (d.y * dist))
+    z = round(pos.z + (d.z * dist))
+    return V3(x,y,z)
+
+def scan(showLoc = False):
+    direc=my_rot()
+    target = vg.up(my_pos())
+
+    print("Facing:",direc)
+    if direc == 'w':
+        x_range = [1]
+        z_range = [-2,-1,0,1,2]
+    elif direc == 'e':
+        x_range = [-1]
+        z_range = [2,1,0,-1,-2]
+    elif direc == 's':
+        x_range = [-3,-2,-1,0,1]
+        z_range = [0]
+    else: #n
+        x_range = [-2,-1,0,1,2]
+        z_range = [-2]
+
+    blocks = []
+    for y in [2,1,0,-1,-2]:
+        text = ""
+        for x in x_range:
+            for z in z_range:
+                newPoint = target + V3(x,y,z)
+                b = mc.getBlockWithData(newPoint.x, newPoint.y, newPoint.z)
+
+                name = Blocks.name_by_id(b.id, b.data)
+                loc = str(newPoint.x)+","+str(newPoint.y)+","+str(newPoint.z)+" : " if showLoc else ""
+                line = "(" + loc + str(b.id) + "," + str(b.data) + ": "+name+")  "
+
+                text += line.ljust(28)
+                blocks.append(b)
+        print(text)
+    # return blocks
 
 
 def bulldoze(player_pos = my_pos(), radius=40, ground=True):
