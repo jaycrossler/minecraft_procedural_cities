@@ -6,12 +6,14 @@ from mcpi.minecraft import Minecraft
 import mcpi.block as block
 import math
 import numpy as np
+from Map import Map
 from V3 import V3
 import VoxelGraphics as vg
 import Blocks
 
 # Minecraft connection link
 mc = False
+BLOCK_DRAW_INCREMENTER = 0
 
 #-----------------------
 def connect():
@@ -94,7 +96,7 @@ def biome_at(pos):
     #    def getBiome(self, *args):
     #        return int(self.conn.sendReceive(b"world.getBiome", intFloor(args)))
     try:
-        biome = mc.getBiome(pos.x, pos.z)
+        biome = mc.player.getBiome(pos.x, pos.z)
     except mcpi.connection.RequestError:
         print("CONNECTION ERROR #3 - Can't get Biome data")
         biome = "Plains"
@@ -111,16 +113,36 @@ def move_me_to(p):
 def read_block(p):
     mc.getBlock(p)
 
-def draw_point_list(points, blocktype, data=None):
-    if not data:
-        for p in points:
-            mc.setBlock(p.x, p.y, p.z, blocktype)
-    else:
-        for p in points:
-            mc.setBlock(p.x, p.y, p.z, blocktype, data)
+def draw_point_list(points, blocktype, data=None, options=Map()):
+    global BLOCK_DRAW_INCREMENTER
+    BLOCK_DRAW_INCREMENTER = 0
+    for p in points:
+        blocktype_now, data_now = find_block_info(blocktype, data, options)
+        if not data_now:
+            mc.setBlock(p.x, p.y, p.z, blocktype_now)
+        else:
+            mc.setBlock(p.x, p.y, p.z, blocktype_now, data_now)
 
-def create_block(p, blocktype=block.STONE.id, data=None):
+def find_block_info(blocktype, data=None, options=Map()):
+    if type(blocktype) == list:
+        if options.choice_type == "rotate":
+            global BLOCK_DRAW_INCREMENTER
+            blocktype = blocktype[BLOCK_DRAW_INCREMENTER % (len(blocktype))] #TODO: Rotate?
+            BLOCK_DRAW_INCREMENTER += 1
+        else: #Random
+            blocktype = np.random.choice(blocktype)
+    if type(blocktype) == dict:
+        id = blocktype["id"]
+        data = blocktype["data"] or data or None
+        blocktype = id
+    if type(blocktype) == tuple:
+        blocktype, data = blocktype
+    return blocktype, data
+
+def create_block(p, blocktype=block.STONE.id, data=None, options=Map(choice_type = "random")):
     try:
+        blocktype, data = find_block_info(blocktype, data, options)
+
         if not data:
             mc.setBlock(p.x, p.y, p.z, blocktype)
         else:
@@ -128,11 +150,16 @@ def create_block(p, blocktype=block.STONE.id, data=None):
     except AttributeError:
         print("ERROR: Can't write block - didn't have valid x,y,z:", p, blocktype, "type", type(p))
 
-def create_block_filled_box(p1, p2, blocktype=block.STONE.id, data=None):
-    if not data:
-        mc.setBlocks(p1.x, p1.y, p1.z, p2.x, p2.y, p2.z, blocktype)
-    else:
-        mc.setBlocks(p1.x, p1.y, p1.z, p2.x, p2.y, p2.z, blocktype, data)
+def create_block_filled_box(p1, p2, blocktype=block.STONE.id, data=None, options=Map()):
+    try:
+        blocktype, data = find_block_info(blocktype, data, options)
+
+        if not data:
+            mc.setBlocks(p1.x, p1.y, p1.z, p2.x, p2.y, p2.z, blocktype)
+        else:
+            mc.setBlocks(p1.x, p1.y, p1.z, p2.x, p2.y, p2.z, blocktype, data)
+    except AttributeError:
+        print("ERROR: Can't write blocks - didn't have valid x,y,z:", p, blocktype, "type", type(p))
 
 def create_box_centered_on(x,y,z,w,h,l, blocktype=block.STONE.id, data=None):
     if not data:
@@ -207,6 +234,7 @@ def scan(showLoc = False):
 def bulldoze(player_pos = my_pos(), radius=40, ground=True):
     debug("Bulldozing " + str(radius) + "x around player...")
     debug(player_pos)
+    print(player_pos)
     create_box_centered_on(player_pos.x, player_pos.y, player_pos.z, radius,radius,radius, block.AIR.id)
     if ground:
         create_box_centered_on(player_pos.x, player_pos.y-1, player_pos.z, radius,1,radius, block.GRASS.id)
@@ -250,7 +278,7 @@ def xfrange(start, stop, step):
         yield start + i * step
         i += 1
 
-def test_drawing_function(func, min_x_step=3, max_x_step=11, min_z_step=0, max_z_step=1, z_jumps=1, higher=0, thickness=1, filled=False):
+def test_drawing_function(func, min_x_step=3, max_x_step=11, min_z_step=0, max_z_step=1, z_jumps=1, higher=0, thickness=1, filled=False, material=block.GLOWSTONE_BLOCK, render="rotate"):
     home()
     pos = my_tile_pos()
     pos = V3(pos.x, pos.y + higher, pos.z)
@@ -261,7 +289,7 @@ def test_drawing_function(func, min_x_step=3, max_x_step=11, min_z_step=0, max_z
         x_counter += (2*x) + 3
         for i,z in enumerate(xfrange(min_z_step, max_z_step, z_jumps)):
             points = func(V3(pos.x + x_counter, pos.y, pos.z + (i * (max_x_step*1.8))), x, z, filled=filled, thickness=thickness)
-            draw_point_list(points=points, blocktype=block.GLOWSTONE_BLOCK)
+            draw_point_list(points=points, blocktype=material, options=Map(choice_type = render))
             all_points+=points
 
     class Temp():
