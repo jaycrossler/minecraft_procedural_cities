@@ -1,5 +1,7 @@
 # Extracted from http://www.minecraft-servers-list.org/ide-list/
-#
+import math
+import MinecraftHelpers as helpers
+
 def block_by_id(id, data=0):
     b = [x for x in block_library if x["id"] == id and x["data"] == data]
     if len(b) == 0:
@@ -26,6 +28,7 @@ def match(name, onlyBlock=True):
     if len(b)>0:
         return b[0]
     else:
+        #TODO: Should it return a "like" version if no matches?
         print("Error - blocks.match(\"" + str(name) + "\") - unrecognized block name, returning air")
         return block_library[0]
 
@@ -47,6 +50,54 @@ def id(name):
         return b[0]["id"],b[0]["data"]
     else:
         return 0
+
+def closest_by_color(color):
+    if type(color) == str:
+        targ_color = helpers.hex_to_rgb(color)
+    elif type(color) == tuple and len(color) == 3:
+        targ_color = color
+    else:
+        print("ERROR - invalid color in closest_by_color:", color)
+        targ_color = color
+
+    closest = None
+    closest_num = 10000
+    for b in block_library:
+        if 'main_color' in b:
+            dist = helpers.color_distance(color, b["main_color"])
+            if dist < closest_num:
+                closest_num = dist
+                closest = b
+
+    return closest
+
+def icon(name, showIt=True):
+    from PIL import Image
+
+    b = like(name)
+
+    x_count = 27
+    y_count = 27
+
+    im = Image.open("tools/items-27.png")
+
+    width = math.floor(im.width / x_count)
+    height = math.floor(im.height / y_count)
+
+    blocks = []
+    for img in b:
+        id = img["id_in_image"]
+
+        col = id % x_count
+        row = math.floor(id / x_count)
+
+        box = (col*width, row*height, (col+1)*width, (row+1)*height)
+        block = im.crop(box)
+        if showIt:
+            block.show()
+        blocks.append(block)
+    return blocks
+
 
 #Colors Painstakenly extracted using Pillow and merged with item list
 block_library = [{'name': 'Air', 'id': 0, 'data': 0, 'kind': 'Block', 'id_in_image': 0, 'main_color': (0, 0, 0), 'second_color': (0, 0, 0), 'third_color': (0, 0, 0)},
@@ -680,7 +731,7 @@ block_library = [{'name': 'Air', 'id': 0, 'data': 0, 'kind': 'Block', 'id_in_ima
  {'name': 'Spawn Rabbit', 'id': 383, 'data': 101, 'id_in_image': 157, 'main_color': (76, 47, 32), 'second_color': (137, 85, 57), 'third_color': (57, 35, 24)},
  {'name': 'Spawn Polar Bear', 'id': 383, 'data': 102, 'id_in_image': 184, 'main_color': (92, 93, 91), 'second_color': (215, 215, 215), 'third_color': (188, 188, 188)},
  {'name': 'Spawn Llama', 'id': 383, 'data': 103, 'id_in_image': 211, 'main_color': (80, 51, 35), 'second_color': (172, 141, 112), 'third_color': (99, 72, 54)},
- {'name': 'Spawn Villager', 'id': 383, 'data': 120},
+ {'name': 'Spawn Villager', 'id': 383, 'data': 120, 'id_in_image': 211, 'main_color': (80, 51, 35), 'second_color': (172, 141, 112), 'third_color': (99, 72, 54)},
  {'name': "Bottle o' Enchanting", 'id': 384, 'data': 0, 'id_in_image': 50, 'main_color': (232, 255, 143), 'second_color': (214, 228, 90), 'third_color': (81, 60, 3)},
  {'name': 'Fire Charge', 'id': 385, 'data': 0, 'id_in_image': 77, 'main_color': (16, 13, 10), 'second_color': (83, 44, 6), 'third_color': (161, 49, 0)},
  {'name': 'Book and Quill', 'id': 386, 'data': 0, 'id_in_image': 104, 'main_color': (100, 48, 25), 'second_color': (225, 225, 225), 'third_color': (31, 20, 6)},

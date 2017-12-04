@@ -84,6 +84,20 @@ def get_height(pos):
         print("CONNECTION ERROR #2 - Can't get Height at tile")
     return out
 
+def hex_to_rgb(value):
+    value = value.lstrip('#')
+    lv = len(value)
+    return tuple(int(value[i:i+lv/3], 16) for i in range(0, lv, lv/3))
+    #hex_to_rgb("FFFFFF") => (255, 255, 255)
+
+def rgb_to_hex(rgb):
+    return '%02x%02x%02x' % rgb
+    #rgb_to_hex((255, 255, 255)) => "FFFFFF"
+
+def color_distance(c1, c2):
+    (r1,g1,b1) = c1
+    (r2,g2,b2) = c2
+    return math.sqrt((r1 - r2)**2 + (g1 - g2)**2 + (b1 - b2)**2)
 
 def biome_at(pos):
     #NOTE: To add this capability mod the RaspberryJuice/RemoteSessions.java code then build with maven:
