@@ -66,7 +66,8 @@ class BuildingPoly(object):
         for feature in self.features:
             blocks_to_not_draw += feature.blocks_to_not_draw;
 
-        helpers.create_blocks_from_pointlist(self.points, self.material, blocks_to_not_draw=blocks_to_not_draw)
+        helpers.draw_point_list(self.points, self.material, options=Map(blocks_to_not_draw=blocks_to_not_draw))
+        # helpers.create_blocks_from_pointlist(self.points, self.material, blocks_to_not_draw=blocks_to_not_draw)
 
     def draw_edges(self):
         blocks_to_not_draw = []
@@ -74,7 +75,8 @@ class BuildingPoly(object):
             blocks_to_not_draw += feature.blocks_to_not_draw;
 
         if self.material_edges:
-            helpers.create_blocks_from_pointlist(self.points_edges, self.material_edges, blocks_to_not_draw=blocks_to_not_draw)
+            helpers.draw_point_list(self.points_edges, self.material_edges, options=Map(blocks_to_not_draw=blocks_to_not_draw))
+            # helpers.create_blocks_from_pointlist(self.points_edges, self.material_edges, blocks_to_not_draw=blocks_to_not_draw)
 
     def draw_features(self):
         for feature in self.features:
@@ -82,8 +84,10 @@ class BuildingPoly(object):
 
     def clear(self):
         material = block.GRASS.id if self.kind == "foundation" else block.AIR.id
-        helpers.create_blocks_from_pointlist(self.points, material)
-        helpers.create_blocks_from_pointlist(self.points_edges, material)
+        helpers.draw_point_list(self.points + self.points_edges, material)
+
+        # helpers.create_blocks_from_pointlist(self.points, material)
+        # helpers.create_blocks_from_pointlist(self.points_edges, material)
         for feature in self.features:
             feature.clear()
 

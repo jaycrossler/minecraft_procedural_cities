@@ -53,6 +53,29 @@ def id(name):
     else:
         return 0
 
+def color_as_hex(color):
+    if type(color) == tuple and len(color) == 3:
+        targ_color = webcolors.rgb_to_hex(color)
+    elif type(color) == str:
+        match = re.search(r'^#(?:[0-9a-fA-F]{3}){1,2}$', color)
+        if match:
+            targ_color = color
+        else:
+            targ_color = webcolors.name_to_hex(color)
+    return targ_color
+
+def color_as_rgb(color):
+    if type(color) == tuple and len(color) == 3:
+        targ_color = color
+    elif type(color) == str:
+        match = re.search(r'^#(?:[0-9a-fA-F]{3}){1,2}$', color)
+        if match:
+            targ_color = webcolors.hex_to_rgb(color)
+        else:
+            targ_color = webcolors.name_to_rgb(color)
+    return targ_color
+
+
 def closest_by_color(color, onlyBlock=True):
     if type(color) == str:
         match = re.search(r'^#(?:[0-9a-fA-F]{3}){1,2}$', color)
@@ -60,7 +83,7 @@ def closest_by_color(color, onlyBlock=True):
         if not match:
             targ_color = webcolors.name_to_rgb(color)
         else:
-            targ_color = helpers.hex_to_rgb(color)
+            targ_color = webcolors.hex_to_rgb(color)
 
     elif type(color) == tuple and len(color) == 3:
         targ_color = color
@@ -74,7 +97,7 @@ def closest_by_color(color, onlyBlock=True):
         if onlyBlock:
             if ("kind" not in b) or (b["kind"] != "Block"):
                 continue
-        
+
         if 'main_color' in b:
             dist = helpers.color_distance(targ_color, b["main_color"])
             if dist < closest_num:

@@ -212,7 +212,7 @@ class Building(object):
 # City Building
 #--------------------------------------------------------------------
 
-def city(size=0, layout="castle"):
+def city(size=0, layout="castle", farms=False, buildings=False, streets=True):
     #Testing location numbers
     mid_point = V3(30,0,120)
 
@@ -266,9 +266,9 @@ def city(size=0, layout="castle"):
     z = [all_zones,farm_zones,building_zones,castle_zone]
 
     #Build the creations
-    s.build()
-#    f.build()
-#    n.build()
+    if (streets): s.build()
+    if (farms): f.build()
+    if (buildings): n.build()
     c.build()
 
-    return s, f, n, c, z
+    return Map(s=s, f=f, n=n, c=c, z=z)

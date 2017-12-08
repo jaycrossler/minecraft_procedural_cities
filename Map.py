@@ -26,7 +26,7 @@ class Map(dict):
                 self[k] = v
 
     def __convert(self, v):
-        for elem in xrange(0, len(v)):
+        for elem in range(0, len(v)):
             if isinstance(v[elem], dict):
                 v[elem] = Map(v[elem])
             elif isinstance(v[elem], list):

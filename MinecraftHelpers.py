@@ -10,6 +10,7 @@ from Map import Map
 from V3 import V3
 import VoxelGraphics as vg
 import Blocks
+import Texture1D
 
 # Minecraft connection link
 mc = False
@@ -84,15 +85,19 @@ def get_height(pos):
         print("CONNECTION ERROR #2 - Can't get Height at tile")
     return out
 
-def hex_to_rgb(value):
-    value = value.lstrip('#')
-    lv = len(value)
-    return tuple(int(value[i:i+lv/3], 16) for i in range(0, lv, lv/3))
-    #hex_to_rgb("FFFFFF") => (255, 255, 255)
-
-def rgb_to_hex(rgb):
-    return '%02x%02x%02x' % rgb
-    #rgb_to_hex((255, 255, 255)) => "FFFFFF"
+# def hex_to_rgb(value):
+#     value = value.lstrip('#')
+#     lv = len(value)
+#     try:
+#         out = tuple(int(value[i:i+lv/3], 16) for i in range(0, lv, lv/3))
+#         return out
+#     except TypeError:
+#         print("Error turning hex to rgb with", value)
+#     #hex_to_rgb("FFFFFF") => (255, 255, 255)
+#
+# def rgb_to_hex(rgb):
+#     return '%02x%02x%02x' % rgb
+#     #rgb_to_hex((255, 255, 255)) => "FFFFFF"
 
 def color_distance(c1, c2):
     (r1,g1,b1) = c1
@@ -127,21 +132,65 @@ def move_me_to(p):
 def read_block(p):
     mc.getBlock(p)
 
+#TODO: Make this a MShape Class with all the stuff from BuildingPoly
 def draw_point_list(points, blocktype, data=None, options=Map()):
+    #Remove empty blocks from list
+    if options.blocks_to_not_draw:
+        points = [i for i in points if i not in options.blocks_to_not_draw]
+
+    #Find material if texture
+    if type(blocktype) == Texture1D:
+        if 'gradient' in blocktype:
+            if blocktype.axis == "y":
+                #Find low then high, calc difference, get color at dist, draw all at that height
+                y_lowest = vg.lowest(points) #TODO: Make a Bounds function
+                y_highest = vg.highest(points)
+                steps = y_highest - y_lowest + 1
+
+                for elev in range(y_lowest,y_highest+1):
+                    colored_points = []
+                    for point in points:
+                        if point.y == elev:
+                            colored_points.append(point)
+
+                    step = elev - y_lowest
+                    block_at_elev = blocktype.block(Map(step=step, steps=steps))
+
+                    draw_point_list(points=colored_points, blocktype=block_at_elev.id, data=block_at_elev.data)
+                return points
+
+        else:
+            blocktype = blocktype.material
+
+    #Update the incrementer
     global BLOCK_DRAW_INCREMENTER
     BLOCK_DRAW_INCREMENTER = 0
-    for p in points:
-        blocktype_now, data_now = find_block_info(blocktype, data, options)
-        if not data_now:
-            mc.setBlock(p.x, p.y, p.z, blocktype_now)
-        else:
-            mc.setBlock(p.x, p.y, p.z, blocktype_now, data_now)
 
+    #Now that we know the block info from all options, Draw the Points
+    for p in points:
+        blocktype_now, data_now = find_block_info(blocktype, data=data, options=options)
+        try:
+            if not data_now:
+                mc.setBlock(p.x, p.y, p.z, blocktype_now)
+            else:
+                mc.setBlock(p.x, p.y, p.z, blocktype_now, data_now)
+        except TypeError:
+            print("Error crating block", blocktype_now)
+
+#TODO: Move this into a Texture1D option
 def find_block_info(blocktype, data=None, options=Map()):
     if type(blocktype) == list:
+        global BLOCK_DRAW_INCREMENTER
         if options.choice_type == "rotate":
-            global BLOCK_DRAW_INCREMENTER
-            blocktype = blocktype[BLOCK_DRAW_INCREMENTER % (len(blocktype))] #TODO: Rotate?
+            id = BLOCK_DRAW_INCREMENTER % (len(blocktype))
+            blocktype = blocktype[id]
+            BLOCK_DRAW_INCREMENTER += 1
+        elif options.choice_type == "rebound":
+            group = math.ceil(BLOCK_DRAW_INCREMENTER / (len(blocktype)))
+            id = BLOCK_DRAW_INCREMENTER % (len(blocktype))
+            if group % 2 == 0:
+                id = len(blocktype) - 1 - id
+            blocktype = blocktype[id]
             BLOCK_DRAW_INCREMENTER += 1
         else: #Random
             blocktype = np.random.choice(blocktype)
@@ -151,11 +200,29 @@ def find_block_info(blocktype, data=None, options=Map()):
         blocktype = id
     if type(blocktype) == tuple:
         blocktype, data = blocktype
+
+    if blocktype == None:
+        print("ERROR - Blocktype is None")
+    elif type(blocktype) == Map:
+        print("ERROR - Map Blocktype passed in:", blocktype)
+    else:
+        blocktype = int(blocktype)
+
+    if type(data) == Map:
+        print("ERROR - Map Blocktype Data passed in:", data)
+    elif data == None:
+        #do nothing
+        pass
+    else:
+        blocktype = int(blocktype)
+
+    if data != None:
+        data = int(data)
     return blocktype, data
 
 def create_block(p, blocktype=block.STONE.id, data=None, options=Map(choice_type = "random")):
     try:
-        blocktype, data = find_block_info(blocktype, data, options)
+        blocktype, data = find_block_info(blocktype, data=data, options=options)
 
         if not data:
             mc.setBlock(p.x, p.y, p.z, blocktype)
@@ -166,7 +233,7 @@ def create_block(p, blocktype=block.STONE.id, data=None, options=Map(choice_type
 
 def create_block_filled_box(p1, p2, blocktype=block.STONE.id, data=None, options=Map()):
     try:
-        blocktype, data = find_block_info(blocktype, data, options)
+        blocktype, data = find_block_info(blocktype, data=data, options=options)
 
         if not data:
             mc.setBlocks(p1.x, p1.y, p1.z, p2.x, p2.y, p2.z, blocktype)
@@ -180,20 +247,6 @@ def create_box_centered_on(x,y,z,w,h,l, blocktype=block.STONE.id, data=None):
         mc.setBlocks(x-w, y, z-l, x+w, y+h, z+l, blocktype)
     else:
         mc.setBlocks(x-w, y, z-l, x+w, y+h, z+l, blocktype, data)
-
-def create_blocks_from_pointlist(points, blocktype=block.STONE.id, data=None, blocks_to_not_draw=[]):
-    for point in points:
-        draw_block = True
-        if (len(blocks_to_not_draw)>0):
-            #TODO: This could be more efficient
-            try:
-                if (blocks_to_not_draw.index(point)>-1):
-                    draw_block = False
-            except ValueError:
-                draw_block = True
-
-        if draw_block:
-            create_block(point, blocktype, data)
 
 def choose_one(*argv):
     return argv[np.random.randint(0, len(argv)-1)]
@@ -338,6 +391,7 @@ def test_shapes(line=True, buff = 13):
     def draw(func, pos, radius=5, height=8):
         points = func(V3(pos.x, pos.y, pos.z), radius, .7, height=height)
 
+        #TODO: Replace with a Texture1D
         g = 95
         b_colors = [block.GLOWSTONE_BLOCK,g,g,g,g,g,g,g,g,g,g,g,g]
         colors = [False,0,0,14,14,1,4,5,3,11,2,10,10]
