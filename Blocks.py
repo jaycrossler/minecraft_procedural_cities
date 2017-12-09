@@ -2,14 +2,17 @@
 import math
 import MinecraftHelpers as helpers
 import re
+from Map import Map
 from libraries import webcolors
+
 
 def block_by_id(id, data=0):
     b = [x for x in block_library if x["id"] == id and x["data"] == data]
     if len(b) == 0:
         b = [x for x in block_library if x["id"] == id]
 
-    return b or [{"name":"Unknown", "id":0, "data":0}]
+    return b or [{"name": "Unknown", "id": 0, "data": 0}]
+
 
 def name_by_id(id, data=0):
     b = [x for x in block_library if x["id"] == id and x["data"] == data]
@@ -17,22 +20,24 @@ def name_by_id(id, data=0):
         b = [x for x in block_library if x["id"] == id]
 
     out = "Unknown"
-    if (b and len(b)>0 and b[0] and b[0]["name"]):
+    if b and len(b) > 0 and b[0] and b[0]["name"]:
         out = b[0]["name"]
     return out
 
+
 def match(name, onlyBlock=True):
     #Return first item matching the name entered
-    if (onlyBlock):
+    if onlyBlock:
         b = [x for x in block_library if (x["name"].lower() == name.lower()) and ("kind" in x) and (x["kind"] == "Block")]
     else:
         b = [x for x in block_library if x["name"].lower() == name.lower()]
-    if len(b)>0:
+    if len(b) > 0:
         return b[0]
     else:
         #TODO: Should it return a "like" version if no matches?
         print("Error - blocks.match(\"" + str(name) + "\") - unrecognized block name, returning air")
         return block_library[0]
+
 
 def like(name, onlyBlock=True):
     #Returns all items with names with substrings matching
@@ -46,65 +51,75 @@ def like(name, onlyBlock=True):
         print("Error - blocks.like(\"" + str(name) + "\") - unrecognized block name, returning air")
         return [block_library[0]]
 
+
 def id(name):
     b = [x for x in block_library if x["name"].lower() == name.lower()]
-    if len(b)>0:
+    if len(b) > 0:
         return b[0]["id"],b[0]["data"]
     else:
         return 0
 
+
 def color_as_hex(color):
+    target_color = color
     if type(color) == tuple and len(color) == 3:
-        targ_color = webcolors.rgb_to_hex(color)
+        target_color = webcolors.rgb_to_hex(color)
     elif type(color) == str:
-        match = re.search(r'^#(?:[0-9a-fA-F]{3}){1,2}$', color)
-        if match:
-            targ_color = color
+        found = re.search(r'^#(?:[0-9a-fA-F]{3}){1,2}$', color)
+        if found:
+            target_color = color
         else:
-            targ_color = webcolors.name_to_hex(color)
-    return targ_color
+            target_color = webcolors.name_to_hex(color)
+    return target_color
+
 
 def color_as_rgb(color):
+    target_color = color
     if type(color) == tuple and len(color) == 3:
-        targ_color = color
+        target_color = color
     elif type(color) == str:
-        match = re.search(r'^#(?:[0-9a-fA-F]{3}){1,2}$', color)
-        if match:
-            targ_color = webcolors.hex_to_rgb(color)
+        found = re.search(r'^#(?:[0-9a-fA-F]{3}){1,2}$', color)
+        if found:
+            target_color = webcolors.hex_to_rgb(color)
         else:
-            targ_color = webcolors.name_to_rgb(color)
-    return targ_color
+            target_color = webcolors.name_to_rgb(color)
+    return target_color
 
 
-def closest_by_color(color, onlyBlock=True):
+def closest_by_color(color, options=Map()):
     if type(color) == str:
-        match = re.search(r'^#(?:[0-9a-fA-F]{3}){1,2}$', color)
+        found = re.search(r'^#(?:[0-9a-fA-F]{3}){1,2}$', color)
 
-        if not match:
-            targ_color = webcolors.name_to_rgb(color)
+        if not found:
+            target_color = webcolors.name_to_rgb(color)
         else:
-            targ_color = webcolors.hex_to_rgb(color)
+            target_color = webcolors.hex_to_rgb(color)
 
     elif type(color) == tuple and len(color) == 3:
-        targ_color = color
+        target_color = color
     else:
         print("ERROR - invalid color in closest_by_color:", color)
-        targ_color = color
+        target_color = color
 
     closest = None
     closest_num = 10000
     for b in block_library:
-        if onlyBlock:
+        if options.name_contains:
+            if b["name"].lower().find(options.name_contains.lower()) == -1:
+                continue
+
+        if options.onlyBlock:
             if ("kind" not in b) or (b["kind"] != "Block"):
                 continue
 
-        if 'main_color' in b:
-            dist = helpers.color_distance(targ_color, b["main_color"])
+        if "main_color" in b:
+            dist = helpers.color_distance(target_color, b["main_color"])
             if dist < closest_num:
                 closest_num = dist
                 closest = b
 
     return closest
+
 
 def icon(name, showIt=True):
     from PIL import Image

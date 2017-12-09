@@ -49,6 +49,14 @@ class Map(dict):
         super(Map, self).__delitem__(key)
         del self.__dict__[key]
 
+    def __add__(self, new_map):
+        item = Map({})
+        for key in self:
+            item[key] = self[key]
+        for key in new_map:
+            item[key] = new_map[key]
+        return item
+
     def extend (self, **new_keys):
         for key in new_keys:
             self[key] = new_keys[key]
