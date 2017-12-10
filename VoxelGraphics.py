@@ -687,7 +687,7 @@ def triangular_prism(p1, p2, height, radius=2, sloped=False):
     faces = []
     h = 0
     while radius > 0:
-        if (sloped):
+        if sloped:
             p1, p2 = move_points_together(p1, p2, 1)
 
         corner_vecs = line_thick_into_corners(p1.x, p1.z, p2.x, p2.z, radius)

@@ -278,3 +278,10 @@ def city(size=0, layout="castle", farms=False, buildings=False, streets=True):
     c.build()
 
     return Map(s=s, f=f, n=n, c=c, z=z)
+
+
+def test_c():
+    c = castle.Castle(False, Map(p1=V3(0, -1, 90), p2=V3(59, -1, 149)))
+    print("Building Castle")
+    c.build()
+    return c

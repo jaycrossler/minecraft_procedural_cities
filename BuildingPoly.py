@@ -89,7 +89,8 @@ class BuildingPoly(object):
 
     def clear(self):
         material = block.GRASS.id if self.kind == "foundation" else block.AIR.id
-        helpers.draw_point_list(self.points + self.points_edges, material)
+        helpers.draw_point_list(self.points, material)
+        helpers.draw_point_list(self.points_edges, material)
 
         # helpers.create_blocks_from_pointlist(self.points, material)
         # helpers.create_blocks_from_pointlist(self.points_edges, material)
