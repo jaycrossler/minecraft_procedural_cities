@@ -1,4 +1,3 @@
-# Extracted from http://www.minecraft-servers-list.org/ide-list/
 import math
 import MinecraftHelpers as helpers
 import re
@@ -6,18 +5,18 @@ from Map import Map
 from libraries import webcolors
 
 
-def block_by_id(id, data=0):
-    b = [x for x in block_library if x["id"] == id and x["data"] == data]
+def block_by_id(block_id, data=0):
+    b = [x for x in block_library if x["id"] == block_id and x["data"] == data]
     if len(b) == 0:
-        b = [x for x in block_library if x["id"] == id]
+        b = [x for x in block_library if x["id"] == block_id]
 
     return b or [{"name": "Unknown", "id": 0, "data": 0}]
 
 
-def name_by_id(id, data=0):
-    b = [x for x in block_library if x["id"] == id and x["data"] == data]
+def name_by_id(block_id, data=0):
+    b = [x for x in block_library if x["id"] == block_id and x["data"] == data]
     if len(b) == 0:
-        b = [x for x in block_library if x["id"] == id]
+        b = [x for x in block_library if x["id"] == block_id]
 
     out = "Unknown"
     if b and len(b) > 0 and b[0] and b[0]["name"]:
@@ -25,9 +24,9 @@ def name_by_id(id, data=0):
     return out
 
 
-def match(name, onlyBlock=True):
-    #Return first item matching the name entered
-    if onlyBlock:
+def match(name, only_blocks=True):
+    # Return first item matching the name entered
+    if only_blocks:
         b = [x for x in block_library if (x["name"].lower() == name.lower()) and ("kind" in x) and (x["kind"] == "Block")]
     else:
         b = [x for x in block_library if x["name"].lower() == name.lower()]
@@ -39,9 +38,9 @@ def match(name, onlyBlock=True):
         return block_library[0]
 
 
-def like(name, onlyBlock=True):
-    #Returns all items with names with substrings matching
-    if onlyBlock:
+def like(name, only_blocks=True):
+    # Returns all items with names with substrings matching
+    if only_blocks:
         b = [x for x in block_library if (x["name"].lower().find(name.lower()) > -1) and ("kind" in x) and (x["kind"] == "Block")]
     else:
         b = [x for x in block_library if x["name"].lower().find(name.lower()) > -1]
@@ -52,12 +51,12 @@ def like(name, onlyBlock=True):
         return [block_library[0]]
 
 
-def id(name):
+def id_and_data(name):
     b = [x for x in block_library if x["name"].lower() == name.lower()]
     if len(b) > 0:
-        return b[0]["id"],b[0]["data"]
+        return b[0]["id"], b[0]["data"]
     else:
-        return 0
+        return 0, 0
 
 
 def color_as_hex(color):
@@ -108,7 +107,7 @@ def closest_by_color(color, options=Map()):
             if b["name"].lower().find(options.name_contains.lower()) == -1:
                 continue
 
-        if options.onlyBlock:
+        if options.only_blocks:
             if ("kind" not in b) or (b["kind"] != "Block"):
                 continue
 
@@ -121,7 +120,7 @@ def closest_by_color(color, options=Map()):
     return closest
 
 
-def icon(name, showIt=True):
+def icon(name, show_it=True):
     from PIL import Image
 
     b = like(name)
@@ -136,20 +135,22 @@ def icon(name, showIt=True):
 
     blocks = []
     for img in b:
-        id = img["id_in_image"]
+        image_id = img["id_in_image"]
 
-        col = id % x_count
-        row = math.floor(id / x_count)
+        col = image_id % x_count
+        row = math.floor(image_id / x_count)
 
         box = (col*width, row*height, (col+1)*width, (row+1)*height)
         block = im.crop(box)
-        if showIt:
+        if show_it:
             block.show()
         blocks.append(block)
     return blocks
 
 
-#Colors Painstakenly extracted using Pillow and merged with item list
+# Block colors Painstakenly extracted from http://www.minecraft-servers-list.org/ide-list/ using Pillow
+#  and merged with list of all blocks
+
 block_library = [{'name': 'Air', 'id': 0, 'data': 0, 'kind': 'Block', 'id_in_image': 0, 'main_color': (0, 0, 0), 'second_color': (0, 0, 0), 'third_color': (0, 0, 0)},
  {'name': 'Stone', 'id': 1, 'data': 0, 'kind': 'Block', 'id_in_image': 1, 'main_color': (95, 95, 95), 'second_color': (89, 89, 89), 'third_color': (57, 57, 57)},
  {'name': 'Granite', 'id': 1, 'data': 1, 'kind': 'Block', 'id_in_image': 27, 'main_color': (73, 51, 43), 'second_color': (108, 83, 74), 'third_color': (94, 67, 57)},
@@ -169,12 +170,12 @@ block_library = [{'name': 'Air', 'id': 0, 'data': 0, 'kind': 'Block', 'id_in_ima
  {'name': 'Jungle Wood Plank', 'id': 5, 'data': 3, 'kind': 'Block', 'id_in_image': 187, 'main_color': (73, 52, 36), 'second_color': (109, 78, 54), 'third_color': (50, 34, 23)},
  {'name': 'Acacia Wood Plank', 'id': 5, 'data': 4, 'kind': 'Block', 'id_in_image': 214, 'main_color': (89, 48, 26), 'second_color': (168, 91, 50), 'third_color': (116, 64, 36)},
  {'name': 'Dark Oak Wood Plank', 'id': 5, 'data': 5, 'kind': 'Block', 'id_in_image': 241, 'main_color': (29, 18, 8), 'second_color': (41, 26, 12), 'third_color': (42, 27, 12)},
- {'name': 'Oak Sapling', 'id': 6, 'data': 0, 'kind': 'Block', 'id_in_image': 538, 'main_color': (0, 100, 0), 'second_color': (148, 100, 40), 'third_color': (73, 204, 37)},
- {'name': 'Spruce Sapling', 'id': 6, 'data': 1, 'kind': 'Block', 'id_in_image': 565, 'main_color': (35, 33, 18), 'second_color': (57, 90, 57), 'third_color': (80, 54, 26)},
- {'name': 'Birch Sapling', 'id': 6, 'data': 2, 'kind': 'Block', 'id_in_image': 592, 'main_color': (81, 116, 45), 'second_color': (207, 227, 186), 'third_color': (100, 141, 56)},
- {'name': 'Jungle Sapling', 'id': 6, 'data': 3, 'kind': 'Block', 'id_in_image': 619, 'main_color': (52, 57, 11), 'second_color': (42, 103, 19), 'third_color': (55, 128, 32)},
- {'name': 'Acacia Sapling', 'id': 6, 'data': 4, 'kind': 'Block', 'id_in_image': 646, 'main_color': (114, 85, 10), 'second_color': (121, 146, 30), 'third_color': (103, 126, 23)},
- {'name': 'Dark Oak Sapling', 'id': 6, 'data': 5, 'kind': 'Block', 'id_in_image': 673, 'main_color': (19, 85, 17), 'second_color': (84, 57, 25), 'third_color': (106, 78, 42)},
+ {'name': 'Oak Sapling', 'id': 6, 'data': 0, 'id_in_image': 538, 'main_color': (0, 100, 0), 'second_color': (148, 100, 40), 'third_color': (73, 204, 37)},
+ {'name': 'Spruce Sapling', 'id': 6, 'data': 1, 'id_in_image': 565, 'main_color': (35, 33, 18), 'second_color': (57, 90, 57), 'third_color': (80, 54, 26)},
+ {'name': 'Birch Sapling', 'id': 6, 'data': 2, 'id_in_image': 592, 'main_color': (81, 116, 45), 'second_color': (207, 227, 186), 'third_color': (100, 141, 56)},
+ {'name': 'Jungle Sapling', 'id': 6, 'data': 3, 'id_in_image': 619, 'main_color': (52, 57, 11), 'second_color': (42, 103, 19), 'third_color': (55, 128, 32)},
+ {'name': 'Acacia Sapling', 'id': 6, 'data': 4, 'id_in_image': 646, 'main_color': (114, 85, 10), 'second_color': (121, 146, 30), 'third_color': (103, 126, 23)},
+ {'name': 'Dark Oak Sapling', 'id': 6, 'data': 5, 'id_in_image': 673, 'main_color': (19, 85, 17), 'second_color': (84, 57, 25), 'third_color': (106, 78, 42)},
  {'name': 'Bedrock', 'id': 7, 'data': 0, 'kind': 'Block', 'id_in_image': 685, 'main_color': (83, 83, 83), 'second_color': (31, 31, 31), 'third_color': (41, 41, 41)},
  {'name': 'Flowing Water', 'id': 8, 'data': 0, 'kind': 'Block', 'id_in_image': 696, 'main_color': (17, 38, 106), 'second_color': (38, 87, 238), 'third_color': (21, 55, 160)},
  {'name': 'Still Water', 'id': 9, 'data': 0, 'kind': 'Block', 'id_in_image': 188, 'main_color': (17, 38, 106), 'second_color': (38, 87, 238), 'third_color': (21, 55, 160)},
@@ -271,7 +272,7 @@ block_library = [{'name': 'Air', 'id': 0, 'data': 0, 'kind': 'Block', 'id_in_ima
  {'name': 'Monster Spawner', 'id': 52, 'data': 0, 'id_in_image': 322, 'main_color': (24, 36, 46), 'second_color': (19, 29, 36), 'third_color': (16, 22, 26)},
  {'name': 'Oak Wood Stairs', 'id': 53, 'data': 0, 'kind': 'Block', 'id_in_image': 349, 'main_color': (99, 81, 49), 'second_color': (174, 142, 87), 'third_color': (137, 111, 71)},
  {'name': 'Chest', 'id': 54, 'data': 0, 'kind': 'Block', 'interactive': True, 'id_in_image': 376, 'main_color': (39, 34, 26), 'second_color': (113, 80, 28), 'third_color': (77, 54, 18)},
- {'name': 'Redstone Wire', 'id': 55, 'data': 0, 'kind': 'Block', 'interactive': True, 'id_in_image': 403, 'main_color': (175, 0, 0), 'second_color': (253, 0, 0), 'third_color': (214, 0, 0)},
+ {'name': 'Redstone Wire', 'id': 55, 'data': 0, 'interactive': True, 'id_in_image': 403, 'main_color': (175, 0, 0), 'second_color': (253, 0, 0), 'third_color': (214, 0, 0)},
  {'name': 'Diamond Ore', 'id': 56, 'data': 0, 'kind': 'Block', 'id_in_image': 430, 'main_color': (93, 93, 93), 'second_color': (57, 57, 57), 'third_color': (145, 149, 152)},
  {'name': 'Diamond Block', 'id': 57, 'data': 0, 'kind': 'Block', 'id_in_image': 457, 'main_color': (101, 170, 167), 'second_color': (74, 117, 115), 'third_color': (26, 104, 100)},
  {'name': 'Crafting Table', 'id': 58, 'data': 0, 'kind': 'Block', 'interactive': True, 'id_in_image': 484, 'main_color': (29, 23, 14), 'second_color': (95, 77, 46), 'third_color': (150, 111, 70)},
@@ -450,7 +451,7 @@ block_library = [{'name': 'Air', 'id': 0, 'data': 0, 'kind': 'Block', 'id_in_ima
  {'name': 'Acacia Wood Stairs', 'id': 163, 'data': 0, 'kind': 'Block', 'id_in_image': 92, 'main_color': (92, 49, 27), 'second_color': (168, 91, 50), 'third_color': (116, 64, 36)},
  {'name': 'Dark Oak Wood Stairs', 'id': 164, 'data': 0, 'kind': 'Block', 'id_in_image': 119, 'main_color': (41, 26, 12), 'second_color': (29, 18, 8), 'third_color': (44, 28, 12)},
  {'name': 'Slime Block', 'id': 165, 'data': 0, 'kind': 'Block', 'id_in_image': 146, 'main_color': (105, 150, 93), 'second_color': (77, 105, 70), 'third_color': (130, 187, 115)},
- {'name': 'Barrier', 'id': 166, 'data': 0, 'kind': 'Block', 'id_in_image': 173, 'main_color': (227, 0, 0), 'second_color': (206, 104, 106), 'third_color': (209, 24, 25)},
+ {'name': 'Barrier', 'id': 166, 'data': 0, 'kind': 'Invisible', 'id_in_image': 173, 'main_color': (227, 0, 0), 'second_color': (206, 104, 106), 'third_color': (209, 24, 25)},
  {'name': 'Iron Trapdoor', 'id': 167, 'data': 0, 'id_in_image': 200, 'main_color': (200, 200, 200), 'second_color': (95, 95, 95), 'third_color': (153, 153, 153)},
  {'name': 'Prismarine', 'id': 168, 'data': 0, 'kind': 'Block', 'id_in_image': 227, 'main_color': (49, 87, 77), 'second_color': (72, 106, 96), 'third_color': (100, 166, 149)},
  {'name': 'Prismarine Bricks', 'id': 168, 'data': 1, 'kind': 'Block', 'id_in_image': 254, 'main_color': (52, 88, 78), 'second_color': (76, 113, 102), 'third_color': (103, 168, 150)},

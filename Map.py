@@ -1,7 +1,7 @@
 class Map(dict):
     """
     From: https://stackoverflow.com/questions/2352181/how-to-use-a-dot-to-access-members-of-dictionary
-    Mods (Extend and Copy) by Jay
+    Mods (Extend and Copy and add) by Jay
 
     Example:
     m = Map({'first_name': 'Eduardo'}, last_name='Pool', age=24, sports=['Soccer'])

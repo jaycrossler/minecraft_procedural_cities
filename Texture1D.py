@@ -5,7 +5,8 @@ import math
 
 # Example test steps:
 # import Texture1D;
-# t = Texture1D.Texture1D(Map(gradient = True, gradient_type = "linear_bezier", colors = Texture1D.COMMON_TEXTURES.RainbowGlass, onlyBlock=True, name_contains="Glass"))
+# t = Texture1D.Texture1D(Map(gradient = True, gradient_type = "linear_bezier",
+#     colors = Texture1D.COMMON_TEXTURES.RainbowGlass, only_blocks=True, name_contains="Glass"))
 # steps = 30
 # for i in range(steps):print(t.block(Map(step=i, steps=steps)), i, steps)
 
@@ -26,10 +27,11 @@ class Texture1D(object):
     def set_options(self, options=Map()):
         self.options = options
         if options.gradient:
-            self.axis = options.gradient_axis or "y"  #TODO: Implement so xyz can be passed in
+            self.axis = options.gradient_axis or "y"
+            # TODO: Implement so xyz can be passed in
             self.gradient_type = options.gradient_type or "linear"
             self.colors_names = options.colors or rand_hex_color(2)
-            self.colors = [Blocks.color_as_rgb(hex) for hex in self.colors_names]
+            self.colors = [Blocks.color_as_rgb(color_name) for color_name in self.colors_names]
         else:
             self.material = options.color or options.material or rand_hex_color(1)
 
@@ -40,7 +42,7 @@ class Texture1D(object):
                 if "hex" in hex_colors:
                     hex_colors = hex_colors["hex"]
 
-                step = options.step
+                step = options.step or 0
                 if step > len(hex_colors)-1:
                     step = len(hex_colors)-1
                 elif step < 0:
@@ -73,72 +75,78 @@ class Texture1D(object):
 
     def info(self, steps=10):
         for i in range(steps):
-            print(self.block(Map(step=i, steps=steps)), i, steps)
+            block = self.block(Map(step=i, steps=steps))
+            color = rgb_to_hex(block["main_color"])
+            print(i, "of", steps, color, block)
 
 # ==========================================================
 # Many functions from https://bsou.io/posts/color-gradients-with-python
 
 
-def hex_to_RGB(hex):
-    ''' "#FFFFFF" -> [255,255,255] '''
-    # Pass 16 to the integer function for change of base
+def hex_to_rgb(color):
+    """ "#FFFFFF" -> [255,255,255] '''
+    Note: Pass 16 to the integer function for change of base"""
+
     try:
         # out = [int(hex[i:i+2], 16) for i in range(1,6,2)]
-        out_rgb = Blocks.color_as_rgb(hex)
+        out_rgb = Blocks.color_as_rgb(color)
         out = [out_rgb[0], out_rgb[1], out_rgb[2]]
 
     except ValueError:
-        print("Hex invalid", hex)
-        out = hex
+        print("Hex invalid", color)
+        out = color
 
     return out
 
 
-def RGB_to_hex(RGB):
-    ''' [255,255,255] -> "#FFFFFF" '''
-    # Components need to be integers for hex to make sense
-    RGB = [int(x) for x in RGB]
+def rgb_to_hex(rgb):
+    """ [255,255,255] -> "#FFFFFF"
+    # Components need to be integers for hex to make sense """
+
+    rgb = [int(x) for x in rgb]
     return "#" + "".join(["0{0:x}".format(v) if v < 16 else
-                          "{0:x}".format(v) for v in RGB])
+                          "{0:x}".format(v) for v in rgb])
 
 
 def rand_hex_color(num=1):
-    ''' Generate random hex colors, default is one,
+    """ Generate random hex colors, default is one,
         returning a string. If num is greater than
-        1, an array of strings is returned. '''
-    colors = [
-        RGB_to_hex([x * 255 for x in rnd.rand(3)])
-        for i in range(num)
-    ]
+        1, an array of strings is returned. """
+    colors = []
+    for i in range(num):
+        color = rgb_to_hex([x * 255 for x in rnd.rand(3)])
+        colors.append(color)
+
     if num == 1:
-        return colors[0]
-    else:
-        return colors
+        colors = colors[0]
+
+    return colors
 
 
 def color_dict(gradient):
-    ''' Takes in a list of RGB sub-lists and returns dictionary of
+    """ Takes in a list of RGB sub-lists and returns dictionary of
       colors in RGB and hex form for use in a graphing function
-      defined later on '''
-    return {"hex": [RGB_to_hex(RGB) for RGB in gradient],
+      defined later on """
+    return {"hex": [rgb_to_hex(RGB) for RGB in gradient],
             "r": [RGB[0] for RGB in gradient],
             "g": [RGB[1] for RGB in gradient],
             "b": [RGB[2] for RGB in gradient]}
 
 
 def linear_gradient(start_hex, finish_hex="#FFFFFF", n=10):
-    ''' returns a gradient list of (n) colors between
+    """ returns a gradient list of (n) colors between
       two hex colors. start_hex and finish_hex
       should be the full six-digit color string,
-      inlcuding the number sign ("#FFFFFF") '''
-    # Starting and ending colors in RGB form
+      including the number sign ("#FFFFFF")
 
-    s = hex_to_RGB(start_hex)
-    f = hex_to_RGB(finish_hex)
+    Note: Starting and ending colors in RGB form """
 
-    # Initilize a list of the output colors with the starting color
-    RGB_list = [s]
-    # Calcuate a color at each evenly spaced value of t from 1 to n
+    s = hex_to_rgb(start_hex)
+    f = hex_to_rgb(finish_hex)
+
+    # Initialize a list of the output colors with the starting color
+    rgb_list = [s]
+    # Calculate a color at each evenly spaced value of t from 1 to n
     for t in range(1, n):
         # Interpolate RGB vector for color at the current value of t
         curr_vector = [
@@ -146,37 +154,17 @@ def linear_gradient(start_hex, finish_hex="#FFFFFF", n=10):
             for j in range(3)
         ]
         # Add it to our list of output colors
-        RGB_list.append(curr_vector)
+        rgb_list.append(curr_vector)
 
-    return color_dict(RGB_list)
-
-
-# def polylinear_gradient(colors, n):
-#     ''' returns a list of colors forming linear gradients between
-#         all sequential pairs of colors. "n" specifies the total
-#         number of desired output colors '''
-#     # The number of colors per individual linear gradient
-#     n_out = int(float(n) / (len(colors) - 1))
-#     # returns dictionary defined by color_dict()
-#     gradient_dict = linear_gradient(colors[0], colors[1], n_out)
-#
-#     if len(colors) > 1:
-#         for col in range(1, len(colors) - 1):
-#             next = linear_gradient(colors[col], colors[col + 1], n_out)
-#             for k in ("hex", "r", "g", "b"):
-#                 # Exclude first point to avoid duplicates
-#                 gradient_dict[k] += next[k][1:]
-#
-#     return gradient_dict
+    return color_dict(rgb_list)
 
 
 def polylinear_gradient(colors, n):
-    ''' returns a list of colors forming linear gradients between
+    """ returns a list of colors forming linear gradients between
         all sequential pairs of colors. "n" specifies the total
-        number of desired output colors '''
+        number of desired output colors """
 
     color_count = len(colors)
-    out = []
 
     if n < 1:
         out = []
@@ -196,12 +184,13 @@ def polylinear_gradient(colors, n):
     elif n == color_count:
         out = colors
     else:
-        # n > color_count > 1
+        # elif n > color_count > 1:
+        # TODO: There must be a better way to band by these colors, not apparent right now
         extended = [colors[0]]
         colors_per_grad = float(n) / float(len(colors))
 
         for i in range(color_count-1):
-            span = linear_gradient(colors[i], colors[i + 1], math.ceil(colors_per_grad)+1)
+            span = linear_gradient(colors[i], colors[i + 1], int(math.ceil(colors_per_grad))+1)
             extended.extend(span['hex'][1:])
 
         out = polylinear_gradient(extended, n)
@@ -213,10 +202,11 @@ fact_cache = {}
 
 
 def fact(n):
-    ''' Memoized factorial function '''
+    """ Factorial function """
+
     try:
         return fact_cache[n]
-    except(KeyError):
+    except KeyError:
         if n == 1 or n == 0:
             result = 1
         else:
@@ -226,33 +216,36 @@ def fact(n):
 
 
 def bernstein(t, n, i):
-    ''' Bernstein coefficient '''
-    binom = fact(n) / float(fact(i) * fact(n - i))
-    return binom * ((1 - t) ** (n - i)) * (t ** i)
+    """ Bernstein coefficient """
+    binomial = fact(n) / float(fact(i) * fact(n - i))
+    return binomial * ((1 - t) ** (n - i)) * (t ** i)
 
 
 def bezier_gradient(colors, n_out=100):
-    ''' Returns a "bezier gradient" dictionary
+    """ Returns a "bezier gradient" dictionary
         using a given list of colors as control
         points. Dictionary also contains control
-        colors/points. '''
-    # RGB vectors for each color, use as control points
-    RGB_list = [hex_to_RGB(color) for color in colors]
-    n = len(RGB_list) - 1
+        colors/points.
+
+    Use RGB vectors for each color, use as control points """
+
+    rgb_list = [hex_to_rgb(color) for color in colors]
+    n = len(rgb_list) - 1
 
     def bezier_interp(t):
-        ''' Define an interpolation function
-            for this specific curve'''
-        # List of all summands
-        summands = [
+        """ Define an interpolation function
+            for this specific curve
+        # List of all stop_points """
+
+        stop_points = [
             list(map(lambda x: int(bernstein(t, n, i) * x), c))
-            for i, c in enumerate(RGB_list)
+            for i, c in enumerate(rgb_list)
         ]
         # Output color
         out = [0, 0, 0]
-        # Add components of each summand together
+        # Add components of each stop_points together
 
-        for vector in summands:
+        for vector in stop_points:
             for c in range(3):
                 out[c] += vector[c]
 
@@ -265,9 +258,11 @@ def bezier_gradient(colors, n_out=100):
     # Return all points requested for gradient
     return {
         "gradient": color_dict(gradient),
-        "control": color_dict(RGB_list)
+        "control": color_dict(rgb_list)
     }
 
+
 COMMON_TEXTURES = Map()
-COMMON_TEXTURES.Rainbow = ["#FF0000", "#FF7F00", "#FFFF00", "#00FF00", "#0000FF", "#4B0082", "#9400D3"]
-COMMON_TEXTURES.RainbowGlass = [(53, 0, 0), (175, 0, 54), (255, 120, 7), (92, 92, 0), (29, 43, 0), (0, 50, 73), (0, 15, 73), (58, 0, 103)]
+COMMON_TEXTURES.RainbowPrime = ["#FF0000", "#FF7F00", "#FFFF00", "#00FF00", "#0000FF", "#4B0082", "#9400D3"]
+COMMON_TEXTURES.Rainbow = [(53, 0, 0), (175, 0, 54), (255, 120, 7), (92, 92, 0), (29, 43, 0), (0, 50, 73),
+                           (0, 15, 73), (58, 0, 103)]

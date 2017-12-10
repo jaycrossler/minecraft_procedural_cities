@@ -19,9 +19,15 @@
 #
 # Test Buildings:
 #   b = Building(False, Map(sides=4, height=7, radius=6, windows="window_line_double", roof="pointy"))
-#   b = Building(False, Map(sides=6, height=5, radius=8, windows="window_line", roof="pointy_lines", material=block.WOOL.id, material_edges=block.GOLD_BLOCK.id))
+#   b = Building(False, Map(sides=6, height=5, radius=8, windows="window_line", roof="pointy_lines",
+#                material=block.WOOL.id, material_edges=block.GOLD_BLOCK.id))
 ##############################################################################################################
 import mcpi
+import Texture1D
+import numpy as np
+import Blocks as blocks
+import time
+
 import mcpi.block as block
 import math
 import MinecraftHelpers as helpers
@@ -30,15 +36,13 @@ import BuildingStyler as bs
 import BuildingPoly as bp
 import Farmzones as fz
 import Castle as castle
-import numpy as np
-import Blocks as blocks
 from Map import Map
 from V3 import V3
-import time
 
 helpers.connect()
 
-#-----------------------
+
+# -----------------------
 # Polygon helper class to store, build, and create blocks
 class Neighborhoods(object):
     def __init__(self, zones, options=Map()):
@@ -61,11 +65,12 @@ class Neighborhoods(object):
         for b in self.buildings:
             b.clear()
 
-#-----------------------
+
+# -----------------------
 # Polygon helper class to store, build, and create blocks
 class Streets(object):
     def __init__(self, zones, options=Map()):
-    #TODO: Set width 1 or 2 of roads
+        # TODO: Set width 1 or 2 of roads
 
         self.style = options.style or "blacktop"
         for z in zones:
@@ -76,7 +81,7 @@ class Streets(object):
         self.options = options
         self.blocks, self.inner_blocks = vg.partitions_to_blocks(zones, options)
 
-    def build(self,min_size=0):
+    def build(self):
         if self.style == "blacktop":
             color = block.OBSIDIAN.id
         else:
@@ -90,7 +95,7 @@ class Streets(object):
             helpers.create_block(pos, block.GRASS.id)
 
 
-#-----------------------
+# -----------------------
 # Main class for creating a building along with settings
 class Building(object):
     def __init__(self, pos=False, options=Map()):
@@ -111,11 +116,11 @@ class Building(object):
                 options.p1 = p1
                 options.p2 = p2
         else:
-            #If position isn't set, use the player position
+            # If position isn't set, use the player position
             if pos is False:
                 pos = helpers.my_tile_pos()
 
-        #If "force_height" not passed in as an option, then pick height of the terrain at the x,z point
+        # If "force_height" not passed in as an option, then pick height of the terrain at the x,z point
         # if not options.force_height:
         #     setattr(pos, "y", helpers.get_height(pos))
 
@@ -124,21 +129,21 @@ class Building(object):
         self.options = bs.random_options(self.options)
         self.center = V3(pos.x, pos.y, pos.z)
 
-        self.biome = "Plains" #TODO: self.biome.title(options.biome or helpers.biome_at(pos))
+        self.biome = "Plains" # TODO: self.biome.title(options.biome or helpers.biome_at(pos))
 
-        rand_max = min(max(math.ceil(self.radius*2.5), 6),40) #keep buildings between 4-40 height
+        rand_max = min(max(math.ceil(self.radius*2.5), 6),40) # keep buildings between 4-40 height
         self.height = options.height or vg.rand_in_range(4,rand_max)
         self.corner_vectors = []
 
         self.material = options.material or block.STONE.id
-        self.material_edges = options.material_edges or block.IRON_BLOCK.id #TODO: Change based on biome, have rand list
+        self.material_edges = options.material_edges or block.IRON_BLOCK.id # TODO: Change based on biome, have rand list
 
         self.name = options.name or self.biome + " house"
 
-        #Style the polygon based on kind and options
+        # Style the polygon based on kind and options
         self = bs.building_styler(self, options)
 
-        #Create the walls and major polygons
+        # Create the walls and major polygons
         self.polys = self.create_polys(options)
 
     def build(self):
@@ -158,7 +163,7 @@ class Building(object):
             poly.clear()
 
     def data(self):
-        #TODO: Find how to return this as an iterable data object
+        # TODO: Find how to return this as an iterable data object
         d = Map()
         d.center = self.center
         d.biome = self.biome
@@ -195,25 +200,26 @@ class Building(object):
             corner_vectors.append(p1)
 
             facing = "front" if i == 1 else "side"
-            #TODO: Pass in point where front door is, determine facing from that
+            # TODO: Pass in point where front door is, determine facing from that
             p = bp.BuildingPoly('wall', [p1, p2], data_so_far.copy(height=self.height, facing=facing))
             polys.append(p)
 
         roof_vectors = [vg.up(v,self.height) for v in corner_vectors]
         polys.append(bp.BuildingPoly("roof", roof_vectors, data_so_far.copy(corner_vectors = roof_vectors)))
-        #insert foundation so that it is drawn first:
+        # insert foundation so that it is drawn first:
         polys.insert(0,bp.BuildingPoly("foundation", [vg.up(v,-1) for v in corner_vectors], data_so_far.copy(corner_vectors = corner_vectors)))
 
         self.corner_vectors = corner_vectors
 
         return polys
 
-#--------------------------------------------------------------------
+
+# --------------------------------------------------------------------
 # City Building
-#--------------------------------------------------------------------
+# --------------------------------------------------------------------
 
 def city(size=0, layout="castle", farms=False, buildings=False, streets=True):
-    #Testing location numbers
+    # Testing location numbers
     mid_point = V3(30,0,120)
 
     if size > 0:
