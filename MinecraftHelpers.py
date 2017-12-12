@@ -177,8 +177,8 @@ def draw_point_list(points, material, data=None, options=Map()):
                 colored_points = []
                 for point in points:
                     if (material.axis == "x" and point.x == slice_step) or \
-                       (material.axis == "y" and point.y == slice_step) or \
-                       (material.axis == "z" and point.z == slice_step):
+                            (material.axis == "y" and point.y == slice_step) or \
+                            (material.axis == "z" and point.z == slice_step):
                         colored_points.append(point)
 
                 step = slice_step - bounds_lowest
@@ -539,7 +539,8 @@ def clear(size=0):
 if __name__ == "__main__":
     # test_shapes()
 
-    tb = Texture1D.Texture1D(Map(gradient=True, only_blocks=True, gradient_type="linear", colors=["red", "blue"], gradient_axis="x"))
+    tb = Texture1D.Texture1D(
+        Map(gradient=True, only_blocks=True, gradient_type="linear", colors=["red", "blue"], gradient_axis="x"))
     t = test_shapes(texture_base=tb)
 
     time.sleep(10)

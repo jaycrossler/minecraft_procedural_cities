@@ -1,36 +1,38 @@
 #############################################################################################################
 # Procedural Building creation functions for MineCraft.  Uses mcpi to connect to RaspberryJuice on SpigotMC
 ##############################################################################################################
-import mcpi
-import mcpi.block as block
 import MinecraftHelpers as helpers
 import VoxelGraphics as vg
-import BuildingStyler as bs
 from Map import Map
-from V3 import V3
+import mcpi.block as block
+
+
+# TODO: Change all info functions
+
+DECORATIONS_LIBRARY = []
 
 
 # -----------------------
 # Polygon helper class to store, build, and create blocks
-class BuildingPoly(object):
-    def __init__(self, kind, vertices, options=Map()):
+class MCShape(object):
+    def __init__(self, kind, vertices=[], options=Map()):
         self.kind = kind
         self.facing = options.facing
         self.material = options.material
         self.material_edges = options.material_edges  # TODO: Different colors for different edges
         self.features = []
         self.options = options
+        self.vertices = vertices
 
         # Build default points, vertices, and settings for every poly
-        # these might get changed later with a styler (in building_poly_styler)
+        # these might get changed later with a styler (in decorate)
         if len(vertices) == 1:
             self.center = options.center = p1 = vertices[0]
-            radius = options.tower_radius or 4
             self.height = h = options.height or 8
             self.points = []
             self.points_edges = []  # TODO: Use bottom and top circles for edges?
             # TODO: Temp holder:
-            self.vertices = vertices_with_up = [p1, p1, vg.up(p1, h), vg.up(p1, h)]  # points straight up
+            self.vertices = [p1, p1, vg.up(p1, h), vg.up(p1, h)]  # points straight up
 
         elif len(vertices) == 2:
             # If two points are given, assume it's for the bottom line, then draw that as a wall
@@ -55,7 +57,6 @@ class BuildingPoly(object):
             self.cardinality = vg.cardinality(p1, p2)
         else:
             # It's a non-y-rectangular-shaped polygon, so use a different getFace builder function
-            self.vertices = vertices
             self.height = options.height or (vg.highest(vertices) - vg.lowest(vertices) + 1)
             self.cardinality = options.cardinality
             self.points = vg.unique_points(vg.getFace(self.vertices))
@@ -63,7 +64,7 @@ class BuildingPoly(object):
             self.points_edges = self.top_line + self.bottom_line + self.left_line + self.right_line
 
         # Style the polygon based on kind and options
-        self = bs.building_poly_styler(self, kind, options)
+        self.decorate(kind, options)
 
     def draw(self):
         blocks_to_not_draw = []
@@ -92,8 +93,6 @@ class BuildingPoly(object):
         helpers.draw_point_list(self.points, material)
         helpers.draw_point_list(self.points_edges, material)
 
-        # helpers.create_blocks_from_pointlist(self.points, material)
-        # helpers.create_blocks_from_pointlist(self.points_edges, material)
         for feature in self.features:
             feature.clear()
 
@@ -121,8 +120,12 @@ class BuildingPoly(object):
 
     def info(self):
         stro = []
-        stro.append(" - BuildingPoly: " + self.kind + " with " + str(self.vertices) + " points, height " + str(
-            self.height) + ", and " + str(len(self.points)) + " blocks (" + str(self.width) + " x " + str(
-            self.depth) + ")")
+        stro.append(" - MCShape: " + self.kind + " with " + str(self.vertices) + " points, height " + str(
+            self.height) + ", and " + str(len(self.points)) + " blocks (" + str(vg.bounds(self.points)) + ")")
         stro.append(" -- Features:" + str(len(self.features)))
         return stro
+
+    def decorate(self, kind, options=Map()):
+        for d in DECORATIONS_LIBRARY:
+            if d["kind"] == kind:
+                return d["function"](self, options)
