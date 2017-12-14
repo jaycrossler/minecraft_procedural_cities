@@ -5,6 +5,12 @@ import VoxelGraphics as vg
 from V3 import V3
 from Feature import Feature
 
+import sys
+
+file_name = sys.argv[0][::-1][3:][::-1]
+variables = []
+materials = []
+
 
 # -----------------------
 def decorate_castle_wall_tower(obj, options):
@@ -19,4 +25,5 @@ def decorate_castle_wall_tower(obj, options):
 
 
 # -----------------------
-Decoration.Decoration("castle_wall_tower", decorate_castle_wall_tower)
+Decoration.Decoration(kind="castle_wall_tower", callback=decorate_castle_wall_tower, namespace=file_name,
+                      variables=variables, materials=materials)

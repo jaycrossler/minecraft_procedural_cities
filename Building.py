@@ -24,6 +24,7 @@ import VoxelGraphics as vg
 from MCShape import MCShape
 from Map import Map
 from V3 import V3
+from Decoration import DECORATIONS_LIBRARY
 
 
 # -----------------------
@@ -110,7 +111,7 @@ class Building(object):
 
         self.options = options
         self.radius = options.radius or vg.rand_in_range(4, 10)
-        self.options = self.random_options(self.options)
+        self.options = random_options(self.options)
         self.center = V3(pos.x, pos.y, pos.z)
 
         self.biome = "Plains"  # TODO: self.biome.title(options.biome or helpers.biome_at(pos))
@@ -204,7 +205,8 @@ class Building(object):
 
     # -----------------------
     def building_styler(self, options=Map()):
-        # TODO: Move these create blocks to add a Feature or BuildingFeature
+
+        # TODO: Move these create blocks to add a "garden" Decoration
         if options.outside and options.p1 and options.p2:
             p1, p2 = vg.rectangle_inner(options.p1, options.p2, options.outside_width or -1)
             rec, none = vg.rectangle(p1, p2)
@@ -227,44 +229,54 @@ class Building(object):
 
         return self
 
-    # -----------------------
-    def random_options(self, options=Map()):
-        if not options.windows:
-            options.windows = np.random.choice(["window_line_double", "window_line", "window_slits"])
-        if not options.window_style:
-            options.windows = np.random.choice(["open_slit_and_above", "glass"])
-        if not options.roof:
-            options.roof = np.random.choice(["pointy", "pointy_lines", "battlement", False])
-        if not options.moat:
-            options.moat = np.random.choice(["clear", "icy", "weeds"])
 
-        if not options.material:
-            options.color_scheme = r = np.random.choice(["gold_white", "grey_iron", "grey_stone", "blue_white"])
-            if r == "gold_white":
-                options.material = block.WOOL.id
-                options.material_edges = block.GOLD_BLOCK.id
-            elif r == "grey_iron":
-                options.material = block.STONE_BRICK.id
-                options.material_edges = block.IRON_BLOCK.id
-            elif r == "grey_stone":
-                options.material = block.STONE_SLAB_DOUBLE.id
-                options.material_edges = block.IRON_BLOCK.id
-            elif r == "blue_white":
-                options.material = block.WOOL.id
-                options.material_edges = block.LAPIS_LAZULI_BLOCK.id
-            elif r == "brown":
-                options.material = block.SAND.id
-                options.material_edges = block.SANDSTONE.id
-        if not options.roof_pointy_height:
-            options.roof_pointy_height = round(np.random.random() * (options.radius or 5) * 3)
-        if not options.roof_battlement_height:
-            options.roof_battlement_height = np.random.choice([1, 2, 3])  # TODO: Have it go straight up
-        if not options.roof_battlement_space:
-            options.roof_battlement_space = np.random.choice([1, 2, 3])
-        if not options.door_inside:
-            options.door_inside = np.random.choice([True, False])
-        if not options.outside:
-            options.outside = np.random.choice(["flowers", "trees", "grass", "fence", False])
+# -----------------------
+def random_options(options=Map()):
+    for d in DECORATIONS_LIBRARY:
+        if d.variables:
+            for var in d.variables:
+                var_name = var["var"]
+                choices = var["choices"]
 
-        return options
+                if var_name not in options:
+                    options[var_name] = np.random.choice(choices)
+
+    # if not options.windows:
+    #     options.windows = np.random.choice(["window_line_double", "window_line", "window_slits"])
+    # if not options.window_style:
+    #     options.windows = np.random.choice(["open_slit_and_above", "glass"])
+    # if not options.roof:
+    #     options.roof = np.random.choice(["pointy", "pointy_lines", "battlement", False])
+    # if not options.moat:
+    #     options.moat = np.random.choice(["clear", "icy", "weeds"])
+
+    if not options.material:
+        options.color_scheme = r = np.random.choice(["gold_white", "grey_iron", "grey_stone", "blue_white"])
+        if r == "gold_white":
+            options.material = block.WOOL.id
+            options.material_edges = block.GOLD_BLOCK.id
+        elif r == "grey_iron":
+            options.material = block.STONE_BRICK.id
+            options.material_edges = block.IRON_BLOCK.id
+        elif r == "grey_stone":
+            options.material = block.STONE_SLAB_DOUBLE.id
+            options.material_edges = block.IRON_BLOCK.id
+        elif r == "blue_white":
+            options.material = block.WOOL.id
+            options.material_edges = block.LAPIS_LAZULI_BLOCK.id
+        elif r == "brown":
+            options.material = block.SAND.id
+            options.material_edges = block.SANDSTONE.id
+    # if not options.roof_pointy_height:
+    #     options.roof_pointy_height = round(np.random.random() * (options.radius or 5) * 3)
+    # if not options.roof_battlement_height:
+    #     options.roof_battlement_height = np.random.choice([1, 2, 3])  # TODO: Have it go straight up
+    # if not options.roof_battlement_space:
+    #     options.roof_battlement_space = np.random.choice([1, 2, 3])
+    # if not options.door_inside:
+    #     options.door_inside = np.random.choice([True, False])
+    # if not options.outside:
+    #     options.outside = np.random.choice(["flowers", "trees", "grass", "fence", False])
+
+    return options
 

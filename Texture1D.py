@@ -264,6 +264,7 @@ def bezier_gradient(colors, n_out=100):
 
 
 COMMON_TEXTURES = Map()
-COMMON_TEXTURES.RainbowPrime = ["#FF0000", "#FF7F00", "#FFFF00", "#00FF00", "#0000FF", "#4B0082", "#9400D3"]
-COMMON_TEXTURES.Rainbow = [(53, 0, 0), (175, 0, 54), (255, 120, 7), (92, 92, 0), (29, 43, 0), (0, 50, 73),
-                           (0, 15, 73), (58, 0, 103)]
+COMMON_TEXTURES.RainbowPrime = Map(colors=["#FF0000", "#FF7F00", "#FFFF00", "#00FF00", "#0000FF", "#4B0082", "#9400D3"])
+COMMON_TEXTURES.Rainbow = Map(colors=[(53, 0, 0), (175, 0, 54), (255, 120, 7), (92, 92, 0), (29, 43, 0), (0, 50, 73),
+                           (0, 15, 73), (58, 0, 103)])
+COMMON_TEXTURES.StoneWall = Map(type="random", colors=[4, 48, (97,1)], frequencies=[.98, .1, .1])

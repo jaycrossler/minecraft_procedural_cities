@@ -4,11 +4,24 @@ import mcpi.block as block
 import VoxelGraphics as vg
 from V3 import V3
 
+import sys
+file_name = sys.argv[0][::-1][3:][::-1]
+variables = []
+materials = []
+
+
+def init():
+    variables.append(Map(var="roof", choices=["pointy", "pointy_lines", "battlement", False]))
+    variables.append(Map(var="roof_battlement_height", choices=[1, 2, 3]))
+    variables.append(Map(var="roof_battlement_space", choices=[1, 2, 3]))
+    variables.append(Map(var="roof_pointy_multiplier", choices=[0.4, 0.6, 0.8, 1, 1.2, 1.4, 1.6, 1.8, 2, 2.2, 2.5]))
+
 
 # -----------------------
 def decorate_roof(obj, options=Map()):
+
     if options.options.roof and str.startswith(options.options.roof, "pointy"):
-        height = options.options.roof_pointy_height or options.radius
+        height = options.options.roof_pointy_multiplier * options.radius
         pointy = V3(options.center.x, options.center.y + options.height + height, options.center.z)
 
         for i, vec in enumerate(options.corner_vectors):
@@ -39,4 +52,6 @@ def decorate_roof(obj, options=Map()):
 
 
 # -----------------------
-Decoration.Decoration("roof", decorate_roof)
+init()
+Decoration.Decoration(kind="roof", callback=decorate_roof, namespace=file_name, variables=variables,
+                      materials=materials)

@@ -5,11 +5,9 @@ import MinecraftHelpers as helpers
 import VoxelGraphics as vg
 from Map import Map
 import mcpi.block as block
-
+import Decoration
 
 # TODO: Change all info functions
-
-DECORATIONS_LIBRARY = []
 
 
 # -----------------------
@@ -23,6 +21,7 @@ class MCShape(object):
         self.features = []
         self.options = options
         self.vertices = vertices
+        self.decorations = []
 
         # Build default points, vertices, and settings for every poly
         # these might get changed later with a styler (in decorate)
@@ -72,8 +71,10 @@ class MCShape(object):
             null, self.top_line, self.bottom_line, self.left_line, self.right_line = vg.poly_point_edges(self.points)
             self.points_edges = self.top_line + self.bottom_line + self.left_line + self.right_line
 
+        self.decorations.append(Map(kind=kind, options=options))
+
         # Style the polygon based on kind and options
-        self.decorate(kind, options)
+        self.decorate()
 
     def draw(self):
         blocks_to_not_draw = []
@@ -132,11 +133,11 @@ class MCShape(object):
         stro.append(" -- Features:" + str(len(self.features)))
         return stro
 
-    def decorate(self, kind, options=Map()):
-        for d in DECORATIONS_LIBRARY:
-            if d["kind"] == kind:
-                try:
-                    return d["function"](self, options)
-                except ValueError:
-                    print("PLUGIN Decorator error - ", d["function"])
-                    return self
+    def decorate(self):
+        decorations_list = Decoration.get_matching_decorations(self.decorations)
+        for d in decorations_list:
+            try:
+                return d["callback"](self, d["options"])
+            except ValueError:
+                print("PLUGIN [", d["namespace"], "] Decorator error - ", d["callback"])
+                return self

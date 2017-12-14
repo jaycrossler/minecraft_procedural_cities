@@ -5,10 +5,29 @@ import mcpi.block as block
 import VoxelGraphics as vg
 from V3 import V3
 from Feature import Feature
+from Texture1D import COMMON_TEXTURES
+
+import sys
+file_name = sys.argv[0][::-1][3:][::-1]
+variables = []
+materials = []
 
 
 # -----------------------
+def init():
+    variables.append(Map(var="windows", choices=["window_line", "window_line_double", "window_slits"]))
+    # variables.append(Map(var="wall_type", choices=["building_inner", "building_outer", "castle_wall"]))
+    # materials.extend([Map(name="wall", material=COMMON_TEXTURES.StoneWall)])
+    # materials.extend([Map(name="wall_base", material=(4, 0))])
+    # materials.extend([Map(name="wall_edges", material=(1, 0))])
+
+    variables.append(Map(var="window_style", choices=["open_slit_and_above", "glass"]))
+    variables.append(Map(var="door_inside", choices=[True, False]))
+    variables.append(Map(var="outside", choices=["flowers", "trees", "grass", "fence", False]))
+
+
 def decorate_wall(obj, options):
+
     if options.options.windows == "window_line":
         spaced_points = vg.extrude(obj.bottom(), Map(spacing=V3(0, math.ceil(obj.height / 2), 0)))
         for vec in spaced_points:
@@ -42,4 +61,6 @@ def decorate_wall(obj, options):
 
 
 # -----------------------
-Decoration.Decoration("wall", decorate_wall)
+init()
+Decoration.Decoration(kind="wall", callback=decorate_wall, namespace=file_name, variables=variables,
+                      materials=materials)

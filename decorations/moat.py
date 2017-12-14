@@ -3,6 +3,15 @@ from Map import Map
 import mcpi.block as block
 import VoxelGraphics as vg
 
+import sys
+file_name = sys.argv[0][::-1][3:][::-1]
+variables = []
+materials = []
+
+
+def init():
+    variables.append(Map(var="moat", choices=["clear", "icy", "weeds"]))
+
 
 # -----------------------
 def decorate_moat(obj, options=Map()):
@@ -29,4 +38,6 @@ def decorate_moat(obj, options=Map()):
 
 
 # -----------------------
-Decoration.Decoration("moat", decorate_moat)
+init()
+Decoration.Decoration(kind="moat", callback=decorate_moat, namespace=file_name, variables=variables,
+                      materials=materials)

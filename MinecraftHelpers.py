@@ -451,7 +451,7 @@ def test_pyramid(thickness=1):
 
 def test_shapes(line=True, buff=13, texture_base=89, texture_main="Glass", info=False):
     texture = Texture1D.Texture1D(Map(gradient=True, gradient_type="linear", onlyBlock=True, name_contains=texture_main,
-                                      colors=Texture1D.COMMON_TEXTURES.Rainbow, axis="y"))
+                                      colors=Texture1D.COMMON_TEXTURES.Rainbow.colors, axis="y"))
 
     def draw(func, position, radius=5, height=8, material=texture_base, info=False):
         points = func(V3(position.x, position.y, position.z), radius, .7, height=height)

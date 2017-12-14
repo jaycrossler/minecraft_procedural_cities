@@ -4,6 +4,15 @@ import mcpi.block as block
 import VoxelGraphics as vg
 from V3 import V3
 from Feature import Feature
+import sys
+
+file_name = sys.argv[0][::-1][3:][::-1]
+variables = []
+materials = []
+
+
+def init():
+    pass
 
 
 # -----------------------
@@ -27,4 +36,6 @@ def decorate_castle_outer_wall(obj, options):
 
 
 # -----------------------
-Decoration.Decoration("castle_outer_wall", decorate_castle_outer_wall)
+init()
+Decoration.Decoration(kind="castle_outer_wall", callback=decorate_castle_outer_wall, namespace=file_name,
+                      variables=variables, materials=materials)
