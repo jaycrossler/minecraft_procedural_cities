@@ -88,27 +88,44 @@ def evaluate_3d_range(pos, x_min, x_max, y_min, y_max, z_min, z_max, func):
     return points
 
 
-def angle_between(p1, p2):
-    return (math.atan2(p2.z - p1.z, p2.x - p1.x) * (180.0 / math.pi) + 360) % 360
+def inside_vector(p1, center, p2=None):
+    if p1 and p2:
+        p = p1 + p2
+        p = p * .5
+    else:
+        p = p1
+
+    xz_cardinality = cardinality(p, center, as_vector=True)
+    y = 0
+    if p.y < center.y:
+        y = 1
+    elif p.y > center.y:
+        y = -1
+
+    return V3(xz_cardinality.x, y, xz_cardinality.z)
 
 
-def cardinality(p1, p2):
-    angle = angle_between(p1, p2)
-    c = "e"
-    if angle > 22.5 and angle <= 67.5:
-        c = "se"
-    elif angle > 67.5 and angle <= 112.5:
-        c = "s"
-    elif angle > 112.5 and angle <= 157.5:
-        c = "sw"
-    elif angle > 157.5 and angle <= 202.5:
-        c = "w"
-    elif angle > 202.5 and angle <= 247.5:
-        c = "nw"
-    elif angle > 247.5 and angle <= 292.5:
-        c = "n"
-    elif angle > 292.5 and angle <= 337.5:
-        c = "ne"
+def angle_between(p1a, p1b, p2a, p2b):
+    return (math.atan2(p2b - p1b, p2a - p1a) * (180.0 / math.pi) + 360) % 360
+
+
+def cardinality(p1, p2, as_vector=False):
+    angle = angle_between(p1.x, p1.z, p2.x, p2.z)
+    c = "e" if not as_vector else V3(1, 0, 0)
+    if 22.5 < angle <= 67.5:
+        c = "se" if not as_vector else V3(1, 0, 1)
+    elif 67.5 < angle <= 112.5:
+        c = "s" if not as_vector else V3(0, 0, 1)
+    elif 112.5 < angle <= 157.5:
+        c = "sw" if not as_vector else V3(-1, 0, 1)
+    elif 157.5 < angle <= 202.5:
+        c = "w" if not as_vector else V3(-1, 0, 0)
+    elif 202.5 < angle <= 247.5:
+        c = "nw" if not as_vector else V3(-1, 0, -1)
+    elif 247.5 < angle <= 292.5:
+        c = "n" if not as_vector else V3(0, 0, -1)
+    elif 292.5 < angle <= 337.5:
+        c = "ne" if not as_vector else V3(1, 0, -1)
     return c
 
 
@@ -246,6 +263,37 @@ def next_to(p, num=1):
     ps.append(Map(point=V3(p.x, p.y, p.z - num), dir=1))
     ps.append(Map(point=V3(p.x, p.y, p.z + num), dir=2))
     return ps
+
+
+def points_around(points, cardinality="e"):
+    around = []
+
+    if cardinality in ["e", "w"]:
+        for p in points:
+            around.append(p + V3(-1, -1, 0))
+            around.append(p + V3(-1, 0, 0))
+            around.append(p + V3(-1, 1, 0))
+            around.append(p + V3(0, -1, 0))
+            around.append(p + V3(0, 1, 0))
+            around.append(p + V3(1, -1, 0))
+            around.append(p + V3(1, 0, 0))
+            around.append(p + V3(1, 1, 0))
+    else:
+        for p in points:
+            around.append(p + V3(0, -1, -1))
+            around.append(p + V3(0, 0, -1))
+            around.append(p + V3(0, 1, -1))
+            around.append(p + V3(0, -1, 0))
+            around.append(p + V3(0, 1, 0))
+            around.append(p + V3(0, -1, 1))
+            around.append(p + V3(0, 0, 1))
+            around.append(p + V3(0, 1, 1))
+
+    around = list(set(around))
+    for p in points:
+        around.remove(p)
+
+    return around
 
 
 def rectangle_inner(p1, p2, num):

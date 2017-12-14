@@ -2,6 +2,7 @@ from Map import Map
 import MinecraftHelpers as helpers
 import mcpi.block as block
 from V3 import *
+import VoxelGraphics as vg
 
 
 # -----------------------
@@ -22,11 +23,23 @@ class Feature(object):
             else:
                 door_pattern = "nesw"
             door_code = door_pattern.index(options.cardinality[-1:])
-            self.blocks.append(Map(pos=V3(pos.x, pos.y, pos.z), id=block.DOOR_WOOD.id, data=door_code))
-            self.blocks.append(Map(pos=V3(pos.x, pos.y + 1, pos.z), id=block.DOOR_WOOD.id, data=8))
+            self.blocks.append(Map(pos=pos, id=block.DOOR_WOOD.id, data=door_code))
+            self.blocks.append(Map(pos=vg.up(pos), id=block.DOOR_WOOD.id, data=8))
             # self.blocks_to_not_draw.append(V3(pos.x, pos.y+1, pos.z))
         elif kind == "window":
-            self.blocks.append(Map(pos=pos, id=block.GLASS_PANE.id, data=1))
+            if options.window_style == "glass random":
+                self.blocks.append(Map(pos=pos, id=block.GLASS_PANE.id, data=1))
+
+            elif options.window_style == "open_slit_and_above" and options.windows not in ["window_line", "window_line_double"]:
+                self.blocks.append(Map(pos=vg.up(pos), id=44, data=13))
+                self.blocks.append(Map(pos=pos, id=44, data=5))
+                around = vg.points_around([pos, vg.up(pos)])
+                for b in around:
+                    self.blocks.append(Map(pos=b, id=block.STONE.id))
+
+            else:
+                self.blocks.append(Map(pos=pos, id=block.GLASS_PANE.id, data=1))
+
         elif kind == "bed":
             self.blocks.append(Map(pos=pos, id=block.BED.id))
         elif kind == "spacing":

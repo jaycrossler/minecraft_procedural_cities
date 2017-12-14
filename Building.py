@@ -231,6 +231,8 @@ class Building(object):
     def random_options(self, options=Map()):
         if not options.windows:
             options.windows = np.random.choice(["window_line_double", "window_line", "window_slits"])
+        if not options.window_style:
+            options.windows = np.random.choice(["open_slit_and_above", "glass"])
         if not options.roof:
             options.roof = np.random.choice(["pointy", "pointy_lines", "battlement", False])
         if not options.moat:

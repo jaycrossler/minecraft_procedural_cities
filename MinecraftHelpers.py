@@ -242,8 +242,13 @@ def find_block_info(material, data=None, options=Map()):
         print("ERROR - material is None")
     elif type(material) == Map:
         print("ERROR - Map material passed in:", material)
+    elif type(material) == block.Block:
+        material = material.id
     else:
-        material = int(material)
+        try:
+            material = int(material)
+        except:
+            print("ERROR CONVERTING MATERIAL", type(material))
 
     if type(data) == Map:
         print("ERROR - Map material Data passed in:", data)
@@ -516,6 +521,10 @@ def prep(size=0, ground=True):
     if ground: create_block_filled_box(vg.up(corner1, -1), vg.up(corner2, -3), block.GRASS.id, data=None)
     create_block_filled_box(vg.up(corner1, 0), vg.up(corner2, 70), block.AIR.id, data=None)
     debug("...Finished bulldozing")
+
+
+def go_tower():
+    move_me_to(V3(-786, 1, 263))
 
 
 def clear(size=0):

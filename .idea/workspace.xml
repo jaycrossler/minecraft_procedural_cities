@@ -2,26 +2,15 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="54be9693-8525-4c4e-bd19-6727feed9fab" name="Default" comment="">
-      <change beforePath="" afterPath="$PROJECT_DIR$/CityBuilder.py" />
-      <change beforePath="" afterPath="$PROJECT_DIR$/Decoration.py" />
-      <change beforePath="" afterPath="$PROJECT_DIR$/Feature.py" />
-      <change beforePath="" afterPath="$PROJECT_DIR$/MCShape.py" />
-      <change beforePath="" afterPath="$PROJECT_DIR$/decorations/__init__.py" />
-      <change beforePath="" afterPath="$PROJECT_DIR$/decorations/castle_outer_wall.py" />
-      <change beforePath="" afterPath="$PROJECT_DIR$/decorations/castle_wall_tower.py" />
-      <change beforePath="" afterPath="$PROJECT_DIR$/decorations/moat.py" />
-      <change beforePath="" afterPath="$PROJECT_DIR$/decorations/roof.py" />
-      <change beforePath="" afterPath="$PROJECT_DIR$/decorations/wall.py" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change beforePath="$PROJECT_DIR$/Blocks.py" afterPath="$PROJECT_DIR$/Blocks.py" />
       <change beforePath="$PROJECT_DIR$/Building.py" afterPath="$PROJECT_DIR$/Building.py" />
-      <change beforePath="$PROJECT_DIR$/BuildingPoly.py" afterPath="" />
-      <change beforePath="$PROJECT_DIR$/BuildingStyler.py" afterPath="" />
-      <change beforePath="$PROJECT_DIR$/Castle.py" afterPath="$PROJECT_DIR$/Castle.py" />
+      <change beforePath="$PROJECT_DIR$/CityBuilder.py" afterPath="$PROJECT_DIR$/CityBuilder.py" />
+      <change beforePath="$PROJECT_DIR$/Decoration.py" afterPath="$PROJECT_DIR$/Decoration.py" />
+      <change beforePath="$PROJECT_DIR$/Feature.py" afterPath="$PROJECT_DIR$/Feature.py" />
+      <change beforePath="$PROJECT_DIR$/MCShape.py" afterPath="$PROJECT_DIR$/MCShape.py" />
       <change beforePath="$PROJECT_DIR$/MinecraftHelpers.py" afterPath="$PROJECT_DIR$/MinecraftHelpers.py" />
-      <change beforePath="$PROJECT_DIR$/Texture1D.py" afterPath="$PROJECT_DIR$/Texture1D.py" />
-      <change beforePath="$PROJECT_DIR$/clear.py" afterPath="" />
-      <change beforePath="$PROJECT_DIR$/drawing.py" afterPath="" />
+      <change beforePath="$PROJECT_DIR$/VoxelGraphics.py" afterPath="$PROJECT_DIR$/VoxelGraphics.py" />
+      <change beforePath="$PROJECT_DIR$/decorations/wall.py" afterPath="$PROJECT_DIR$/decorations/wall.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -35,8 +24,8 @@
       <file leaf-file-name="CityBuilder.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/CityBuilder.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-843">
-              <caret line="35" column="0" lean-forward="false" selection-start-line="35" selection-start-column="0" selection-end-line="35" selection-end-column="0" />
+            <state relative-caret-position="552">
+              <caret line="122" column="0" lean-forward="true" selection-start-line="122" selection-start-column="0" selection-end-line="122" selection-end-column="0" />
               <folding>
                 <element signature="e#628#644#0" expanded="true" />
               </folding>
@@ -44,35 +33,35 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="__init__.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/decorations/__init__.py">
+      <file leaf-file-name="Building.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/Building.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="75">
-              <caret line="5" column="0" lean-forward="true" selection-start-line="5" selection-start-column="0" selection-end-line="5" selection-end-column="0" />
+            <state relative-caret-position="153">
+              <caret line="227" column="19" lean-forward="true" selection-start-line="227" selection-start-column="19" selection-end-line="227" selection-end-column="19" />
               <folding>
-                <element signature="e#0#45#0" expanded="true" />
+                <element signature="e#866#884#0" expanded="true" />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="codecs.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/venv/lib/python3.6/codecs.py">
+      <file leaf-file-name="Castle.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/Castle.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="266">
-              <caret line="310" column="0" lean-forward="false" selection-start-line="310" selection-start-column="0" selection-end-line="310" selection-end-column="0" />
+            <state relative-caret-position="1588">
+              <caret line="114" column="0" lean-forward="false" selection-start-line="114" selection-start-column="0" selection-end-line="114" selection-end-column="0" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="moat.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/decorations/moat.py">
+      <file leaf-file-name="MCShape.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/MCShape.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="75">
-              <caret line="5" column="0" lean-forward="true" selection-start-line="5" selection-start-column="0" selection-end-line="5" selection-end-column="0" />
+            <state relative-caret-position="-285">
+              <caret line="51" column="43" lean-forward="false" selection-start-line="51" selection-start-column="43" selection-end-line="51" selection-end-column="43" />
               <folding>
-                <element signature="e#0#17#0" expanded="true" />
+                <element signature="e#329#363#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -81,8 +70,8 @@
       <file leaf-file-name="MinecraftHelpers.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/MinecraftHelpers.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="462">
-              <caret line="538" column="0" lean-forward="false" selection-start-line="538" selection-start-column="0" selection-end-line="547" selection-end-column="0" />
+            <state relative-caret-position="495">
+              <caret line="261" column="0" lean-forward="true" selection-start-line="261" selection-start-column="0" selection-end-line="261" selection-end-column="0" />
               <folding>
                 <element signature="e#307#318#0" expanded="true" />
               </folding>
@@ -90,55 +79,57 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="MCShape.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/MCShape.py">
+      <file leaf-file-name="wall.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/decorations/wall.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="552">
-              <caret line="128" column="0" lean-forward="false" selection-start-line="128" selection-start-column="0" selection-end-line="128" selection-end-column="0" />
+            <state relative-caret-position="105">
+              <caret line="7" column="0" lean-forward="true" selection-start-line="7" selection-start-column="0" selection-end-line="7" selection-end-column="0" />
               <folding>
-                <element signature="e#329#363#0" expanded="true" />
+                <element signature="e#0#11#0" expanded="true" />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="castle_wall_tower.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/decorations/castle_wall_tower.py">
+      <file leaf-file-name="Decoration.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/Decoration.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="210">
-              <caret line="19" column="0" lean-forward="false" selection-start-line="19" selection-start-column="0" selection-end-line="19" selection-end-column="0" />
+            <state relative-caret-position="90">
+              <caret line="7" column="0" lean-forward="true" selection-start-line="7" selection-start-column="0" selection-end-line="7" selection-end-column="0" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="castle_outer_wall.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/decorations/castle_outer_wall.py">
+      <file leaf-file-name="Feature.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/Feature.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="345">
-              <caret line="28" column="0" lean-forward="false" selection-start-line="28" selection-start-column="0" selection-end-line="28" selection-end-column="0" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="wall.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/decorations/wall.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="15">
-              <caret line="1" column="17" lean-forward="true" selection-start-line="1" selection-start-column="17" selection-end-line="1" selection-end-column="17" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="roof.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/decorations/roof.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="75">
-              <caret line="5" column="0" lean-forward="true" selection-start-line="5" selection-start-column="0" selection-end-line="5" selection-end-column="0" />
+            <state relative-caret-position="317">
+              <caret line="33" column="0" lean-forward="false" selection-start-line="33" selection-start-column="0" selection-end-line="33" selection-end-column="0" />
               <folding>
-                <element signature="e#0#17#0" expanded="true" />
+                <element signature="e#0#19#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="Blocks.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/Blocks.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="220">
+              <caret line="252" column="28" lean-forward="false" selection-start-line="252" selection-start-column="24" selection-end-line="252" selection-end-column="28" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="VoxelGraphics.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/VoxelGraphics.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="331">
+              <caret line="247" column="33" lean-forward="false" selection-start-line="247" selection-start-column="32" selection-end-line="247" selection-end-column="33" />
+              <folding>
+                <element signature="e#297#308#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -155,11 +146,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>match</find>
-      <find>glowsto</find>
-      <find>Redstone t</find>
-      <find>polylinear_gradient</find>
-      <find>blocks</find>
       <find>t</find>
       <find>only_blocks</find>
       <find>gradient_calculated_steps</find>
@@ -185,6 +171,11 @@
       <find>Feature</find>
       <find>building_poly_styler</find>
       <find>math.</find>
+      <find>direction</find>
+      <find>angle</find>
+      <find>slab</find>
+      <find>unique</find>
+      <find>window</find>
     </findStrings>
     <replaceStrings>
       <replace>material</replace>
@@ -202,32 +193,32 @@
     <option name="CHANGED_PATHS">
       <list>
         <option value="$PROJECT_DIR$/Map.py" />
-        <option value="$PROJECT_DIR$/VoxelGraphics.py" />
         <option value="$PROJECT_DIR$/BuildingPoly.py" />
-        <option value="$PROJECT_DIR$/MinecraftHelpers.py" />
         <option value="$PROJECT_DIR$/Texture1D.py" />
         <option value="$PROJECT_DIR$/venv/Feature.py" />
         <option value="$PROJECT_DIR$/BuildingStyler.py" />
-        <option value="$PROJECT_DIR$/Feature.py" />
-        <option value="$PROJECT_DIR$/Building.py" />
         <option value="$PROJECT_DIR$/Blocks.py" />
         <option value="$PROJECT_DIR$/Castle.py" />
-        <option value="$PROJECT_DIR$/Decoration.py" />
         <option value="$PROJECT_DIR$/decorations/moat" />
         <option value="$PROJECT_DIR$/decorations/__init__.py" />
-        <option value="$PROJECT_DIR$/CityBuilder.py" />
         <option value="$PROJECT_DIR$/decorations/roof.py" />
         <option value="$PROJECT_DIR$/decorations/castle_outer_wall.py" />
         <option value="$PROJECT_DIR$/decorations/castle_wall_tower.py" />
-        <option value="$PROJECT_DIR$/decorations/wall.py" />
         <option value="$PROJECT_DIR$/MCShape.py" />
+        <option value="$PROJECT_DIR$/CityBuilder.py" />
+        <option value="$PROJECT_DIR$/VoxelGraphics.py" />
+        <option value="$PROJECT_DIR$/MinecraftHelpers.py" />
+        <option value="$PROJECT_DIR$/Feature.py" />
+        <option value="$PROJECT_DIR$/Building.py" />
+        <option value="$PROJECT_DIR$/decorations/wall.py" />
+        <option value="$PROJECT_DIR$/Decoration.py" />
       </list>
     </option>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="234" />
+    <option name="x" value="32" />
     <option name="y" value="23" />
-    <option name="width" value="1669" />
+    <option name="width" value="1871" />
     <option name="height" value="1177" />
   </component>
   <component name="ProjectView">
@@ -374,13 +365,13 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="234" y="23" width="1669" height="1177" extended-state="0" />
+    <frame x="32" y="23" width="1871" height="1177" extended-state="0" />
     <editor active="true" />
     <layout>
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.20611145" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.1838589" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
-      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.16561086" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.21719457" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
@@ -401,6 +392,13 @@
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/MinecraftHelpers.py</url>
+          <line>245</line>
+          <option name="timeStamp" value="38" />
+        </line-breakpoint>
+      </breakpoints>
       <default-breakpoints>
         <breakpoint type="python-exception">
           <properties notifyOnTerminate="true" exception="BaseException">
@@ -408,7 +406,7 @@
           </properties>
         </breakpoint>
       </default-breakpoints>
-      <option name="time" value="29" />
+      <option name="time" value="39" />
     </breakpoint-manager>
     <watches-manager />
   </component>
@@ -452,7 +450,7 @@
         <state relative-caret-position="1605">
           <caret line="114" column="0" lean-forward="true" selection-start-line="114" selection-start-column="0" selection-end-line="114" selection-end-column="0" />
           <folding>
-            <element signature="e#283#294#0" expanded="true" />
+            <element signature="e#283#294#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -498,7 +496,7 @@
         <state relative-caret-position="1080">
           <caret line="76" column="48" lean-forward="true" selection-start-line="76" selection-start-column="48" selection-end-line="76" selection-end-column="48" />
           <folding>
-            <element signature="e#258#269#0" expanded="true" />
+            <element signature="e#258#269#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -528,7 +526,7 @@
         <state relative-caret-position="105">
           <caret line="7" column="0" lean-forward="true" selection-start-line="7" selection-start-column="0" selection-end-line="7" selection-end-column="0" />
           <folding>
-            <element signature="e#258#269#0" expanded="true" />
+            <element signature="e#258#269#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -545,6 +543,7 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="604">
           <caret line="1682" column="0" lean-forward="false" selection-start-line="1682" selection-start-column="0" selection-end-line="1682" selection-end-column="0" />
+          <folding />
         </state>
       </provider>
     </entry>
@@ -588,14 +587,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/VoxelGraphics.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="120">
-          <caret line="8" column="34" lean-forward="false" selection-start-line="8" selection-start-column="34" selection-end-line="8" selection-end-column="34" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/Texture1D.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
@@ -616,61 +607,11 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/Blocks.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="390">
-          <caret line="26" column="26" lean-forward="false" selection-start-line="26" selection-start-column="26" selection-end-line="26" selection-end-column="26" />
-          <folding>
-            <element signature="e#258#269#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$USER_HOME$/Downloads/RaspberryJuice-master/src/main/resources/mcpi/api/python/modded/mcpi/block.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="75">
           <caret line="5" column="0" lean-forward="false" selection-start-line="5" selection-start-column="0" selection-end-line="5" selection-end-column="0" />
           <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/Castle.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1710">
-          <caret line="114" column="0" lean-forward="false" selection-start-line="114" selection-start-column="0" selection-end-line="114" selection-end-column="0" />
-          <folding>
-            <element signature="e#283#294#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/Building.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="255">
-          <caret line="17" column="0" lean-forward="false" selection-start-line="17" selection-start-column="0" selection-end-line="17" selection-end-column="0" />
-          <folding>
-            <element signature="e#866#884#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/Feature.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="105">
-          <caret line="7" column="84" lean-forward="false" selection-start-line="7" selection-start-column="84" selection-end-line="7" selection-end-column="84" />
-          <folding>
-            <element signature="e#0#19#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/Decoration.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="45">
-          <caret line="3" column="0" lean-forward="false" selection-start-line="3" selection-start-column="0" selection-end-line="3" selection-end-column="0" />
-          <folding>
-            <element signature="e#0#19#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -695,32 +636,12 @@
         <state relative-caret-position="75">
           <caret line="5" column="0" lean-forward="true" selection-start-line="5" selection-start-column="0" selection-end-line="5" selection-end-column="0" />
           <folding>
-            <element signature="e#0#45#0" expanded="true" />
+            <element signature="e#0#45#0" expanded="false" />
           </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/decorations/moat.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="75">
-          <caret line="5" column="0" lean-forward="true" selection-start-line="5" selection-start-column="0" selection-end-line="5" selection-end-column="0" />
-          <folding>
-            <element signature="e#0#17#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/MinecraftHelpers.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="462">
-          <caret line="538" column="0" lean-forward="false" selection-start-line="538" selection-start-column="0" selection-end-line="547" selection-end-column="0" />
-          <folding>
-            <element signature="e#307#318#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/decorations/roof.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="75">
           <caret line="5" column="0" lean-forward="true" selection-start-line="5" selection-start-column="0" selection-end-line="5" selection-end-column="0" />
@@ -746,28 +667,104 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/decorations/wall.py">
+    <entry file="file://$PROJECT_DIR$/decorations/roof.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="15">
-          <caret line="1" column="17" lean-forward="true" selection-start-line="1" selection-start-column="17" selection-end-line="1" selection-end-column="17" />
+        <state relative-caret-position="75">
+          <caret line="5" column="0" lean-forward="true" selection-start-line="5" selection-start-column="0" selection-end-line="5" selection-end-column="0" />
+          <folding>
+            <element signature="e#0#17#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Blocks.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="220">
+          <caret line="252" column="28" lean-forward="false" selection-start-line="252" selection-start-column="24" selection-end-line="252" selection-end-column="28" />
           <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Castle.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1588">
+          <caret line="114" column="0" lean-forward="false" selection-start-line="114" selection-start-column="0" selection-end-line="114" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/VoxelGraphics.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="331">
+          <caret line="247" column="33" lean-forward="false" selection-start-line="247" selection-start-column="32" selection-end-line="247" selection-end-column="33" />
+          <folding>
+            <element signature="e#297#308#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Feature.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="317">
+          <caret line="33" column="0" lean-forward="false" selection-start-line="33" selection-start-column="0" selection-end-line="33" selection-end-column="0" />
+          <folding>
+            <element signature="e#0#19#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Building.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="153">
+          <caret line="227" column="19" lean-forward="true" selection-start-line="227" selection-start-column="19" selection-end-line="227" selection-end-column="19" />
+          <folding>
+            <element signature="e#866#884#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/MCShape.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="552">
-          <caret line="128" column="0" lean-forward="false" selection-start-line="128" selection-start-column="0" selection-end-line="128" selection-end-column="0" />
+        <state relative-caret-position="-285">
+          <caret line="51" column="43" lean-forward="false" selection-start-line="51" selection-start-column="43" selection-end-line="51" selection-end-column="43" />
           <folding>
             <element signature="e#329#363#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/MinecraftHelpers.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="495">
+          <caret line="261" column="0" lean-forward="true" selection-start-line="261" selection-start-column="0" selection-end-line="261" selection-end-column="0" />
+          <folding>
+            <element signature="e#307#318#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/decorations/wall.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="105">
+          <caret line="7" column="0" lean-forward="true" selection-start-line="7" selection-start-column="0" selection-end-line="7" selection-end-column="0" />
+          <folding>
+            <element signature="e#0#11#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Decoration.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="90">
+          <caret line="7" column="0" lean-forward="true" selection-start-line="7" selection-start-column="0" selection-end-line="7" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/CityBuilder.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-843">
-          <caret line="35" column="0" lean-forward="false" selection-start-line="35" selection-start-column="0" selection-end-line="35" selection-end-column="0" />
+        <state relative-caret-position="552">
+          <caret line="122" column="0" lean-forward="true" selection-start-line="122" selection-start-column="0" selection-end-line="122" selection-end-column="0" />
           <folding>
             <element signature="e#628#644#0" expanded="true" />
           </folding>

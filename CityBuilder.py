@@ -22,16 +22,8 @@ from Map import Map
 from V3 import V3
 from Building import Streets, Neighborhoods
 
+# Load Plugin decorations and register them
 from decorations import *
-
-# import glob
-# import importlib.util
-# modules = glob.glob('decorations/*.py')
-# for i, module in enumerate(modules):
-#     spec = importlib.util.spec_from_file_location("decoration" + str(i), module)
-#     foo = importlib.util.module_from_spec(spec)
-#     spec.
-
 
 helpers.connect()
 
@@ -116,8 +108,9 @@ def city(size=0, layout="castle", farms=False, buildings=False, streets=True, ca
     return Temp(s=s, f=f, n=n, c=c, z=z)
 
 
-def test_c():
-    c = Castle(False, Map(p1=V3(0, -1, 90), p2=V3(59, -1, 149)))
+def test_c(size=0):
+    # c = Castle(False, Map(p1=V3(0-size, -1, 90-size), p2=V3(60+size, -1, 150+size)))
+    c = Castle(False, Map(p1=V3(0-size, -1, 90-size), p2=V3(60+size, -1, 150+size), window_style="open_slit_and_above"))
     print("Building Castle")
     c.build()
     return c
@@ -125,7 +118,8 @@ def test_c():
 
 if __name__ == "__main__":
     import time
-    c = city(80)
+#    c = city(80)
+    c = test_c(10)
 
     time.sleep(10)
     c.clear()

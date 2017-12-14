@@ -34,11 +34,19 @@ class MCShape(object):
             # TODO: Temp holder:
             self.vertices = [p1, p1, vg.up(p1, h), vg.up(p1, h)]  # points straight up
 
+            self.inside_vector = vg.inside_vector(p1=p1, center=options.center)
+            self.outside_vector = self.inside_vector * -1
+
         elif len(vertices) == 2:
             # If two points are given, assume it's for the bottom line, then draw that as a wall
             # TODO: Add width for the wall - how to add end lines to that?
+
             options.p1 = p1 = vertices[0]
             options.p2 = p2 = vertices[1]
+
+            self.inside_vector = vg.inside_vector(p1=p1, center=options.center, p2=p2)
+            self.outside_vector = self.inside_vector * -1
+
             h = options.height or 5
             if h > 1:
                 self.vertices = vertices_with_up = [p1, p2, vg.up(p2, h), vg.up(p1, h)]  # points straight up
@@ -54,6 +62,7 @@ class MCShape(object):
                                                                                                 p2.y, p2.z)
                 self.left_line = self.points[0]
                 self.right_line = self.points[-1]
+
             self.cardinality = vg.cardinality(p1, p2)
         else:
             # It's a non-y-rectangular-shaped polygon, so use a different getFace builder function
@@ -69,7 +78,7 @@ class MCShape(object):
     def draw(self):
         blocks_to_not_draw = []
         for feature in self.features:
-            blocks_to_not_draw += feature.blocks_to_not_draw;
+            blocks_to_not_draw += feature.blocks_to_not_draw
 
         helpers.draw_point_list(self.points, self.material, options=Map(blocks_to_not_draw=blocks_to_not_draw))
         # helpers.create_blocks_from_pointlist(self.points, self.material, blocks_to_not_draw=blocks_to_not_draw)
@@ -116,8 +125,6 @@ class MCShape(object):
             self.right_line = vg.points_along_poly(self.points, Map(side="right_x"))
         return self.right_line
 
-    # TODO: Inside and outside point?
-
     def info(self):
         stro = []
         stro.append(" - MCShape: " + self.kind + " with " + str(self.vertices) + " points, height " + str(
@@ -128,4 +135,8 @@ class MCShape(object):
     def decorate(self, kind, options=Map()):
         for d in DECORATIONS_LIBRARY:
             if d["kind"] == kind:
-                return d["function"](self, options)
+                try:
+                    return d["function"](self, options)
+                except ValueError:
+                    print("PLUGIN Decorator error - ", d["function"])
+                    return self
