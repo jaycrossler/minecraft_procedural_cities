@@ -5,7 +5,7 @@ import mcpi.block as block
 import VoxelGraphics as vg
 from V3 import V3
 from Feature import Feature
-from Texture1D import COMMON_TEXTURES
+from Texture1D import COLOR_MAPS
 
 import sys
 file_name = sys.argv[0][::-1][3:][::-1]
@@ -17,7 +17,7 @@ materials = []
 def init():
     variables.append(Map(var="windows", choices=["window_line", "window_line_double", "window_slits"]))
     # variables.append(Map(var="wall_type", choices=["building_inner", "building_outer", "castle_wall"]))
-    # materials.extend([Map(name="wall", material=COMMON_TEXTURES.StoneWall)])
+    # materials.extend([Map(name="wall", material=COMMON_TEXTURES.OldStoneWall)])
     # materials.extend([Map(name="wall_base", material=(4, 0))])
     # materials.extend([Map(name="wall_edges", material=(1, 0))])
 

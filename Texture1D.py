@@ -1,7 +1,8 @@
 from numpy import random as rnd
 from Map import Map
-import Blocks
+from Blocks import closest_by_color, color_as_rgb
 import math
+
 
 # Example test steps:
 # import Texture1D;
@@ -32,7 +33,7 @@ class Texture1D(object):
             # TODO: Implement so xyz can be passed in
             self.gradient_type = options.gradient_type or "linear"
             self.colors_names = options.colors or rand_hex_color(2)
-            self.colors = [Blocks.color_as_rgb(color_name) for color_name in self.colors_names]
+            self.colors = [color_as_rgb(color_name) for color_name in self.colors_names]
         else:
             self.material = options.color or options.material or rand_hex_color(1)
 
@@ -44,8 +45,8 @@ class Texture1D(object):
                     hex_colors = hex_colors["hex"]
 
                 step = options.step or 0
-                if step > len(hex_colors)-1:
-                    step = len(hex_colors)-1
+                if step > len(hex_colors) - 1:
+                    step = len(hex_colors) - 1
                 elif step < 0:
                     step = 0
                 return hex_colors[step]
@@ -54,7 +55,7 @@ class Texture1D(object):
 
     def block(self, options=Map()):
         color = self.color(options)
-        return Blocks.closest_by_color(color, self.options + options)
+        return closest_by_color(color, self.options + options)
 
     def get_calculated_steps(self, options=Map()):
         steps = options.steps or self.steps
@@ -80,6 +81,7 @@ class Texture1D(object):
             color = rgb_to_hex(block["main_color"])
             print(i, "of", steps, color, block)
 
+
 # ==========================================================
 # Many functions from https://bsou.io/posts/color-gradients-with-python
 
@@ -90,7 +92,7 @@ def hex_to_rgb(color):
 
     try:
         # out = [int(hex[i:i+2], 16) for i in range(1,6,2)]
-        out_rgb = Blocks.color_as_rgb(color)
+        out_rgb = color_as_rgb(color)
         out = [out_rgb[0], out_rgb[1], out_rgb[2]]
 
     except ValueError:
@@ -177,7 +179,7 @@ def polylinear_gradient(colors, n):
         out = [colors[0], colors[-1]]
     elif n < color_count:
         out = [colors[0]]
-        colors_per_grad = float(len(colors) - 1) / float(n-1)
+        colors_per_grad = float(len(colors) - 1) / float(n - 1)
 
         for i in range(1, n):
             out.append(colors[round(i * colors_per_grad)])
@@ -190,8 +192,8 @@ def polylinear_gradient(colors, n):
         extended = [colors[0]]
         colors_per_grad = float(n) / float(len(colors))
 
-        for i in range(color_count-1):
-            span = linear_gradient(colors[i], colors[i + 1], int(math.ceil(colors_per_grad))+1)
+        for i in range(color_count - 1):
+            span = linear_gradient(colors[i], colors[i + 1], int(math.ceil(colors_per_grad)) + 1)
             extended.extend(span['hex'][1:])
 
         out = polylinear_gradient(extended, n)
@@ -263,8 +265,19 @@ def bezier_gradient(colors, n_out=100):
     }
 
 
+COLOR_MAPS = Map()
 COMMON_TEXTURES = Map()
-COMMON_TEXTURES.RainbowPrime = Map(colors=["#FF0000", "#FF7F00", "#FFFF00", "#00FF00", "#0000FF", "#4B0082", "#9400D3"])
-COMMON_TEXTURES.Rainbow = Map(colors=[(53, 0, 0), (175, 0, 54), (255, 120, 7), (92, 92, 0), (29, 43, 0), (0, 50, 73),
-                           (0, 15, 73), (58, 0, 103)])
-COMMON_TEXTURES.StoneWall = Map(type="random", colors=[4, 48, (97,1)], frequencies=[.98, .1, .1])
+
+
+def init():
+    COLOR_MAPS.RainbowPrime = ["#FF0000", "#FF7F00", "#FFFF00", "#00FF00", "#0000FF", "#4B0082", "#9400D3"]
+    COLOR_MAPS.Rainbow = [(53, 0, 0), (175, 0, 54), (255, 120, 7), (92, 92, 0), (29, 43, 0), (0, 50, 73),
+                          (0, 15, 73), (58, 0, 103)]
+
+    COMMON_TEXTURES.RainbowGlass = Texture1D(
+        Map(gradient=True, gradient_type="linear", onlyBlock=True, name_contains="Glass",
+            colors=COMMON_TEXTURES.Rainbow, axis="y"))
+    COMMON_TEXTURES.OldStoneWall = Texture1D(Map(blocks=[4, 48, (97, 1)], chances=[.95, .04, .01], random=True))
+
+
+init()

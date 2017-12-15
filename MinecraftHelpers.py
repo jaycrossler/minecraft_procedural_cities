@@ -6,6 +6,8 @@ from mcpi.minecraft import Minecraft
 import mcpi.block as block
 import math
 import time
+from libraries import webcolors
+import re
 import numpy as np
 from Map import Map
 from V3 import V3
@@ -92,27 +94,6 @@ def get_height(pos):
     except mcpi.connection.RequestError:
         print("CONNECTION ERROR #2 - Can't get Height at tile")
     return out
-
-
-# def hex_to_rgb(value):
-#     value = value.lstrip('#')
-#     lv = len(value)
-#     try:
-#         out = tuple(int(value[i:i+lv/3], 16) for i in range(0, lv, lv/3))
-#         return out
-#     except TypeError:
-#         print("Error turning hex to rgb with", value)
-#     #hex_to_rgb("FFFFFF") => (255, 255, 255)
-#
-# def rgb_to_hex(rgb):
-#     return '%02x%02x%02x' % rgb
-#     #rgb_to_hex((255, 255, 255)) => "FFFFFF"
-
-
-def color_distance(c1, c2):
-    (r1, g1, b1) = c1
-    (r2, g2, b2) = c2
-    return math.sqrt((r1 - r2) ** 2 + (g1 - g2) ** 2 + (b1 - b2) ** 2)
 
 
 def biome_at(pos):
@@ -229,8 +210,15 @@ def find_block_info(material, data=None, options=Map()):
         else:  # Random
             material = np.random.choice(material)
     elif type(material) == Texture1D:
-        material.color()
-
+        material = material.color()
+    elif type(material) == tuple:
+        if len(material) == 2:
+            data = material[1]
+            material = material[0]
+        elif len(material) == 3:
+            block_color = Blocks.closest_by_color(material)
+            data = block_color["id"]
+            material = block_color["data"]
     if type(material) == dict:
         block_id = material["id"]
         data = material["data"] or data or None
@@ -451,7 +439,7 @@ def test_pyramid(thickness=1):
 
 def test_shapes(line=True, buff=13, texture_base=89, texture_main="Glass", info=False):
     texture = Texture1D.Texture1D(Map(gradient=True, gradient_type="linear", onlyBlock=True, name_contains=texture_main,
-                                      colors=Texture1D.COMMON_TEXTURES.Rainbow.colors, axis="y"))
+                                      colors=Texture1D.COLOR_MAPS.Rainbow.colors, axis="y"))
 
     def draw(func, position, radius=5, height=8, material=texture_base, info=False):
         points = func(V3(position.x, position.y, position.z), radius, .7, height=height)

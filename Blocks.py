@@ -3,10 +3,12 @@
 ##############################################################################################################
 
 import math
-import MinecraftHelpers as helpers
 import re
 from Map import Map
 from libraries import webcolors
+import sys
+# this is a pointer to the module object instance itself.
+this = sys.modules[__name__]
 
 
 def block_by_id(block_id, data=0):
@@ -37,7 +39,6 @@ def match(name, only_blocks=True):
     if len(b) > 0:
         return b[0]
     else:
-        #TODO: Should it return a "like" version if no matches?
         print("Error - blocks.match(\"" + str(name) + "\") - unrecognized block name, returning air")
         return block_library[0]
 
@@ -89,6 +90,12 @@ def color_as_rgb(color):
     return target_color
 
 
+def color_distance(c1, c2):
+    (r1, g1, b1) = c1
+    (r2, g2, b2) = c2
+    return math.sqrt((r1 - r2) ** 2 + (g1 - g2) ** 2 + (b1 - b2) ** 2)
+
+
 def closest_by_color(color, options=Map()):
     if type(color) == str:
         found = re.search(r'^#(?:[0-9a-fA-F]{3}){1,2}$', color)
@@ -116,7 +123,7 @@ def closest_by_color(color, options=Map()):
                 continue
 
         if "main_color" in b:
-            dist = helpers.color_distance(target_color, b["main_color"])
+            dist = color_distance(target_color, b["main_color"])
             if dist < closest_num:
                 closest_num = dist
                 closest = b
@@ -871,3 +878,9 @@ block_library = [{'name': 'Air', 'id': 0, 'data': 0, 'kind': 'Block', 'id_in_ima
  {'name': 'Ward Disc', 'id': 2265, 'data': 0, 'id_in_image': 285, 'main_color': (67, 67, 67), 'second_color': (30, 30, 30), 'third_color': (142, 198, 0)},
  {'name': '11 Disc', 'id': 2266, 'data': 0, 'id_in_image': 312, 'main_color': (36, 36, 36), 'second_color': (64, 64, 64), 'third_color': (9, 9, 9)},
  {'name': 'Wait Disc', 'id': 2267, 'data': 0, 'id_in_image': 339, 'main_color': (67, 67, 67), 'second_color': (29, 29, 30), 'third_color': (129, 169, 226)}]
+
+
+# Turn all Blocks into shortcuts, so Blocks.STONE = (1,0)
+for b in block_library:
+    name = b["name"].replace(" ", "")
+    setattr(this, name.upper(),  (b["id"], b["data"]))

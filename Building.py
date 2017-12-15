@@ -241,14 +241,6 @@ def random_options(options=Map()):
                 if var_name not in options:
                     options[var_name] = np.random.choice(choices)
 
-    # if not options.windows:
-    #     options.windows = np.random.choice(["window_line_double", "window_line", "window_slits"])
-    # if not options.window_style:
-    #     options.windows = np.random.choice(["open_slit_and_above", "glass"])
-    # if not options.roof:
-    #     options.roof = np.random.choice(["pointy", "pointy_lines", "battlement", False])
-    # if not options.moat:
-    #     options.moat = np.random.choice(["clear", "icy", "weeds"])
 
     if not options.material:
         options.color_scheme = r = np.random.choice(["gold_white", "grey_iron", "grey_stone", "blue_white"])
@@ -267,16 +259,7 @@ def random_options(options=Map()):
         elif r == "brown":
             options.material = block.SAND.id
             options.material_edges = block.SANDSTONE.id
-    # if not options.roof_pointy_height:
-    #     options.roof_pointy_height = round(np.random.random() * (options.radius or 5) * 3)
-    # if not options.roof_battlement_height:
-    #     options.roof_battlement_height = np.random.choice([1, 2, 3])  # TODO: Have it go straight up
-    # if not options.roof_battlement_space:
-    #     options.roof_battlement_space = np.random.choice([1, 2, 3])
-    # if not options.door_inside:
-    #     options.door_inside = np.random.choice([True, False])
-    # if not options.outside:
-    #     options.outside = np.random.choice(["flowers", "trees", "grass", "fence", False])
+
 
     return options
 
