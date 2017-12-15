@@ -12,14 +12,24 @@ this = sys.modules[__name__]
 
 
 def block_by_id(block_id, data=0):
+
+    if type(block_id) == tuple and len(block_id) == 2:
+        data = block_id[1]
+        block_id = block_id[0]
+
     b = [x for x in block_library if x["id"] == block_id and x["data"] == data]
     if len(b) == 0:
         b = [x for x in block_library if x["id"] == block_id]
 
-    return b or [{"name": "Unknown", "id": 0, "data": 0}]
+    return b[0] if b else {"name": "Unknown", "id": 0, "data": 0}
 
 
 def name_by_id(block_id, data=0):
+
+    if type(block_id) == tuple and len(block_id) == 2:
+        data = block_id[1]
+        block_id = block_id[0]
+
     b = [x for x in block_library if x["id"] == block_id and x["data"] == data]
     if len(b) == 0:
         b = [x for x in block_library if x["id"] == block_id]

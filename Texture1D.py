@@ -1,6 +1,6 @@
-from numpy import random as rnd
+from numpy import cumsum, random as rnd
 from Map import Map
-from Blocks import closest_by_color, color_as_rgb
+from Blocks import closest_by_color, color_as_rgb, block_by_id
 import math
 
 
@@ -23,6 +23,8 @@ class Texture1D(object):
         self.colors = None
         self.material = None
         self.steps = None
+        self.blocks = None
+        self.chances = None
 
         self.set_options(options)
 
@@ -34,28 +36,56 @@ class Texture1D(object):
             self.gradient_type = options.gradient_type or "linear"
             self.colors_names = options.colors or rand_hex_color(2)
             self.colors = [color_as_rgb(color_name) for color_name in self.colors_names]
+        elif options.blocks:
+            self.blocks = options.blocks
+            if options.chances:
+                self.chances = options.chances
         else:
             self.material = options.color or options.material or rand_hex_color(1)
 
     def color(self, options=Map()):
         if self.options.gradient:
             hex_colors = self.get_calculated_steps(options)
-            if 'step' in options:
-                if "hex" in hex_colors:
-                    hex_colors = hex_colors["hex"]
+            step = options.step or 0
 
-                step = options.step or 0
-                if step > len(hex_colors) - 1:
-                    step = len(hex_colors) - 1
-                elif step < 0:
-                    step = 0
-                return hex_colors[step]
+            if "hex" in hex_colors:
+                hex_colors = hex_colors["hex"]
+
+            if step > len(hex_colors) - 1:
+                step = len(hex_colors) - 1
+            elif step < 0:
+                step = 0
+            return hex_colors[step]
+
         else:
-            return self.material
+            if self.blocks and self.chances:
+                block = weighted_choice(self.chances, self.blocks)
+            elif self.blocks:
+                block = rnd.choice(self.blocks)
+            else:
+                block = self.material
+
+            block_obj = block_by_id(block)
+            return block_obj["main_color"]
 
     def block(self, options=Map()):
-        color = self.color(options)
-        return closest_by_color(color, self.options + options)
+        if self.options.gradient:
+            color = self.color(options)
+            if type(color) == tuple and len(color) == 3:
+                block_obj = closest_by_color(color, self.options + options)
+            else:
+                print("BLOCK ERROR - COLOR not recognized")
+                block_obj = block_by_id(0)
+        else:
+            if self.blocks and self.chances:
+                block = weighted_choice(self.chances, self.blocks)
+            elif self.blocks:
+                block = rnd.choice(self.blocks)
+            else:
+                block = self.material
+            block_obj = block_by_id(block)
+
+        return block_obj
 
     def get_calculated_steps(self, options=Map()):
         steps = options.steps or self.steps
@@ -265,6 +295,14 @@ def bezier_gradient(colors, n_out=100):
     }
 
 
+def weighted_choice(weights, objects):
+    """Return a random item from objects, with the weighting defined by weights
+    (which must sum to 1)."""
+    cs = cumsum(weights)  # An array of the weights, cumulatively summed.
+    idx = sum(cs < rnd.rand())  # Find the index of the first weight over a random value.
+    return objects[idx]
+
+
 COLOR_MAPS = Map()
 COMMON_TEXTURES = Map()
 
@@ -277,7 +315,7 @@ def init():
     COMMON_TEXTURES.RainbowGlass = Texture1D(
         Map(gradient=True, gradient_type="linear", onlyBlock=True, name_contains="Glass",
             colors=COMMON_TEXTURES.Rainbow, axis="y"))
-    COMMON_TEXTURES.OldStoneWall = Texture1D(Map(blocks=[4, 48, (97, 1)], chances=[.95, .04, .01], random=True))
+    COMMON_TEXTURES.OldStoneWall = Texture1D(Map(blocks=[4, 48, (97, 1)], chances=[.90, .08, .02], random=True))
 
 
 init()

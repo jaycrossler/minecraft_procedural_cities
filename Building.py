@@ -241,7 +241,6 @@ def random_options(options=Map()):
                 if var_name not in options:
                     options[var_name] = np.random.choice(choices)
 
-
     if not options.material:
         options.color_scheme = r = np.random.choice(["gold_white", "grey_iron", "grey_stone", "blue_white"])
         if r == "gold_white":
@@ -260,6 +259,4 @@ def random_options(options=Map()):
             options.material = block.SAND.id
             options.material_edges = block.SANDSTONE.id
 
-
     return options
-

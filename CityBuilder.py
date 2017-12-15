@@ -117,9 +117,17 @@ def test_c(size=0):
 
 
 if __name__ == "__main__":
-    import time
-#    c = city(80)
-    c = test_c(10)
+    #     import time
+    #     c = city(80)
+    #     c = test_c(10)
+    #
+    #     time.sleep(10)
+    #     c.clear()
 
-    time.sleep(10)
-    c.clear()
+    t = Texture1D.COMMON_TEXTURES.OldStoneWall
+    print(t.block())
+    print(t.block())
+    print(t.block())
+    print(t.block())
+    print(t.block())
+
