@@ -54,7 +54,7 @@ def point_along_circle(center, radius, points, num, options=Map()):
     #   set r=8 and multiply so that the radius entered is 11.3
     #   also rotate everything by 1/8th to that sides aren't diagonal
     if options.align_to_cells:
-        radius *= 1.4125;
+        radius *= 1.4125
         if not options.rotation:
             options.rotation = 1 / (points * 2)  # TODO: Verify this works for hexagons
 
@@ -560,7 +560,7 @@ def ninths(p1, p2, preset_w, preset_z, double=True):
     return out
 
 
-def partition(p1, p2, min_x=10, min_z=10, rate=1.01, rate_dec=.01, iterations=0, ignore_small=False):
+def partition(p1, p2, min_x=15, min_z=15, rate=1.01, rate_dec=.01, iterations=0, ignore_small=False):
     # Take a square, and recursively break in down until it's around min_x, min_z
     p1, p2 = min_max_points(p1, p2)
 
@@ -1155,6 +1155,10 @@ def traverse(a, b):
 
         if tMaxX == inf and tMaxY == inf and tMaxZ == inf:
             return
+
+
+def get_line_from_points(p1, p2):
+    return getLine(p1.x, p1.y, p1.z, p2.x, p2.y, p2.z)
 
 
 # Brasenham's algorithm

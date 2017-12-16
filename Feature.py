@@ -41,9 +41,21 @@ class Feature(object):
                 self.blocks.append(Map(pos=pos, id=block.GLASS_PANE.id, data=1))
 
         elif kind == "bed":
-            self.blocks.append(Map(pos=pos, id=block.BED.id))
+            self.blocks.append(Map(pos=pos, id=block.BED.id))  # TODO: Add 2 beds or 4 beds with spacing
+
         elif kind == "spacing":
-            self.blocks.append(Map(pos=pos, id=block.AIR.id))
+            self.add_blocks(pos, block.AIR.id)
+        elif kind == "flowers":
+            self.add_blocks(pos, options.material)
+        elif kind == "fence":
+            self.add_blocks(pos, options.material)
+
+    def add_blocks(self, blocks, material):
+        if type(blocks) is list:
+            for b in blocks:
+                self.blocks.append(Map(pos=b, id=material))
+        else:
+            self.blocks.append(Map(pos=blocks, id=material))
 
     def draw(self):
         for item in self.blocks:
@@ -53,5 +65,12 @@ class Feature(object):
         for item in self.blocks:
             helpers.create_block(item.pos, block.AIR.id)
 
-    def info(self):
-        return "Feature: " + self.kind + " with " + str(len(self.blocks)) + " blocks"
+    def __str__(self):
+        return "-- Feature of kind " + str(self.kind) + " with " + str(len(self.blocks)) + " blocks"
+
+    def __repr__(self):
+        sb = []
+        for key in self.__dict__:
+            sb.append("{key}='{value}'".format(key=key, value=self.__dict__[key]))
+
+        return ', '.join(sb)

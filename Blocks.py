@@ -40,10 +40,10 @@ def name_by_id(block_id, data=0):
     return out
 
 
-def match(name, only_blocks=True):
+def match(name, only_blocks="Block"):
     # Return first item matching the name entered
     if only_blocks:
-        b = [x for x in block_library if (x["name"].lower() == name.lower()) and ("kind" in x) and (x["kind"] == "Block")]
+        b = [x for x in block_library if (x["name"].lower() == name.lower()) and ("kind" in x) and (x["kind"] == only_blocks)]
     else:
         b = [x for x in block_library if x["name"].lower() == name.lower()]
     if len(b) > 0:
@@ -53,16 +53,25 @@ def match(name, only_blocks=True):
         return block_library[0]
 
 
-def like(name, only_blocks=True):
+def like(name, only_blocks="Block"):
     # Returns all items with names with substrings matching
     if only_blocks:
-        b = [x for x in block_library if (x["name"].lower().find(name.lower()) > -1) and ("kind" in x) and (x["kind"] == "Block")]
+        b = [x for x in block_library if (x["name"].lower().find(name.lower()) > -1) and ("kind" in x) and (x["kind"] == only_blocks)]
     else:
         b = [x for x in block_library if x["name"].lower().find(name.lower()) > -1]
-    if len(b)>0:
+    if len(b) > 0:
         return b
     else:
         print("Error - blocks.like(\"" + str(name) + "\") - unrecognized block name, returning air")
+        return [block_library[0]]
+
+
+def kind(kind="Flower"):
+    b = [x for x in block_library if ("kind" in x) and (x["kind"].lower().find(kind.lower()) > -1)]
+    if len(b) > 0:
+        return b
+    else:
+        print("Error - blocks.kind(\"" + str(name) + "\") - unrecognized block name, returning air")
         return [block_library[0]]
 
 
@@ -191,12 +200,12 @@ block_library = [{'name': 'Air', 'id': 0, 'data': 0, 'kind': 'Block', 'id_in_ima
  {'name': 'Jungle Wood Plank', 'id': 5, 'data': 3, 'kind': 'Block', 'id_in_image': 187, 'main_color': (73, 52, 36), 'second_color': (109, 78, 54), 'third_color': (50, 34, 23)},
  {'name': 'Acacia Wood Plank', 'id': 5, 'data': 4, 'kind': 'Block', 'id_in_image': 214, 'main_color': (89, 48, 26), 'second_color': (168, 91, 50), 'third_color': (116, 64, 36)},
  {'name': 'Dark Oak Wood Plank', 'id': 5, 'data': 5, 'kind': 'Block', 'id_in_image': 241, 'main_color': (29, 18, 8), 'second_color': (41, 26, 12), 'third_color': (42, 27, 12)},
- {'name': 'Oak Sapling', 'id': 6, 'data': 0, 'id_in_image': 538, 'main_color': (0, 100, 0), 'second_color': (148, 100, 40), 'third_color': (73, 204, 37)},
- {'name': 'Spruce Sapling', 'id': 6, 'data': 1, 'id_in_image': 565, 'main_color': (35, 33, 18), 'second_color': (57, 90, 57), 'third_color': (80, 54, 26)},
- {'name': 'Birch Sapling', 'id': 6, 'data': 2, 'id_in_image': 592, 'main_color': (81, 116, 45), 'second_color': (207, 227, 186), 'third_color': (100, 141, 56)},
- {'name': 'Jungle Sapling', 'id': 6, 'data': 3, 'id_in_image': 619, 'main_color': (52, 57, 11), 'second_color': (42, 103, 19), 'third_color': (55, 128, 32)},
- {'name': 'Acacia Sapling', 'id': 6, 'data': 4, 'id_in_image': 646, 'main_color': (114, 85, 10), 'second_color': (121, 146, 30), 'third_color': (103, 126, 23)},
- {'name': 'Dark Oak Sapling', 'id': 6, 'data': 5, 'id_in_image': 673, 'main_color': (19, 85, 17), 'second_color': (84, 57, 25), 'third_color': (106, 78, 42)},
+ {'name': 'Oak Sapling', 'id': 6, 'data': 0, 'kind': 'Sapling', 'id_in_image': 538, 'main_color': (0, 100, 0), 'second_color': (148, 100, 40), 'third_color': (73, 204, 37)},
+ {'name': 'Spruce Sapling', 'id': 6, 'data': 1, 'kind': 'Sapling', 'id_in_image': 565, 'main_color': (35, 33, 18), 'second_color': (57, 90, 57), 'third_color': (80, 54, 26)},
+ {'name': 'Birch Sapling', 'id': 6, 'data': 2, 'kind': 'Sapling', 'id_in_image': 592, 'main_color': (81, 116, 45), 'second_color': (207, 227, 186), 'third_color': (100, 141, 56)},
+ {'name': 'Jungle Sapling', 'id': 6, 'data': 3, 'kind': 'Sapling', 'id_in_image': 619, 'main_color': (52, 57, 11), 'second_color': (42, 103, 19), 'third_color': (55, 128, 32)},
+ {'name': 'Acacia Sapling', 'id': 6, 'data': 4, 'kind': 'Sapling', 'id_in_image': 646, 'main_color': (114, 85, 10), 'second_color': (121, 146, 30), 'third_color': (103, 126, 23)},
+ {'name': 'Dark Oak Sapling', 'id': 6, 'data': 5, 'kind': 'Sapling', 'id_in_image': 673, 'main_color': (19, 85, 17), 'second_color': (84, 57, 25), 'third_color': (106, 78, 42)},
  {'name': 'Bedrock', 'id': 7, 'data': 0, 'kind': 'Block', 'id_in_image': 685, 'main_color': (83, 83, 83), 'second_color': (31, 31, 31), 'third_color': (41, 41, 41)},
  {'name': 'Flowing Water', 'id': 8, 'data': 0, 'kind': 'Block', 'id_in_image': 696, 'main_color': (17, 38, 106), 'second_color': (38, 87, 238), 'third_color': (21, 55, 160)},
  {'name': 'Still Water', 'id': 9, 'data': 0, 'kind': 'Block', 'id_in_image': 188, 'main_color': (17, 38, 106), 'second_color': (38, 87, 238), 'third_color': (21, 55, 160)},
@@ -230,9 +239,9 @@ block_library = [{'name': 'Air', 'id': 0, 'data': 0, 'kind': 'Block', 'id_in_ima
  {'name': 'Powered Rail', 'id': 27, 'data': 0, 'kind': 'Block', 'id_in_image': 469, 'main_color': (164, 164, 164), 'second_color': (104, 104, 104), 'third_color': (212, 159, 36)},
  {'name': 'Detector Rail', 'id': 28, 'data': 0, 'kind': 'Block', 'id_in_image': 99, 'main_color': (165, 164, 164), 'second_color': (105, 104, 104), 'third_color': (95, 76, 45)},
  {'name': 'Sticky Piston', 'id': 29, 'data': 0, 'kind': 'Block', 'id_in_image': 396, 'main_color': (41, 41, 39), 'second_color': (86, 86, 83), 'third_color': (103, 86, 51)},
- {'name': 'Cobweb', 'id': 30, 'data': 0, 'kind': 'Block', 'id_in_image': 496, 'main_color': (206, 206, 206), 'second_color': (221, 221, 221), 'third_color': (237, 237, 237)},
+ {'name': 'Cobweb', 'id': 30, 'data': 0, 'id_in_image': 496, 'main_color': (206, 206, 206), 'second_color': (221, 221, 221), 'third_color': (237, 237, 237)},
  {'name': 'Dead Shrub', 'id': 31, 'data': 0, 'kind': 'Block', 'id_in_image': 73, 'main_color': (148, 100, 40), 'second_color': (91, 52, 6), 'third_color': (0, 0, 0)},
- {'name': 'Grass', 'id': 31, 'data': 1, 'kind': 'Block', 'id_in_image': 100, 'main_color': (53, 139, 40), 'second_color': (41, 108, 31), 'third_color': (46, 119, 34)},
+ {'name': 'Grass', 'id': 31, 'data': 1, 'kind': 'Flower', 'id_in_image': 100, 'main_color': (53, 139, 40), 'second_color': (41, 108, 31), 'third_color': (46, 119, 34)},
  {'name': 'Fern', 'id': 31, 'data': 2, 'kind': 'Block', 'id_in_image': 127, 'main_color': (44, 130, 43), 'second_color': (33, 98, 33), 'third_color': (63, 187, 62)},
  {'name': 'Dead Shrub', 'id': 32, 'data': 0, 'kind': 'Block', 'id_in_image': 424, 'main_color': (148, 100, 40), 'second_color': (91, 52, 6), 'third_color': (0, 0, 0)},
  {'name': 'Piston', 'id': 33, 'data': 0, 'kind': 'Block', 'id_in_image': 521, 'main_color': (41, 41, 39), 'second_color': (84, 84, 84), 'third_color': (106, 85, 51)},
@@ -253,18 +262,18 @@ block_library = [{'name': 'Air', 'id': 0, 'data': 0, 'kind': 'Block', 'id_in_ima
  {'name': 'Green Wool', 'id': 35, 'data': 13, 'kind': 'Block', 'id_in_image': 506, 'main_color': (39, 55, 17), 'second_color': (27, 38, 12), 'third_color': (54, 75, 23)},
  {'name': 'Red Wool', 'id': 35, 'data': 14, 'kind': 'Block', 'id_in_image': 533, 'main_color': (82, 22, 20), 'second_color': (116, 31, 28), 'third_color': (142, 39, 35)},
  {'name': 'Black Wool', 'id': 35, 'data': 15, 'kind': 'Block', 'id_in_image': 540, 'main_color': (14, 11, 11), 'second_color': (23, 20, 20), 'third_color': (32, 28, 28)},
- {'name': 'Dandelion', 'id': 37, 'data': 0, 'id_in_image': 570, 'main_color': (226, 233, 2), 'second_color': (22, 135, 0), 'third_color': (16, 99, 0)},
- {'name': 'Poppy', 'id': 38, 'data': 0, 'id_in_image': 581, 'main_color': (165, 3, 8), 'second_color': (17, 110, 0), 'third_color': (22, 135, 0)},
- {'name': 'Blue Orchid', 'id': 38, 'data': 1, 'id_in_image': 582, 'main_color': (36, 166, 237), 'second_color': (44, 137, 5), 'third_color': (28, 118, 11)},
- {'name': 'Allium', 'id': 38, 'data': 2, 'id_in_image': 583, 'main_color': (185, 104, 251), 'second_color': (214, 169, 251), 'third_color': (106, 176, 72)},
- {'name': 'Azure Bluet', 'id': 38, 'data': 3, 'id_in_image': 584, 'main_color': (222, 228, 236), 'second_color': (81, 142, 47), 'third_color': (242, 242, 156)},
- {'name': 'Red Tulip', 'id': 38, 'data': 4, 'id_in_image': 585, 'main_color': (84, 153, 50), 'second_color': (65, 139, 28), 'third_color': (96, 177, 56)},
- {'name': 'Orange Tulip', 'id': 38, 'data': 5, 'id_in_image': 586, 'main_color': (83, 156, 46), 'second_color': (54, 126, 18), 'third_color': (69, 138, 35)},
- {'name': 'White Tulip', 'id': 38, 'data': 6, 'id_in_image': 587, 'main_color': (74, 146, 39), 'second_color': (49, 121, 13), 'third_color': (230, 230, 230)},
- {'name': 'Pink Tulip', 'id': 38, 'data': 7, 'id_in_image': 588, 'main_color': (79, 149, 45), 'second_color': (56, 125, 21), 'third_color': (226, 178, 226)},
- {'name': 'Oxeye Daisy', 'id': 38, 'data': 8, 'id_in_image': 22, 'main_color': (238, 238, 238), 'second_color': (80, 148, 47), 'third_color': (53, 119, 20)},
- {'name': 'Brown Mushroom', 'id': 39, 'data': 0, 'id_in_image': 212, 'main_color': (112, 87, 70), 'second_color': (145, 109, 85), 'third_color': (204, 153, 120)},
- {'name': 'Red Mushroom', 'id': 40, 'data': 0, 'id_in_image': 622, 'main_color': (227, 27, 29), 'second_color': (154, 23, 28), 'third_color': (218, 218, 218)},
+ {'name': 'Dandelion', 'id': 37, 'data': 0, 'kind': 'Flower', 'id_in_image': 570, 'main_color': (226, 233, 2), 'second_color': (22, 135, 0), 'third_color': (16, 99, 0)},
+ {'name': 'Poppy', 'id': 38, 'data': 0, 'kind': 'Flower', 'id_in_image': 581, 'main_color': (165, 3, 8), 'second_color': (17, 110, 0), 'third_color': (22, 135, 0)},
+ {'name': 'Blue Orchid', 'id': 38, 'data': 1, 'kind': 'Flower', 'id_in_image': 582, 'main_color': (36, 166, 237), 'second_color': (44, 137, 5), 'third_color': (28, 118, 11)},
+ {'name': 'Allium', 'id': 38, 'data': 2, 'kind': 'Flower', 'id_in_image': 583, 'main_color': (185, 104, 251), 'second_color': (214, 169, 251), 'third_color': (106, 176, 72)},
+ {'name': 'Azure Bluet', 'id': 38, 'data': 3, 'kind': 'Flower', 'id_in_image': 584, 'main_color': (222, 228, 236), 'second_color': (81, 142, 47), 'third_color': (242, 242, 156)},
+ {'name': 'Red Tulip', 'id': 38, 'data': 4, 'kind': 'Flower', 'id_in_image': 585, 'main_color': (84, 153, 50), 'second_color': (65, 139, 28), 'third_color': (96, 177, 56)},
+ {'name': 'Orange Tulip', 'id': 38, 'data': 5, 'kind': 'Flower', 'id_in_image': 586, 'main_color': (83, 156, 46), 'second_color': (54, 126, 18), 'third_color': (69, 138, 35)},
+ {'name': 'White Tulip', 'id': 38, 'data': 6, 'kind': 'Flower', 'id_in_image': 587, 'main_color': (74, 146, 39), 'second_color': (49, 121, 13), 'third_color': (230, 230, 230)},
+ {'name': 'Pink Tulip', 'id': 38, 'data': 7, 'kind': 'Flower', 'id_in_image': 588, 'main_color': (79, 149, 45), 'second_color': (56, 125, 21), 'third_color': (226, 178, 226)},
+ {'name': 'Oxeye Daisy', 'id': 38, 'data': 8, 'kind': 'Flower', 'id_in_image': 22, 'main_color': (238, 238, 238), 'second_color': (80, 148, 47), 'third_color': (53, 119, 20)},
+ {'name': 'Brown Mushroom', 'id': 39, 'data': 0, 'kind': 'Flower', 'id_in_image': 212, 'main_color': (112, 87, 70), 'second_color': (145, 109, 85), 'third_color': (204, 153, 120)},
+ {'name': 'Red Mushroom', 'id': 40, 'data': 0, 'kind': 'Flower', 'id_in_image': 622, 'main_color': (227, 27, 29), 'second_color': (154, 23, 28), 'third_color': (218, 218, 218)},
  {'name': 'Gold Block', 'id': 41, 'data': 0, 'kind': 'Block', 'id_in_image': 633, 'main_color': (171, 161, 50), 'second_color': (252, 246, 85), 'third_color': (129, 123, 40)},
  {'name': 'Iron Block', 'id': 42, 'data': 0, 'kind': 'Block', 'id_in_image': 644, 'main_color': (171, 171, 171), 'second_color': (231, 231, 231), 'third_color': (119, 119, 119)},
  {'name': 'Double Stone Slab', 'id': 43, 'data': 0, 'kind': 'Block', 'id_in_image': 267, 'main_color': (154, 154, 154), 'second_color': (106, 106, 106), 'third_color': (85, 85, 85)},
@@ -502,8 +511,8 @@ block_library = [{'name': 'Air', 'id': 0, 'data': 0, 'kind': 'Block', 'id_in_ima
  {'name': 'Lilac', 'id': 175, 'data': 1, 'id_in_image': 326, 'main_color': (159, 120, 164), 'second_color': (82, 155, 46), 'third_color': (186, 157, 190)},
  {'name': 'Double Tallgrass', 'id': 175, 'data': 2, 'id_in_image': 327, 'main_color': (51, 78, 44), 'second_color': (67, 102, 58), 'third_color': (88, 134, 76)},
  {'name': 'Large Fern', 'id': 175, 'data': 3, 'id_in_image': 328, 'main_color': (54, 83, 47), 'second_color': (87, 134, 76), 'third_color': (68, 104, 59)},
- {'name': 'Rose Bush', 'id': 175, 'data': 4, 'id_in_image': 329, 'main_color': (32, 89, 0), 'second_color': (161, 3, 7), 'third_color': (237, 6, 13)},
- {'name': 'Peony', 'id': 175, 'data': 5, 'id_in_image': 330, 'main_color': (36, 78, 39), 'second_color': (226, 177, 247), 'third_color': (236, 210, 247)},
+ {'name': 'Rose Bush', 'id': 175, 'data': 4, 'kind': 'Flower', 'id_in_image': 329, 'main_color': (32, 89, 0), 'second_color': (161, 3, 7), 'third_color': (237, 6, 13)},
+ {'name': 'Peony', 'id': 175, 'data': 5, 'kind': 'Flower', 'id_in_image': 330, 'main_color': (36, 78, 39), 'second_color': (226, 177, 247), 'third_color': (236, 210, 247)},
  {'name': 'Free-standing Banner', 'id': 176, 'data': 0, 'id_in_image': 331, 'main_color': (151, 151, 151), 'second_color': (86, 68, 41), 'third_color': (235, 235, 235)},
  {'name': 'Wall-mounted Banner', 'id': 177, 'data': 0, 'id_in_image': 332, 'main_color': (151, 151, 151), 'second_color': (86, 68, 41), 'third_color': (235, 235, 235)},
  {'name': 'Inverted Daylight Sensor', 'id': 178, 'data': 0, 'id_in_image': 333, 'main_color': (38, 32, 21), 'second_color': (136, 151, 174), 'third_color': (71, 61, 41)},

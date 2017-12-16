@@ -39,7 +39,7 @@ class Neighborhoods(object):
             self.zones.append(part)
             p1 = vg.up(part.p1, 1)
             p2 = vg.up(part.p2, 1)
-            p1, p2 = vg.rectangle_inner(p1, p2, 2)
+            p1, p2 = vg.rectangle_inner(p1, p2, 1)
             self.buildings.append(Building(False, Map(p1=p1, p2=p2)))
 
     def build(self):
@@ -111,7 +111,7 @@ class Building(object):
 
         self.options = options
         self.radius = options.radius or vg.rand_in_range(4, 10)
-        self.options = random_options(self.options)
+        self.options = choose_random_options(self.options)
         self.center = V3(pos.x, pos.y, pos.z)
 
         self.biome = "Plains"  # TODO: self.biome.title(options.biome or helpers.biome_at(pos))
@@ -124,9 +124,6 @@ class Building(object):
         self.material_edges = options.material_edges or block.IRON_BLOCK.id  # TODO: Change based on biome, have rand list
 
         self.name = options.name or self.biome + " house"
-
-        # Style the polygon based on kind and options
-        self.building_styler(options)
 
         # Create the walls and major polygons
         self.polys = self.create_polys(options)
@@ -161,16 +158,16 @@ class Building(object):
         d.options = self.options
         return d
 
-    def info(self, show=True):
-        stro = ["Building with " + str(self.sides) + " sides and height " + str(self.height)]
-        for p in self.polys:
-            stro += p.info()
+    def __str__(self):
+        return "Building with " + str(self.sides) + " sides and height " + str(self.height) + ', having ' +\
+               str(len(self.polys)) + ' major shapes'
 
-        if show:
-            for s in stro:
-                print(s)
-        else:
-            return stro
+    def __repr__(self):
+        sb = []
+        for key in self.__dict__:
+            sb.append("{key}='{value}'".format(key=key, value=self.__dict__[key]))
+
+        return ', '.join(sb)
 
     def create_polys(self, options=Map()):
         polys = []
@@ -178,60 +175,34 @@ class Building(object):
 
         sides = data_so_far.sides or 4
 
-        corner_vectors = []
-        for i in range(0, sides):
-            p1 = vg.point_along_circle(self.center, self.radius, sides, i,
-                                       Map(align_to_cells=True, width=options.width, depth=options.depth, p1=options.p1,
-                                           p2=options.p2))
-            p2 = vg.point_along_circle(self.center, self.radius, sides, i + 1,
-                                       Map(align_to_cells=True, width=options.width, depth=options.depth, p1=options.p1,
-                                           p2=options.p2))
-            corner_vectors.append(p1)
+        # TODO: 1) have a "walls" decorator that builds multiple "wall"s, and 2) replicate in Castle
+        if options.outside:
+            corners, lines = helpers.corners_from_bounds(options.p1, options.p2, sides, self.center, self.radius, options.width, options.depth)
+            polys.append(MCShape("garden", corners, data_so_far.copy(corner_vectors=corners, lines=lines)))
+            options.p1, options.p2 = vg.rectangle_inner(options.p1, options.p2, 1)
 
+        corners, lines = helpers.corners_from_bounds(options.p1, options.p2, sides, self.center, self.radius, options.width, options.depth)
+
+        for i, l in enumerate(lines):
             facing = "front" if i == 1 else "side"
             # TODO: Pass in point where front door is, determine facing from that
-            p = MCShape('wall', [p1, p2], data_so_far.copy(height=self.height, facing=facing))
+            p = MCShape("wall", l, data_so_far.copy(height=self.height, facing=facing))
             polys.append(p)
 
-        roof_vectors = [vg.up(v, self.height) for v in corner_vectors]
+        roof_vectors = [vg.up(v, self.height) for v in corners]
         polys.append(MCShape("roof", roof_vectors, data_so_far.copy(corner_vectors=roof_vectors)))
-        # insert foundation so that it is drawn first:
-        polys.insert(0, MCShape("foundation", [vg.up(v, -1) for v in corner_vectors],
-                                data_so_far.copy(corner_vectors=corner_vectors)))
 
-        self.corner_vectors = corner_vectors
+        # insert foundation so that it is drawn first:
+        polys.insert(0, MCShape("foundation", [vg.up(v, -1) for v in corners],
+                                data_so_far.copy(corner_vectors=corners)))
+
+        self.corner_vectors = corners
 
         return polys
 
-    # -----------------------
-    def building_styler(self, options=Map()):
-
-        # TODO: Move these create blocks to add a "garden" Decoration
-        if options.outside and options.p1 and options.p2:
-            p1, p2 = vg.rectangle_inner(options.p1, options.p2, options.outside_width or -1)
-            rec, none = vg.rectangle(p1, p2)
-
-            if options.outside == "flowers":
-                for i, v in enumerate(rec):
-                    material = block.FLOWER_YELLOW.id if (i % 2) == 0 else block.FLOWER_CYAN.id
-                    helpers.create_block(v, material)
-            elif options.outside == "trees":
-                for i, v in enumerate(rec):
-                    if (i % 3) == 0:
-                        helpers.create_block(v, block.SAPLING.id)
-            elif options.outside == "grass":
-                for i, v in enumerate(rec):
-                    if (i % 2) == 0:
-                        helpers.create_block(v, block.GRASS_TALL.id)
-            elif options.outside == "fence":
-                for i, v in enumerate(rec):
-                    helpers.create_block(v, block.FENCE.id)
-
-        return self
-
 
 # -----------------------
-def random_options(options=Map()):
+def choose_random_options(options=Map()):
     for d in DECORATIONS_LIBRARY:
         if d.variables:
             for var in d.variables:
@@ -240,23 +211,5 @@ def random_options(options=Map()):
 
                 if var_name not in options:
                     options[var_name] = np.random.choice(choices)
-
-    if not options.material:
-        options.color_scheme = r = np.random.choice(["gold_white", "grey_iron", "grey_stone", "blue_white"])
-        if r == "gold_white":
-            options.material = block.WOOL.id
-            options.material_edges = block.GOLD_BLOCK.id
-        elif r == "grey_iron":
-            options.material = block.STONE_BRICK.id
-            options.material_edges = block.IRON_BLOCK.id
-        elif r == "grey_stone":
-            options.material = block.STONE_SLAB_DOUBLE.id
-            options.material_edges = block.IRON_BLOCK.id
-        elif r == "blue_white":
-            options.material = block.WOOL.id
-            options.material_edges = block.LAPIS_LAZULI_BLOCK.id
-        elif r == "brown":
-            options.material = block.SAND.id
-            options.material_edges = block.SANDSTONE.id
 
     return options

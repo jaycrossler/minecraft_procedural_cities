@@ -41,12 +41,15 @@ def city(size=0, layout="castle", farms=False, buildings=False, streets=True, ca
         mid2 = V3(mid_point.x + size, mid_point.y, mid_point.z + size)
     else:
         mid1, mid2 = V3(0, 0, 60), V3(50, 0, 110)
+        size = 25
+
+    helpers.prep(size+20)
 
     print("Building zone and street-map using layout:", layout)
     if layout == "castle":
-        all_zones = build_castle_streetmap(mid1, mid2, Map(min_x=min(size - 10, 60), min_z=min(size - 10, 60)))
+        all_zones = build_castle_streetmap(mid1, mid2, Map(min_x=20, min_z=20))
     else:
-        all_zones = vg.partition(mid1, mid2, Map(minx=7, minz=7))
+        all_zones = vg.partition(mid1, mid2, Map(minx=20, minz=20))
     print("-", len(all_zones), "zones identified")
 
     farm_zones = []
@@ -117,17 +120,17 @@ def test_c(size=0):
 
 
 if __name__ == "__main__":
-    #     import time
-    #     c = city(80)
-    #     c = test_c(10)
-    #
-    #     time.sleep(10)
-    #     c.clear()
+        import time
+        c = city(30, buildings=True, castle=False)
+        # c = test_c(10)
 
-    t = Texture1D.COMMON_TEXTURES.OldStoneWall
-    print(t.block())
-    print(t.block())
-    print(t.block())
-    print(t.block())
-    print(t.block())
+        time.sleep(10)
+        c.clear()
+
+    # t = Texture1D.COMMON_TEXTURES.OldStoneWall
+    # print(t.block())
+    # print(t.block())
+    # print(t.block())
+    # print(t.block())
+    # print(t.block())
 

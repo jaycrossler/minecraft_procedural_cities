@@ -11,7 +11,6 @@ import math
 # steps = 30
 # for i in range(steps):print(t.block(Map(step=i, steps=steps)), i, steps)
 
-# TODO: Add Random Textures and Rotational Colors
 
 class Texture1D(object):
     def __init__(self, options=Map()):

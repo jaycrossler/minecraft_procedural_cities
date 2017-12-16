@@ -20,17 +20,6 @@ class Castle(Building):
         super(self.__class__, self).__init__(pos, options)
         self.kind = options.kind or "old stone"
 
-    def info(self, show=True):
-        stro = ["Castle with " + str(self.sides) + " sides and height " + str(self.height)]
-        for p in self.polys:
-            stro += p.info()
-
-        if show:
-            for s in stro:
-                print(s)
-        else:
-            return stro
-
     # -----------------------
 
     def create_polys(self, options=Map()):
@@ -119,13 +108,13 @@ def build_castle_streetmap(p1, p2, options=Map()):
 
     # Find a large central rectangle for the castle
     if width < 25 or depth < 25:
-        castle_x = options.min_x or width
-        castle_z = options.min_z or depth
+        castle_x = options.castle_x or width
+        castle_z = options.castle_z or depth
     else:
         rand_x = max(25, math.ceil(width * .75))
         rand_z = max(25, math.ceil(depth * .75))
-        castle_x = options.min_x or min(width, np.random.randint(24, rand_x))
-        castle_z = options.min_z or min(depth, np.random.randint(24, rand_z))
+        castle_x = options.castle_x or min(width, np.random.randint(24, rand_x))
+        castle_z = options.castle_z or min(depth, np.random.randint(24, rand_z))
 
     ninths = vg.ninths(p1, p2, castle_x, castle_z)
     partitions = []
@@ -135,7 +124,7 @@ def build_castle_streetmap(p1, p2, options=Map()):
         else:
             w, null, d = vg.dists(ninth.p1, ninth.p2)
             if (w > 5) and (d > 5):
-                subparts = vg.partition(ninth.p1, ninth.p2)
+                subparts = vg.partition(ninth.p1, ninth.p2, min_x=options.min_x, min_z=options.min_z)
                 partitions.extend(subparts)
             else:
                 partitions.append(ninth)

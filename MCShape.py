@@ -7,70 +7,38 @@ from Map import Map
 import mcpi.block as block
 import Decoration
 
-# TODO: Change all info functions
-
 
 # -----------------------
 # Polygon helper class to store, build, and create blocks
 class MCShape(object):
-    def __init__(self, kind, vertices=[], options=Map()):
+    def __init__(self, kind, vertices=None, options=Map()):
+        if vertices is None:
+            vertices = []
         self.kind = kind
         self.facing = options.facing
         self.material = options.material
         self.material_edges = options.material_edges  # TODO: Different colors for different edges
         self.features = []
         self.options = options
-        self.vertices = vertices
+        self.vertices = options.vertices = vertices
         self.decorations = []
+        self.points = []
+        self.points_edges = []
+        self.bottom_line = self.top_line = self.left_line = self.right_line = self.height = None
 
         # Build default points, vertices, and settings for every poly
         # these might get changed later with a styler (in decorate)
+
+        self.decorations.append(Map(kind="colorize", options=options))
+
         if len(vertices) == 1:
-            self.center = options.center = p1 = vertices[0]
-            self.height = h = options.height or 8
-            self.points = []
-            self.points_edges = []  # TODO: Use bottom and top circles for edges?
-            # TODO: Temp holder:
-            self.vertices = [p1, p1, vg.up(p1, h), vg.up(p1, h)]  # points straight up
-
-            self.inside_vector = vg.inside_vector(p1=p1, center=options.center)
-            self.outside_vector = self.inside_vector * -1
-
+            self.decorations.append(Map(kind="standing line", options=options))
         elif len(vertices) == 2:
-            # If two points are given, assume it's for the bottom line, then draw that as a wall
-            # TODO: Add width for the wall - how to add end lines to that?
-
-            options.p1 = p1 = vertices[0]
-            options.p2 = p2 = vertices[1]
-
-            self.inside_vector = vg.inside_vector(p1=p1, center=options.center, p2=p2)
-            self.outside_vector = self.inside_vector * -1
-
-            h = options.height or 5
-            if h > 1:
-                self.vertices = vertices_with_up = [p1, p2, vg.up(p2, h), vg.up(p1, h)]  # points straight up
-                self.height = options.height or (vg.highest(vertices_with_up) - vg.lowest(vertices_with_up) + 1)
-                self.points, self.top_line, self.bottom_line, self.left_line, self.right_line = vg.rectangular_face(p1,
-                                                                                                                    p2,
-                                                                                                                    h)
-                self.points_edges = self.top_line + self.bottom_line + self.left_line + self.right_line
-            else:
-                self.vertices = [p1, p2]  # points straight up
-                self.height = h
-                self.points_edges = self.points = self.top_line = self.bottom_line = vg.getLine(p1.x, p1.y, p1.z, p2.x,
-                                                                                                p2.y, p2.z)
-                self.left_line = self.points[0]
-                self.right_line = self.points[-1]
-
-            self.cardinality = vg.cardinality(p1, p2)
+            self.decorations.append(Map(kind="standing rectangle", options=options))
         else:
-            # It's a non-y-rectangular-shaped polygon, so use a different getFace builder function
-            self.height = options.height or (vg.highest(vertices) - vg.lowest(vertices) + 1)
-            self.cardinality = options.cardinality
-            self.points = vg.unique_points(vg.getFace(self.vertices))
-            null, self.top_line, self.bottom_line, self.left_line, self.right_line = vg.poly_point_edges(self.points)
-            self.points_edges = self.top_line + self.bottom_line + self.left_line + self.right_line
+            self.decorations.append(Map(kind="flat rectangle", options=options))
 
+        # Add a decoration based on what kind of shape
         self.decorations.append(Map(kind=kind, options=options))
 
         # Style the polygon based on kind and options
@@ -82,17 +50,15 @@ class MCShape(object):
             blocks_to_not_draw += feature.blocks_to_not_draw
 
         helpers.draw_point_list(self.points, self.material, options=Map(blocks_to_not_draw=blocks_to_not_draw))
-        # helpers.create_blocks_from_pointlist(self.points, self.material, blocks_to_not_draw=blocks_to_not_draw)
 
     def draw_edges(self):
         blocks_to_not_draw = []
         for feature in self.features:
-            blocks_to_not_draw += feature.blocks_to_not_draw;
+            blocks_to_not_draw += feature.blocks_to_not_draw
 
         if self.material_edges:
             helpers.draw_point_list(self.points_edges, self.material_edges,
                                     options=Map(blocks_to_not_draw=blocks_to_not_draw))
-            # helpers.create_blocks_from_pointlist(self.points_edges, self.material_edges, blocks_to_not_draw=blocks_to_not_draw)
 
     def draw_features(self):
         for feature in self.features:
@@ -126,18 +92,17 @@ class MCShape(object):
             self.right_line = vg.points_along_poly(self.points, Map(side="right_x"))
         return self.right_line
 
-    def info(self):
-        stro = []
-        stro.append(" - MCShape: " + self.kind + " with " + str(self.vertices) + " points, height " + str(
-            self.height) + ", and " + str(len(self.points)) + " blocks (" + str(vg.bounds(self.points)) + ")")
-        stro.append(" -- Features:" + str(len(self.features)))
-        return stro
-
     def decorate(self):
         decorations_list = Decoration.get_matching_decorations(self.decorations)
         for d in decorations_list:
-            try:
-                return d["callback"](self, d["options"])
-            except ValueError:
-                print("PLUGIN [", d["namespace"], "] Decorator error - ", d["callback"])
-                return self
+            self = d["callback"](self, d["options"])
+
+    def __str__(self):
+        return '- Shape within ' + str(vg.bounds(self.points)) + ', having ' + str(len(self.features)) + ' features'
+
+    def __repr__(self):
+        sb = []
+        for key in self.__dict__:
+            sb.append("{key}='{value}'".format(key=key, value=self.__dict__[key]))
+
+        return ', '.join(sb)

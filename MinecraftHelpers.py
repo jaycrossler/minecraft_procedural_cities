@@ -209,21 +209,31 @@ def find_block_info(material, data=None, options=Map()):
             BLOCK_DRAW_INCREMENTER += 1
         else:  # Random
             material = np.random.choice(material)
+
     elif type(material) == Texture1D:
-        material = material.color()
+        block_obj = material.block()
+        data = block_obj["data"]
+        material = block_obj["id"]
+
+    elif type(material) == Map and "id" in material:
+        data = material["data"] if "data" in material else None
+        material = material["id"]
+
     elif type(material) == tuple:
         if len(material) == 2:
             data = material[1]
             material = material[0]
         elif len(material) == 3:
             block_color = Blocks.closest_by_color(material)
-            data = block_color["id"]
-            material = block_color["data"]
+            data = block_color["data"]
+            material = block_color["id"]
+
     if type(material) == dict:
         block_id = material["id"]
         data = material["data"] or data or None
         material = block_id
-    if type(material) == tuple:
+
+    if type(material) == tuple and len(material) == 2:
         material, data = material
 
     if material is None:
@@ -278,6 +288,29 @@ def create_box_centered_on(x, y, z, w, h, l, material=block.STONE.id, data=None)
         mc.setBlocks(x - w, y, z - l, x + w, y + h, z + l, material)
     else:
         mc.setBlocks(x - w, y, z - l, x + w, y + h, z + l, material, data)
+
+
+def corners_from_bounds(p1, p2, sides, center, radius, width, depth):
+    corner_vectors = []
+    lines = []
+    for i in range(0, sides):
+        v1 = vg.point_along_circle(center, radius, sides, i, Map(align_to_cells=True, width=width, depth=depth, p1=p1, p2=p2))
+        v2 = vg.point_along_circle(center, radius, sides, i+1, Map(align_to_cells=True, width=width, depth=depth, p1=p1, p2=p2))
+        corner_vectors.append(v1)
+        lines.append((v1, v2))
+
+    return corner_vectors, lines
+
+
+def list_remove_dupes(seq):
+    seen = set()
+    seen_add = seen.add
+    return [x for x in seq if not (x in seen or seen_add(x))]
+
+
+def flatten_list_of_lists(input):
+    flat = [y for x in input for y in x]
+    return list_remove_dupes(flat)
 
 
 def choose_one(*argv):
