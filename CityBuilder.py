@@ -120,17 +120,22 @@ def test_c(size=0):
 
 
 if __name__ == "__main__":
-        import time
+    import time, os
+
+    if "PYCHARM_HOSTED" in os.environ:
+        # Running from within PyCharm
+
         c = city(30, buildings=True, castle=False)
         # c = test_c(10)
 
         time.sleep(10)
         c.clear()
+        helpers.prep()
 
-    # t = Texture1D.COMMON_TEXTURES.OldStoneWall
-    # print(t.block())
-    # print(t.block())
-    # print(t.block())
-    # print(t.block())
-    # print(t.block())
+        # t = Texture1D.COMMON_TEXTURES.OldStoneWall
+        # print(t.block())
+        # print(t.block())
+        # print(t.block())
+        # print(t.block())
+        # print(t.block())
 

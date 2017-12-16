@@ -8,6 +8,8 @@ __pycache__/
 
 .DS_Store
 
+.gitignore
+
 # Distribution / packaging
 .Python
 build/
@@ -88,6 +90,7 @@ celerybeat-schedule
 .venv
 env/
 venv/
+venv1/
 ENV/
 env.bak/
 venv.bak/
@@ -105,6 +108,7 @@ venv.bak/
 # mypy
 .mypy_cache/
 
-.idea
+.idea/
 .idea/*
 .idea/workspace.xml
+**/.idea/workspace.xml
