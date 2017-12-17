@@ -178,7 +178,7 @@ class Building(object):
         # TODO: 1) have a "walls" decorator that builds multiple "wall"s, and 2) replicate in Castle
         if options.outside:
             corners, lines = helpers.corners_from_bounds(options.p1, options.p2, sides, self.center, self.radius, options.width, options.depth)
-            polys.append(MCShape("garden", corners, data_so_far.copy(corner_vectors=corners, lines=lines)))
+            polys.append(MCShape(["garden"], corners, data_so_far.copy(corner_vectors=corners, lines=lines)))
             options.p1, options.p2 = vg.rectangle_inner(options.p1, options.p2, 1)
 
         corners, lines = helpers.corners_from_bounds(options.p1, options.p2, sides, self.center, self.radius, options.width, options.depth)
@@ -186,14 +186,14 @@ class Building(object):
         for i, l in enumerate(lines):
             facing = "front" if i == 1 else "side"
             # TODO: Pass in point where front door is, determine facing from that
-            p = MCShape("wall", l, data_so_far.copy(height=self.height, facing=facing))
+            p = MCShape(["standing rectangle", "wall"], l, data_so_far.copy(height=self.height, facing=facing))
             polys.append(p)
 
         roof_vectors = [vg.up(v, self.height) for v in corners]
-        polys.append(MCShape("roof", roof_vectors, data_so_far.copy(corner_vectors=roof_vectors)))
+        polys.append(MCShape(["flat rectangle", "roof"], roof_vectors, data_so_far.copy(corner_vectors=roof_vectors)))
 
         # insert foundation so that it is drawn first:
-        polys.insert(0, MCShape("foundation", [vg.up(v, -1) for v in corners],
+        polys.insert(0, MCShape(["flat rectangle", "foundation"], [vg.up(v, -1) for v in corners],
                                 data_so_far.copy(corner_vectors=corners)))
 
         self.corner_vectors = corners

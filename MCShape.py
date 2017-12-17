@@ -4,42 +4,29 @@
 import MinecraftHelpers as helpers
 import VoxelGraphics as vg
 from Map import Map
-import mcpi.block as block
+import Blocks
 import Decoration
 
 
 # -----------------------
 # Polygon helper class to store, build, and create blocks
 class MCShape(object):
-    def __init__(self, kind, vertices=None, options=Map()):
+    def __init__(self, decorations, vertices=None, options=Map()):
         if vertices is None:
             vertices = []
-        self.kind = kind
         self.facing = options.facing
         self.material = options.material
         self.material_edges = options.material_edges  # TODO: Different colors for different edges
+        self.material_clear = Blocks.AIR
         self.features = []
         self.options = options
         self.vertices = options.vertices = vertices
-        self.decorations = []
+        self.decorations = decorations
         self.points = []
         self.points_edges = []
         self.bottom_line = self.top_line = self.left_line = self.right_line = self.height = None
 
-        # Build default points, vertices, and settings for every poly
-        # these might get changed later with a styler (in decorate)
-
-        self.decorations.append(Map(kind="colorize", options=options))
-
-        if len(vertices) == 1:
-            self.decorations.append(Map(kind="standing line", options=options))
-        elif len(vertices) == 2:
-            self.decorations.append(Map(kind="standing rectangle", options=options))
-        else:
-            self.decorations.append(Map(kind="flat rectangle", options=options))
-
-        # Add a decoration based on what kind of shape
-        self.decorations.append(Map(kind=kind, options=options))
+        self.decorations.insert(0, "colorize")
 
         # Style the polygon based on kind and options
         self.decorate()
@@ -65,9 +52,8 @@ class MCShape(object):
             feature.draw()
 
     def clear(self):
-        material = block.GRASS.id if self.kind == "foundation" else block.AIR.id
-        helpers.draw_point_list(self.points, material)
-        helpers.draw_point_list(self.points_edges, material)
+        helpers.draw_point_list(self.points, self.material_clear)
+        helpers.draw_point_list(self.points_edges, self.material_clear)
 
         for feature in self.features:
             feature.clear()
@@ -95,7 +81,7 @@ class MCShape(object):
     def decorate(self):
         decorations_list = Decoration.get_matching_decorations(self.decorations)
         for d in decorations_list:
-            self = d["callback"](self, d["options"])
+            self = d["callback"](self, self.options)
 
     def __str__(self):
         return '- Shape within ' + str(vg.bounds(self.points)) + ', having ' + str(len(self.features)) + ' features'
@@ -103,6 +89,9 @@ class MCShape(object):
     def __repr__(self):
         sb = []
         for key in self.__dict__:
-            sb.append("{key}='{value}'".format(key=key, value=self.__dict__[key]))
+            value = self.__dict__[key]
+            if type(value) == list and len(value) > 1:
+                value = "(" + str(value[0]) + "...)"
+            sb.append("{key}='{value}'".format(key=key, value=value))
 
         return ', '.join(sb)

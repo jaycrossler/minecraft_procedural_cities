@@ -1,5 +1,6 @@
 import Decoration
 import VoxelGraphics as vg
+import Blocks
 
 
 import sys
@@ -23,6 +24,11 @@ def build_basic_shape(obj, options):
     obj.points = vg.unique_points(vg.getFace(obj.vertices))
     null, obj.top_line, obj.bottom_line, obj.left_line, obj.right_line = vg.poly_point_edges(obj.points)
     obj.points_edges = obj.top_line + obj.bottom_line + obj.left_line + obj.right_line
+
+    if options.vertices[0].y > options.center.y:
+        obj.material_clear = Blocks.AIR
+    else:
+        obj.material_clear = Blocks.GRASS
 
     return obj
 

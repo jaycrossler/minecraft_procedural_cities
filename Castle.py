@@ -52,7 +52,7 @@ class Castle(Building):
                 outside_vectors.append(w1)
 
             print("MOAT Outside Vectors", outside_vectors)
-            poly = MCShape("moat", outside_vectors,
+            poly = MCShape(["moat"], outside_vectors,
                            data_so_far.copy(moat_width=(moat_width / 2) - 1, material=block.WATER.id, height=1,
                                             skip_edges=True, skip_features=True))
             polys.append(poly)
@@ -68,12 +68,12 @@ class Castle(Building):
                 w2 = vg.point_along_circle(False, False, sides, i + 1, Map(p1=p1, p2=p2, align_to_cells=True))
 
                 facing = "front" if i == 1 else "side"
-                poly = MCShape("castle_outer_wall", [w1, w2],
+                poly = MCShape(["standing rectangle", "castle_outer_wall"], [w1, w2],
                                data_so_far.copy(height=castle_wall_height, facing=facing, thickness=3))
                 polys.append(poly)
                 # print("--tower line", w1, w2)
 
-                poly = MCShape("castle_wall_tower", [w1],
+                poly = MCShape(["standing line", "castle_wall_tower"], [w1],
                                data_so_far.copy(style="castle_wall_tower", height=castle_wall_height,
                                                 facing=facing, radius=3, material=block.STONE.id))
                 polys.append(poly)
@@ -87,13 +87,13 @@ class Castle(Building):
             corner_vectors.append(w1)
 
             facing = "front" if i == 1 else "side"
-            poly = MCShape("wall", [w1, w2], data_so_far.copy(height=castle_inner_wall_height, facing=facing))
+            poly = MCShape(["standing rectangle", "wall"], [w1, w2], data_so_far.copy(height=castle_inner_wall_height, facing=facing))
             polys.append(poly)
 
         roof_vectors = [vg.up(v, castle_inner_wall_height) for v in corner_vectors]
-        polys.append(MCShape("roof", roof_vectors, data_so_far.copy(corner_vectors=roof_vectors)))
+        polys.append(MCShape(["flat rectangle", "roof"], roof_vectors, data_so_far.copy(corner_vectors=roof_vectors)))
         # insert foundation so that it is drawn first:
-        polys.insert(0, MCShape("foundation", [vg.up(v, -1) for v in corner_vectors],
+        polys.insert(0, MCShape(["flat rectangle", "foundation"], [vg.up(v, -1) for v in corner_vectors],
                                 data_so_far.copy(corner_vectors=corner_vectors)))
 
         self.corner_vectors = corner_vectors

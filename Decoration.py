@@ -15,9 +15,7 @@ def get_matching_decorations(decorations):
     for d in decorations:
 
         for dl in DECORATIONS_LIBRARY:
-            if dl["kind"] == d["kind"]:
-                dec = dl
-                dec["options"] = d["options"]
-                matching_decorations.append(dec)
+            if dl["kind"] == d:
+                matching_decorations.append(dl)
 
     return matching_decorations

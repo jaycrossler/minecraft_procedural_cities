@@ -1,6 +1,6 @@
 import Decoration
 from Map import Map
-import mcpi.block as block
+import Blocks
 import VoxelGraphics as vg
 
 import sys
@@ -19,6 +19,7 @@ def decorate_moat(obj, options=Map()):
     moat_type = options.options.moat or "clear"
     radius = options.moat_width or 2
     height = -1 * abs(options.moat_depth or (radius + 2))
+    obj.material_clear = Blocks.GRASS
 
     points = []
     for i, vec in enumerate(obj.vertices):
@@ -31,7 +32,7 @@ def decorate_moat(obj, options=Map()):
     obj.points = points
     obj.points_edges = []
 
-    obj.material = block.WATER.id
+    obj.material = Blocks.WATER
     # if moat_type=="ice":
 
     return obj

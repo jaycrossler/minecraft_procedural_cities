@@ -11,6 +11,34 @@ import sys
 this = sys.modules[__name__]
 
 
+def block(description):
+    out = None
+    if type(description) == int:
+        out = block_by_id(description)
+    elif type(description) == str:
+
+        found = re.search(r'^#(?:[0-9a-fA-F]{3}){1,2}$', description)
+
+        if not found:
+            try:
+                out = match(description, "Block")
+            except ValueError:
+                try:
+                    target_color = webcolors.name_to_rgb(description)
+                    out = closest_by_color(target_color, Map(only_blocks=True))
+                except ValueError:
+                    out = like(description, "Block")
+        else:
+            target_color = webcolors.hex_to_rgb(description)
+            out = closest_by_color(target_color, Map(only_blocks=True))
+    elif type(description) == tuple and len(description) == 3:
+        out = closest_by_color(description, Map(only_blocks=True))
+    elif type(description) == tuple and len(description) == 2:
+        out = block_by_id(description)
+
+    return out
+
+
 def block_by_id(block_id, data=0):
 
     if type(block_id) == tuple and len(block_id) == 2:
@@ -49,8 +77,7 @@ def match(name, only_blocks="Block"):
     if len(b) > 0:
         return b[0]
     else:
-        print("Error - blocks.match(\"" + str(name) + "\") - unrecognized block name, returning air")
-        return block_library[0]
+        raise ValueError("Error - blocks.match(\"" + str(name) + "\") - unrecognized block name")
 
 
 def like(name, only_blocks="Block"):

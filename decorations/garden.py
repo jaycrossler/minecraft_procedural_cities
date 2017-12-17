@@ -22,6 +22,7 @@ def decorate_outside(obj, options=Map()):
 
     obj.points = []
     obj.points_edges = []
+    obj.material_clear = Blocks.AIR
 
     border = flatten_list_of_lists([vg.get_line_from_points(l[0], l[1]) for l in options.lines])
 
