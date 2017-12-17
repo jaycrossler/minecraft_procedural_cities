@@ -90,6 +90,7 @@ class Building(object):
         self.seed = options.seed or vg.get_seed()
         vg.init_with_seed(self.seed)
         self.sides = options.sides or 4
+        self.polys = []
 
         if options.p1 and options.p2:
             p1, p2 = vg.min_max_points(options.p1, options.p2)
@@ -126,19 +127,17 @@ class Building(object):
         self.name = options.name or self.biome + " house"
 
         # Create the walls and major polygons
-        self.polys = self.create_polys(options)
+        self.create_polys(options)
 
     def build(self):
         for poly in self.polys:
             poly.draw()
 
         for poly in self.polys:
-            if not poly.options.skip_edges:
-                poly.draw_edges()
+            poly.draw_edges()
 
         for poly in self.polys:
-            if not poly.options.skip_features:
-                poly.draw_features()
+            poly.draw_features()
 
     def clear(self):
         for poly in self.polys:
@@ -170,35 +169,32 @@ class Building(object):
         return ', '.join(sb)
 
     def create_polys(self, options=Map()):
-        polys = []
+        polys = self.polys
         data_so_far = self.data()
 
         sides = data_so_far.sides or 4
 
-        # TODO: 1) have a "walls" decorator that builds multiple "wall"s, and 2) replicate in Castle
         if options.outside:
             corners, lines = helpers.corners_from_bounds(options.p1, options.p2, sides, self.center, self.radius, options.width, options.depth)
             polys.append(MCShape(["garden"], corners, data_so_far.copy(corner_vectors=corners, lines=lines)))
             options.p1, options.p2 = vg.rectangle_inner(options.p1, options.p2, 1)
 
+        # Build Walls
         corners, lines = helpers.corners_from_bounds(options.p1, options.p2, sides, self.center, self.radius, options.width, options.depth)
-
         for i, l in enumerate(lines):
             facing = "front" if i == 1 else "side"
             # TODO: Pass in point where front door is, determine facing from that
             p = MCShape(["standing rectangle", "wall"], l, data_so_far.copy(height=self.height, facing=facing))
             polys.append(p)
 
+        # Build Roof and Foundation
         roof_vectors = [vg.up(v, self.height) for v in corners]
         polys.append(MCShape(["flat rectangle", "roof"], roof_vectors, data_so_far.copy(corner_vectors=roof_vectors)))
-
-        # insert foundation so that it is drawn first:
         polys.insert(0, MCShape(["flat rectangle", "foundation"], [vg.up(v, -1) for v in corners],
                                 data_so_far.copy(corner_vectors=corners)))
 
         self.corner_vectors = corners
-
-        return polys
+        self.polys = polys
 
 
 # -----------------------

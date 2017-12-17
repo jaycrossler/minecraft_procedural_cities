@@ -268,7 +268,7 @@ block_library = [{'name': 'Air', 'id': 0, 'data': 0, 'kind': 'Block', 'id_in_ima
  {'name': 'Sticky Piston', 'id': 29, 'data': 0, 'kind': 'Block', 'id_in_image': 396, 'main_color': (41, 41, 39), 'second_color': (86, 86, 83), 'third_color': (103, 86, 51)},
  {'name': 'Cobweb', 'id': 30, 'data': 0, 'id_in_image': 496, 'main_color': (206, 206, 206), 'second_color': (221, 221, 221), 'third_color': (237, 237, 237)},
  {'name': 'Dead Shrub', 'id': 31, 'data': 0, 'kind': 'Block', 'id_in_image': 73, 'main_color': (148, 100, 40), 'second_color': (91, 52, 6), 'third_color': (0, 0, 0)},
- {'name': 'Grass', 'id': 31, 'data': 1, 'kind': 'Flower', 'id_in_image': 100, 'main_color': (53, 139, 40), 'second_color': (41, 108, 31), 'third_color': (46, 119, 34)},
+ {'name': 'Tall Grass', 'id': 31, 'data': 1, 'kind': 'Flower', 'id_in_image': 100, 'main_color': (53, 139, 40), 'second_color': (41, 108, 31), 'third_color': (46, 119, 34)},
  {'name': 'Fern', 'id': 31, 'data': 2, 'kind': 'Block', 'id_in_image': 127, 'main_color': (44, 130, 43), 'second_color': (33, 98, 33), 'third_color': (63, 187, 62)},
  {'name': 'Dead Shrub', 'id': 32, 'data': 0, 'kind': 'Block', 'id_in_image': 424, 'main_color': (148, 100, 40), 'second_color': (91, 52, 6), 'third_color': (0, 0, 0)},
  {'name': 'Piston', 'id': 33, 'data': 0, 'kind': 'Block', 'id_in_image': 521, 'main_color': (41, 41, 39), 'second_color': (84, 84, 84), 'third_color': (106, 85, 51)},

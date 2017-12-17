@@ -1,6 +1,5 @@
 import Decoration
 from Map import Map
-import mcpi.block as block
 import VoxelGraphics as vg
 from V3 import V3
 from Feature import Feature
@@ -12,16 +11,18 @@ materials = []
 
 
 def init():
-    pass
+    variables.append(Map(var="roof_battlement_height", choices=[1, 2, 3, 0]))
+    variables.append(Map(var="roof_battlement_space", choices=[1, 2, 3]))
+    # variables.append(Map(var="roof_battlement_overhang", choices=[0, 1, 2]))
 
 
 # -----------------------
 def decorate_castle_outer_wall(obj, options):
-    height = options.options.roof_battlement_height or 1
-    spacing = options.options.roof_battlement_space or 2
+    height = options.options.roof_battlement_height
+    spacing = options.options.roof_battlement_space
 
-    p1 = options.options.p1
-    p2 = options.options.p2
+    p1 = options.p1
+    p2 = options.p2
 
     # TODO: Add in inner and outer, create walkway and arrow slits
 

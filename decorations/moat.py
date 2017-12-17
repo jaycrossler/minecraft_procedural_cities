@@ -32,7 +32,7 @@ def decorate_moat(obj, options=Map()):
     obj.points = points
     obj.points_edges = []
 
-    obj.material = Blocks.WATER
+    obj.material = Blocks.STILLWATER
     # if moat_type=="ice":
 
     return obj

@@ -10,6 +10,7 @@ import VoxelGraphics as vg
 from MCShape import MCShape
 from Map import Map
 from V3 import *
+import MinecraftHelpers as helpers
 
 
 # -----------------------
@@ -23,20 +24,19 @@ class Castle(Building):
     # -----------------------
 
     def create_polys(self, options=Map()):
-        polys = []
+        polys = self.polys or []
         data_so_far = self.data()
 
-        sides = 4
-        castle_wall_height = options.castle_wall_height or 12
+        options.outside = False
+        sides = options.sides = 4
+        castle_wall_height = options.castle_wall_height or 9
         castle_inner_wall_height = options.castle_inner_wall_height or 18
 
         p1 = vg.up(options.p1, 1)
         p2 = vg.up(options.p2, 1)
 
-        # castle_farm = width > 19 and depth > 17
-
         width, null, depth = vg.dists(p1, p2)
-        print("starting ps", p1, p2, "wxd:", width, depth)
+        print("Castle starting points and dimensions", p1, p2, ":", width, "x", depth)
         if (width > 22) and (depth > 22):
             # keep moat width between 4 and 10
             if (width > 26) and (depth > 26):
@@ -44,61 +44,41 @@ class Castle(Building):
             else:
                 moat_width = 4
 
+            # Build Moat
             p1, p2 = vg.rectangle_inner(p1, p2, moat_width / 2)
-            outside_vectors = []
-            for i in range(0, sides):
-                w1 = vg.point_along_circle(False, False, sides, i,
-                                           Map(p1=vg.up(p1, -1), p2=vg.up(p2, -1), align_to_cells=True))
-                outside_vectors.append(w1)
+            corners, lines = helpers.corners_from_bounds(vg.up(p1, -1), vg.up(p2, -1), sides, self.center, self.radius,
+                                                         options.width, options.depth)
+            p = MCShape(["moat"], corners, data_so_far.copy(height=self.height))
+            polys.append(p)
 
-            print("MOAT Outside Vectors", outside_vectors)
-            poly = MCShape(["moat"], outside_vectors,
-                           data_so_far.copy(moat_width=(moat_width / 2) - 1, material=block.WATER.id, height=1,
-                                            skip_edges=True, skip_features=True))
-            polys.append(poly)
-            print("--moat", outside_vectors)
             p1, p2 = vg.rectangle_inner(p1, p2, (moat_width / 2) - 2)
 
         width, null, depth = vg.dists(p1, p2)
-        print("tower ps", p1, p2, "wxd:", width, depth)
+        print("- Castle tower points", p1, p2, " and dimensions:", width, "x", depth)
         if (width > 17) and (depth > 17):
-            p1, p2 = vg.rectangle_inner(p1, p2, 4)
-            for i in range(0, sides):
-                w1 = vg.point_along_circle(False, False, sides, i, Map(p1=p1, p2=p2, align_to_cells=True))
-                w2 = vg.point_along_circle(False, False, sides, i + 1, Map(p1=p1, p2=p2, align_to_cells=True))
 
+            p1, p2 = vg.rectangle_inner(p1, p2, 2)
+            corners, lines = helpers.corners_from_bounds(p1, p2, sides, self.center, self.radius,
+                                                         options.width, options.depth)
+
+            for i, l in enumerate(lines):
                 facing = "front" if i == 1 else "side"
-                poly = MCShape(["standing rectangle", "castle_outer_wall"], [w1, w2],
-                               data_so_far.copy(height=castle_wall_height, facing=facing, thickness=3))
-                polys.append(poly)
-                # print("--tower line", w1, w2)
+                p = MCShape(["standing rectangle", "castle_outer_wall"], l, data_so_far.copy(height=castle_wall_height, thickness=3, facing=facing))
+                polys.append(p)
 
-                poly = MCShape(["standing line", "castle_wall_tower"], [w1],
-                               data_so_far.copy(style="castle_wall_tower", height=castle_wall_height,
-                                                facing=facing, radius=3, material=block.STONE.id))
-                polys.append(poly)
-                # print("--tower", w1)
+            for i, c in enumerate(corners):
+                p = MCShape(["standing line", "castle_wall_tower"], [c], data_so_far.copy(height=castle_wall_height, radius=3, facing=facing))
+                polys.append(p)
 
-        corner_vectors = []
-        p1, p2 = vg.rectangle_inner(p1, p2, 4)
-        for i in range(0, sides):
-            w1 = vg.point_along_circle(False, False, sides, i, Map(p1=p1, p2=p2, align_to_cells=True))
-            w2 = vg.point_along_circle(False, False, sides, i + 1, Map(p1=p1, p2=p2, align_to_cells=True))
-            corner_vectors.append(w1)
+            p1, p2 = vg.rectangle_inner(p1, p2, 4)
 
-            facing = "front" if i == 1 else "side"
-            poly = MCShape(["standing rectangle", "wall"], [w1, w2], data_so_far.copy(height=castle_inner_wall_height, facing=facing))
-            polys.append(poly)
+        options.p1 = p1
+        options.p2 = p2
 
-        roof_vectors = [vg.up(v, castle_inner_wall_height) for v in corner_vectors]
-        polys.append(MCShape(["flat rectangle", "roof"], roof_vectors, data_so_far.copy(corner_vectors=roof_vectors)))
-        # insert foundation so that it is drawn first:
-        polys.insert(0, MCShape(["flat rectangle", "foundation"], [vg.up(v, -1) for v in corner_vectors],
-                                data_so_far.copy(corner_vectors=corner_vectors)))
+        self.polys = polys
 
-        self.corner_vectors = corner_vectors
-
-        return polys
+        # Call the Building's create_poly class to build walls and roof
+        super(self.__class__, self).create_polys(options)
 
     # -----------------------
 

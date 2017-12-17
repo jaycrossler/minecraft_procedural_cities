@@ -16,8 +16,10 @@ def init():
 def build_basic_shape(obj, options):
 
     vertices = options.vertices
+    if type(vertices) is not list:
+        raise ValueError("Expected list of points passed in, even though only 1st will be used")
 
-    #TODO: These are being built at center
+    # TODO: These are being built at center
 
     obj.center = options.center = p1 = vertices[0]
     obj.height = h = options.height or 8
