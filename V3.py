@@ -56,6 +56,9 @@ class V3(tuple):
     def __abs__(self):
         return sqrt(self.len2())
 
+    def __round__(self, n=None):
+        return V3(round(self[0]),round(self[1]),round(self[2]))
+
     def __div__(self,other):
         if isinstance(other,Number):
             y = float(other)

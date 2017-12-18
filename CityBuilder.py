@@ -125,7 +125,7 @@ if __name__ == "__main__":
     if "PYCHARM_HOSTED" in os.environ:
         # Running from within PyCharm
 
-        c = city(40, buildings=False, castle=True)
+        c = city(40, buildings=True, castle=False)
         # c = test_c(10)
 
         time.sleep(10)

@@ -10,8 +10,8 @@ import MinecraftHelpers as helpers
 from numbers import Integral
 from V3 import *
 
-TO_RADIANS = pi / 180.
-TO_DEGREES = 180. / pi
+TO_RADIANS = 3.1415926 / 180.
+TO_DEGREES = 180. / 3.1415926
 ICOS = [1, 0, -1, 0]
 ISIN = [0, 1, 0, -1]
 
@@ -313,7 +313,7 @@ def rectangle(p1, p2):
         # Flat on ground (Y Axis)
         x_line = getLine(p1.x, p1.y, p1.z, p2.x, p1.y, p1.z)
         width = len(x_line)
-        h = abs(p2.z - p1.z)
+        h = int(round(abs(p2.z - p1.z)))
 
         for z in range(h):
             for i, vec in enumerate(x_line):
@@ -726,17 +726,22 @@ def rectangular_pyramid_x(center, radius, tight=.4, height=10, filled=False, thi
     return evaluate_3d_range(center, -radius, radius, 0, height, -radius, radius, func)
 
 
-def triangular_prism(p1, p2, height, radius=2, sloped=False):
-    # TODO: Not allways filled (use rects)
+def triangular_prism(p1, p2, height, radius=2, sloped=False, chop_pct=0, filled=False):
+
     p1, p2 = min_max_points(p1, p2)
 
     slope = abs(radius / height)
 
     faces = []
     h = 0
-    while radius > 0:
+
+    grow_limit = radius * chop_pct
+
+    while radius > grow_limit:
         if sloped:
             p1, p2 = move_points_together(p1, p2, 1)
+
+        at_top = (radius - slope) < grow_limit
 
         corner_vecs = line_thick_into_corners(p1.x, p1.z, p2.x, p2.z, radius)
         p1_1 = V3(corner_vecs[0].x, p1.y + h, corner_vecs[0].y)
@@ -744,12 +749,46 @@ def triangular_prism(p1, p2, height, radius=2, sloped=False):
 
         p2_3 = V3(corner_vecs[2].x, p2.y + h, corner_vecs[2].y)
         p2_1 = V3(corner_vecs[3].x, p2.y + h, corner_vecs[3].y)
-        faces.append(getFace([p1_1, p1_3, p2_3, p2_1]))
+        if filled or at_top:
+            faces.append(getFace([p1_1, p1_3, p2_3, p2_1]))
+        else:
+            l1 = get_line_from_points(p1_1, p1_3)
+            l2 = get_line_from_points(p1_3, p2_3)
+            l3 = get_line_from_points(p2_3, p2_1)
+            l4 = get_line_from_points(p2_1, p1_1)
+            faces.append(l1 + l2 + l3 + l4)
 
         radius -= slope
         h += 1 if height > 0 else -1
 
-    return unique_points(faces)
+    out = unique_points(faces)
+
+    return out
+
+
+def dist(p1, p2):
+    return math.sqrt((p2.x-p1.x)**2 + (p2.y-p1.y)**2 + (p2.z-p1.z)**2)
+
+
+def best_points_for_triangular_roof(corners):
+    p1a = (corners[0] + corners[1]) * .5
+    p2a = (corners[2] + corners[3]) * .5
+
+    p1b = (corners[3] + corners[0]) * .5
+    p2b = (corners[1] + corners[2]) * .5
+
+    if dist(p1a, p2a) > dist(p1b, p2b):
+        rad_x = abs(corners[0].x - p1a.x)
+        rad_z = abs(corners[0].z - p1b.z)
+        # rad_z = abs(corners[0].z - p1a.z)
+
+        return p1a, p2a, min(rad_x, rad_z)
+    else:
+        # rad_x = abs(corners[0].x - p1b.x)
+        rad_x = abs(corners[0].x - p1a.x)
+        rad_z = abs(corners[0].z - p1b.z)
+
+        return p1b, p2b, min(rad_x, rad_z)
 
 
 def move_points_together(p1, p2, dist=1):

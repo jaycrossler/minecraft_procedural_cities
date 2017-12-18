@@ -11,16 +11,21 @@ materials = []
 
 
 def init():
-    variables.append(Map(var="roof", choices=["pointy", "pointy_lines", "battlement", False]))
+    variables.append(Map(var="roof", choices=["triangular", "pointy", "pointy_lines", "battlement", False]))
     variables.append(Map(var="roof_battlement_height", choices=[1, 2, 3]))
+    variables.append(Map(var="roof_triangular_sloped", choices=[True]))
+    variables.append(Map(var="roof_triangular_overhang", choices=[0, 0, 0, 1, 2]))
+    variables.append(Map(var="roof_triangular_chop_pct", choices=[0, 0, 0, 0, 0, .1, .2, .3, .4, .5]))
     variables.append(Map(var="roof_battlement_space", choices=[1, 2, 3]))
     variables.append(Map(var="roof_pointy_multiplier", choices=[0.4, 0.6, 0.8, 1, 1.2, 1.4, 1.6, 1.8, 2, 2.2, 2.5]))
 
 
 # -----------------------
 def decorate_roof(obj, options=Map()):
+    if not options.options.roof:
+        return obj
 
-    if options.options.roof and str.startswith(options.options.roof, "pointy"):
+    if str.startswith(options.options.roof, "pointy"):
         height = options.options.roof_pointy_multiplier * options.radius
         pointy = V3(options.center.x, options.center.y + options.height + height, options.center.z)
 
@@ -36,7 +41,20 @@ def decorate_roof(obj, options=Map()):
                 roof_face = vg.unique_points(vg.getFace([V3(v.x, v.y + 1, v.z) for v in triangle_face]))
                 obj.points = obj.points.union(roof_face)
 
-    if options.options.roof and str.startswith(options.options.roof, "battlement"):
+    elif str.startswith(options.options.roof, "triangular"):
+        p1, p2, radius = vg.best_points_for_triangular_roof(options.corner_vectors)
+        chop_pct = options.options.roof_triangular_chop_pct or 0
+
+        radius += options.options.roof_triangular_overhang
+
+        height = radius
+        if round(height) == int(height):
+            height += 1
+
+        obj.points.update(vg.triangular_prism(p1, p2, height=height, radius=radius, chop_pct=chop_pct, sloped=options.options.roof_triangular_sloped))
+
+        obj.points_edges = []
+    elif str.startswith(options.options.roof, "battlement"):
         height = options.options.roof_battlement_height or 1
         spacing = options.options.roof_battlement_space or 2
 
