@@ -49,6 +49,9 @@ class Feature(object):
             self.add_blocks(pos, options.material)
         elif kind == "fence":
             self.add_blocks(pos, options.material)
+        elif kind == "roof":
+            for block_list in options.block_lists:
+                self.add_blocks(block_list.blocks, block_list.material)
 
     def add_blocks(self, blocks, material):
         if type(blocks) is list:

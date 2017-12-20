@@ -690,7 +690,7 @@ def cylinder(center, radius, tight=.5, height=10, filled=False, thickness=1):
     def func(x, y, z):
         c = math.sqrt(x * x + z * z)
         return c < (radius - tight) and (
-        True if filled else (c >= (radius - thickness - tight) or y < thickness or y >= (height - thickness)))
+            True if filled else (c >= (radius - thickness - tight) or y < thickness or y >= (height - thickness)))
 
     return evaluate_3d_range(center, -radius, radius, 0, height, -radius, radius, func)
 
@@ -727,7 +727,6 @@ def rectangular_pyramid_x(center, radius, tight=.4, height=10, filled=False, thi
 
 
 def triangular_prism(p1, p2, height, radius=2, sloped=False, chop_pct=0, filled=False):
-
     p1, p2 = min_max_points(p1, p2)
 
     slope = abs(radius / height)
@@ -766,8 +765,111 @@ def triangular_prism(p1, p2, height, radius=2, sloped=False, chop_pct=0, filled=
     return out
 
 
+def prism_roof(p1, p2, height, radius=2, sloped=0, chop_pct=0, endpoint_out=0, material="Oak Wood", endpoint_stairs=True):
+    # This is very similar with triangular_prism above, possibly refactor it
+
+    p1, p2 = min_max_points(p1, p2)
+
+    slope = abs(radius / height)
+    sloped = slope * sloped
+
+    h = 0
+    grow_limit = (height * chop_pct)
+
+    if endpoint_out is not 0:
+        sloped = 0
+
+    l1 = []  # end
+    l2 = []  # side
+    l3 = []  # end
+    l4 = []  # side
+    l5 = []  # top bar
+
+    material1 = material2 = material3 = material4 = None
+
+    while radius > grow_limit:
+        if sloped is not 0:
+            p1, p2 = move_points_together(p1, p2, slope)
+
+        corner_vecs = line_thick_into_corners(p1.x, p1.z, p2.x, p2.z, radius)
+        p1_1 = V3(corner_vecs[0].x, p1.y + h, corner_vecs[0].y)
+        p1_3 = V3(corner_vecs[1].x, p1.y + h, corner_vecs[1].y)
+
+        p2_3 = V3(corner_vecs[2].x, p2.y + h, corner_vecs[2].y)
+        p2_1 = V3(corner_vecs[3].x, p2.y + h, corner_vecs[3].y)
+
+        # Determine materials if stairs (on the first level built only)
+        if material1 is None:
+            center = (p1 + p2) * .5
+
+            is_square = abs(dist(p1_1, p1_3) - dist(p1_3, p2_3)) < 1
+
+            if endpoint_stairs or is_square:
+                material1 = stair_facing_point((p1_1 + p1_3) * .5, center, material, True)
+                material3 = stair_facing_point((p2_3 + p2_1) * .5, center, material, True)
+            else:
+                material1 = material3 = material
+
+            material2 = stair_facing_point((p1_3 + p2_3) * .5, center, material, True)
+            material4 = stair_facing_point((p2_1 + p1_1) * .5, center, material, True)
+
+        # Build lines to make up roofs  # TODO: Look at this, sometimes weird lines result
+        # if radius <= 0.5:
+        #     l5.extend(get_line_from_points(p1_3, p2_3))
+        #     l5.extend(get_line_from_points(p2_1, p1_1))
+        # else:
+        l1.extend(get_line_from_points(p1_1, p1_3))
+        l3.extend(get_line_from_points(p2_3, p2_1))
+
+        # Move points closer if ends go in
+        if endpoint_out:
+            p1_3, p2_3 = move_points_together(p1_3, p2_3, -endpoint_out)
+            p2_1, p1_1 = move_points_together(p2_1, p1_1, -endpoint_out)
+            l2.extend(get_line_from_points(p1_3, p2_3))
+            l4.extend(get_line_from_points(p2_1, p1_1))
+        else:
+            l2.extend(get_line_from_points(p1_3, p2_3))
+            l4.extend(get_line_from_points(p2_1, p1_1))
+
+        radius -= slope
+
+        # Fill in top of roof if at top-most level
+        if 0 < radius < grow_limit:
+            dist_between = dist(p1_3, p2_1)  # TODO: Sometimes should be switched with p2_1 and p1_1
+            if dist_between > 2:
+                while dist_between > 1:
+                    p1_3, null = move_points_together(p1_3, p2_1, 1)
+                    p2_3, null = move_points_together(p2_3, p1_1, 1)
+                    l5.extend(get_line_from_points(p1_3, p2_3))
+                    dist_between -= 1
+
+        h += 1 if height > 0 else -1
+
+    blocks_list = list()
+    blocks_list.append(Map(blocks=l1, material=material1))  # TODO: Should this only record stair direction, then
+    blocks_list.append(Map(blocks=l3, material=material3))  # calculate the material at render time to apply tex?
+    blocks_list.append(Map(blocks=l2, material=material2))
+    blocks_list.append(Map(blocks=l4, material=material4))
+    blocks_list.append(Map(blocks=l5, material=material))
+
+    return blocks_list
+
+
+def stair_facing_point(p1, center, material, rising=True):
+    facing = cardinality(p1, center)[-1]
+    data = ["e", "w", "s", "n"].index(facing)
+    if not rising: data += 4
+
+    if 'stair' in material:
+        block = material['stair']
+    else:
+        block = 67
+
+    return block, data
+
+
 def dist(p1, p2):
-    return math.sqrt((p2.x-p1.x)**2 + (p2.y-p1.y)**2 + (p2.z-p1.z)**2)
+    return math.sqrt((p2.x - p1.x) ** 2 + (p2.y - p1.y) ** 2 + (p2.z - p1.z) ** 2)
 
 
 def best_points_for_triangular_roof(corners):
@@ -780,15 +882,16 @@ def best_points_for_triangular_roof(corners):
     if dist(p1a, p2a) > dist(p1b, p2b):
         rad_x = abs(corners[0].x - p1a.x)
         rad_z = abs(corners[0].z - p1b.z)
-        # rad_z = abs(corners[0].z - p1a.z)
+        end_cap_lines = [[corners[0], corners[1]], [[corners[2], corners[3]]]]
+        side_lines = [[corners[1], corners[2]], [[corners[3], corners[0]]]]
+        return p1a, p2a, min(rad_x, rad_z), end_cap_lines, side_lines
 
-        return p1a, p2a, min(rad_x, rad_z)
     else:
-        # rad_x = abs(corners[0].x - p1b.x)
         rad_x = abs(corners[0].x - p1a.x)
         rad_z = abs(corners[0].z - p1b.z)
-
-        return p1b, p2b, min(rad_x, rad_z)
+        end_cap_lines = [[corners[3], corners[0]], [[corners[1], corners[2]]]]
+        side_lines = [[corners[0], corners[1]], [[corners[2], corners[3]]]]
+        return p1b, p2b, min(rad_x, rad_z), end_cap_lines, side_lines
 
 
 def move_points_together(p1, p2, dist=1):
@@ -825,34 +928,33 @@ def move_points_together(p1, p2, dist=1):
     return V3(p1x, p1y, p1z), V3(p2x, p2y, p2z)
 
 
-# TODO: Is this working?  Maybe too complex and low quality
-def triangular_prism_faces(p1, p2, height, width=3, radius=False, sloped=False, filled=False, base=False, ends=False):
-    radius = radius or (((width - 1) / 2) if width > 1 else 1)
-    if radius < 0:
-        return []
-
-    # Find the 6 points that form triangles around p1 and p2
-    corner_vecs = line_thick_into_corners(p1.x, p1.z, p2.x, p2.z, radius)
-    p1_1 = V3(corner_vecs[0].x, p1.y, corner_vecs[0].y)
-    p1_2 = V3(p1.x, p1.y + height, p1.z)
-    p1_3 = V3(corner_vecs[1].x, p1.y, corner_vecs[1].y)
-
-    p2_3 = V3(corner_vecs[2].x, p2.y, corner_vecs[2].y)
-    p2_2 = V3(p2.x, p2.y + height, p2.z)
-    p2_1 = V3(corner_vecs[3].x, p2.y, corner_vecs[3].y)
-
-    faces = []
-    faces.append(getFace([p1_1, p1_2, p2_2, p2_1]))
-    faces.append(getFace([p1_3, p1_2, p2_2, p2_3]))
-    if base: faces.append(getFace([p1_1, p1_3, p2_3, p2_1]))
-    if ends:
-        faces.append(getFace([p1_1, p1_2, p1_3]))
-        faces.append(getFace([p2_1, p2_2, p2_3]))
-
-    if filled and (round(radius) >= 0):
-        faces.extend(triangular_prism_faces(p1, p2, height=height, radius=radius - 1, sloped=sloped))
-
-    return faces
+# def triangular_prism_faces(p1, p2, height, width=3, radius=False, sloped=False, filled=False, base=False, ends=False):
+#     radius = radius or (((width - 1) / 2) if width > 1 else 1)
+#     if radius < 0:
+#         return []
+#
+#     # Find the 6 points that form triangles around p1 and p2
+#     corner_vecs = line_thick_into_corners(p1.x, p1.z, p2.x, p2.z, radius)
+#     p1_1 = V3(corner_vecs[0].x, p1.y, corner_vecs[0].y)
+#     p1_2 = V3(p1.x, p1.y + height, p1.z)
+#     p1_3 = V3(corner_vecs[1].x, p1.y, corner_vecs[1].y)
+#
+#     p2_3 = V3(corner_vecs[2].x, p2.y, corner_vecs[2].y)
+#     p2_2 = V3(p2.x, p2.y + height, p2.z)
+#     p2_1 = V3(corner_vecs[3].x, p2.y, corner_vecs[3].y)
+#
+#     faces = []
+#     faces.append(getFace([p1_1, p1_2, p2_2, p2_1]))
+#     faces.append(getFace([p1_3, p1_2, p2_2, p2_3]))
+#     if base: faces.append(getFace([p1_1, p1_3, p2_3, p2_1]))
+#     if ends:
+#         faces.append(getFace([p1_1, p1_2, p1_3]))
+#         faces.append(getFace([p2_1, p2_2, p2_3]))
+#
+#     if filled and (round(radius) >= 0):
+#         faces.extend(triangular_prism_faces(p1, p2, height=height, radius=radius - 1, sloped=sloped))
+#
+#     return faces
 
 
 def line_thick_into_corners(x1, y1, x2, y2, thickness=1):

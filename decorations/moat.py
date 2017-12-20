@@ -24,7 +24,6 @@ def decorate_moat(obj, options=Map()):
     points = []
     for i, vec in enumerate(obj.vertices):
         next_vec = obj.vertices[(i + 1) % len(obj.vertices)]
-        print("---MOAT LINE:", vec, next_vec, height, radius)
 
         p1, p2 = vg.move_points_together(vec, next_vec, -radius)
         points.extend(vg.triangular_prism(p1, p2, height=height, radius=radius, sloped=True))

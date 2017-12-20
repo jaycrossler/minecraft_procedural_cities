@@ -264,7 +264,10 @@ def create_block(p, material=block.STONE.id, data=None, options=Map(choice_type=
         material, data = find_block_info(material, data=data, options=options)
 
         if not data:
-            mc.setBlock(p.x, p.y, p.z, material)
+            if material is None:
+                raise TypeError("No material passed in")
+            else:
+                mc.setBlock(p.x, p.y, p.z, material)
         else:
             mc.setBlock(p.x, p.y, p.z, material, data)
     except AttributeError:

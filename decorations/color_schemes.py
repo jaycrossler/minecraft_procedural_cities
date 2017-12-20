@@ -22,7 +22,7 @@ def colorize(obj, options):
             obj.material = Blocks.WHITEWOOL
             obj.material_edges = Blocks.GOLDBLOCK
         elif r == "grey_iron":
-            obj.material = Blocks.STONEBRICKS
+            obj.material = Blocks.STONEBRICK
             obj.material_edges = Blocks.IRONBLOCK
         elif r == "grey_stone":
             obj.material = Blocks.DOUBLESTONESLAB
