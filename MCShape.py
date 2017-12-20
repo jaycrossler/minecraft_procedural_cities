@@ -79,12 +79,18 @@ class MCShape(object):
         return self.right_line
 
     def decorate(self):
-        decorations_list = Decoration.get_matching_decorations(self.decorations)
-        for d in decorations_list:
-            self = d["callback"](self, self.options)
+        for decoration in self.decorations:
+            decs = [x for x in Decoration.DECORATIONS_LIBRARY if x["kind"].lower() == decoration.lower()]
+
+            if len(decs) > 0:
+                for d in decs:
+                    self = d["callback"](self, self.options)
+            else:
+                print("UNKNOWN Decoration: " + str(decoration) + " on shape")
 
     def __str__(self):
-        return '- Shape within ' + str(vg.bounds(self.points)) + ', having ' + str(len(self.features)) + ' features'
+        decs = "+".join(self.decorations[1:])
+        return '- [' + decs + '] within ' + str(vg.bounds(self.points)) + ': ' + str(len(self.features)) + ' features'
 
     def __repr__(self):
         sb = []

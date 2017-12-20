@@ -385,7 +385,7 @@ def spheredoze(player_pos=my_tile_pos(False), radius=40, ground=True):
     debug("Bulldozing " + str(radius) + "x around player...")
     debug(player_pos)
 
-    all_points = vg.sphere(center=player_pos, radius=radius)
+    all_points = vg.sphere(center=player_pos, radius=radius, filled=True)
     draw_point_list(points=all_points, material=block.AIR.id)
 
     debug("...Finished bulldozing")
@@ -474,8 +474,10 @@ def test_pyramid(thickness=1):
 
 
 def test_shapes(line=True, buff=13, texture_base=89, texture_main="Glass", info=False):
-    texture = Texture1D.Texture1D(Map(gradient=True, gradient_type="linear", onlyBlock=True, name_contains=texture_main,
-                                      colors=Texture1D.COLOR_MAPS.Rainbow.colors, axis="y"))
+    # texture = Texture1D.Texture1D(Map(gradient=True, gradient_type="linear", onlyBlock=True, name_contains=texture_main,
+    #                                   colors=Texture1D.COLOR_MAPS.Rainbow.colors, axis="y"))
+    texture = Texture1D.COMMON_TEXTURES.RainbowGlass
+    # TODO: This stopped working, fix
 
     def draw(func, position, radius=5, height=8, material=texture_base, info=False):
         points = func(V3(position.x, position.y, position.z), radius, .7, height=height)

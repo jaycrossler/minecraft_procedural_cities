@@ -14,6 +14,7 @@ TO_RADIANS = 3.1415926 / 180.
 TO_DEGREES = 180. / 3.1415926
 ICOS = [1, 0, -1, 0]
 ISIN = [0, 1, 0, -1]
+NUM_MAX = 12345678
 
 
 def get_seed():
@@ -80,9 +81,9 @@ def point_along_circle(center, radius, points, num, options=Map()):
 def evaluate_3d_range(pos, x_min, x_max, y_min, y_max, z_min, z_max, func):
     # Evaluate a range of x,y,z and return points that match func
     points = []
-    for y in range(y_min, y_max):
-        for z in range(z_min, z_max):
-            for x in range(x_min, x_max):
+    for y in range(int(y_min), int(y_max)):
+        for z in range(int(z_min), int(z_max)):
+            for x in range(int(x_min), int(x_max)):
                 if func(x, y, z):
                     points.append(V3(pos.x + x, pos.y + y, pos.z + z))
     return points
@@ -343,43 +344,48 @@ def up(v, amount=1):
 
 def bounds(face_points):
     out = Map()
-    high = -30000
+    high = -NUM_MAX
     for p in face_points:
         if p.y > high:
             high = p.y
     out.highest = int(high)
 
-    low = 30000
+    low = NUM_MAX
     for p in face_points:
         if p.y < low:
             low = p.y
     out.lowest = int(low)
 
     # x searching
-    high = -30000
+    high = -NUM_MAX
     for p in face_points:
         if p.x > high:
             high = p.x
     out.x_high = int(high)
 
-    low = 30000
+    low = NUM_MAX
     for p in face_points:
         if p.x < low:
             low = p.x
     out.x_low = int(low)
 
     # z searching
-    high = -30000
+    high = -NUM_MAX
     for p in face_points:
         if p.z > high:
             high = p.z
     out.z_high = int(high)
 
-    low = 30000
+    low = NUM_MAX
     for p in face_points:
         if p.z < low:
             low = p.z
     out.z_low = int(low)
+
+    out.center = V3((out.x_high + out.x_low) * .5, (out.highest + out.lowest) * .5, (out.z_high + out.z_low) * .5)
+    out.x_radius = out.x_high - out.center.x
+    out.y_radius = out.highest - out.center.y
+    out.z_radius = out.z_high - out.center.z
 
     return out
 
@@ -678,7 +684,7 @@ def box(center, radius, tight=1, height=10, filled=False, thickness=1):
     return evaluate_3d_range(center, -radius, radius, -radius, radius, -radius, radius, func)
 
 
-def sphere(center, radius, tight=.5, height=10, filled=False, thickness=1):
+def sphere(center, radius, tight=.5, height=10, filled=False, thickness=1, options=Map()):
     def func(x, y, z):
         c = math.sqrt(x * x + y * y + z * z)
         return c < (radius - tight) and (True if filled else (c >= (radius - thickness - tight)))
@@ -765,7 +771,8 @@ def triangular_prism(p1, p2, height, radius=2, sloped=False, chop_pct=0, filled=
     return out
 
 
-def prism_roof(p1, p2, height, radius=2, sloped=0, chop_pct=0, endpoint_out=0, material="Oak Wood", endpoint_stairs=True):
+def prism_roof(p1, p2, height, radius=2, sloped=0, chop_pct=0, endpoint_out=0, material="Oak Wood",
+               endpoint_stairs=True):
     # This is very similar with triangular_prism above, possibly refactor it
 
     p1, p2 = min_max_points(p1, p2)

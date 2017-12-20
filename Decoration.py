@@ -10,12 +10,12 @@ class Decoration(object):
                                        materials=materials, validator=validator))
 
 
-def get_matching_decorations(decorations):
-    matching_decorations = []
-    for d in decorations:
-
-        for dl in DECORATIONS_LIBRARY:
-            if dl["kind"] == d:
-                matching_decorations.append(dl)
-
-    return matching_decorations
+# def get_matching_decorations(decorations):
+#     matching_decorations = []
+#     for d in decorations:
+#
+#         for dl in DECORATIONS_LIBRARY:
+#             if dl["kind"] == d:
+#                 matching_decorations.append(dl)
+#
+#     return matching_decorations
