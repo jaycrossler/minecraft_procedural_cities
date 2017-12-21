@@ -3,6 +3,7 @@ import MinecraftHelpers as helpers
 import mcpi.block as block
 from V3 import *
 import VoxelGraphics as vg
+import Texture1D
 
 
 # -----------------------
@@ -62,6 +63,8 @@ class Feature(object):
 
     def draw(self):
         for item in self.blocks:
+            if type(item.id) == Texture1D.Texture1D and not item.id.options.bounds:
+                item.id.options.bounds = vg.bounds(self.blocks)
             helpers.create_block(item.pos, item.id, item.data)
 
     def clear(self):

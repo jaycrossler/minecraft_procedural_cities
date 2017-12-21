@@ -344,48 +344,34 @@ def up(v, amount=1):
 
 def bounds(face_points):
     out = Map()
-    high = -NUM_MAX
-    for p in face_points:
-        if p.y > high:
-            high = p.y
-    out.highest = int(high)
+    x_high = y_high = z_high = -NUM_MAX
+    x_low = y_low = z_low = NUM_MAX
 
-    low = NUM_MAX
     for p in face_points:
-        if p.y < low:
-            low = p.y
-    out.lowest = int(low)
+        if "pos" in p:
+            point = p.pos
+        else:
+            point = p
 
-    # x searching
-    high = -NUM_MAX
-    for p in face_points:
-        if p.x > high:
-            high = p.x
-    out.x_high = int(high)
+        if point.x > x_high: x_high = point.x
+        if point.y > y_high: y_high = point.y
+        if point.z > z_high: z_high = point.z
 
-    low = NUM_MAX
-    for p in face_points:
-        if p.x < low:
-            low = p.x
-    out.x_low = int(low)
+        if point.x < x_low: x_low = point.x
+        if point.y < y_low: y_low = point.y
+        if point.z < z_low: z_low = point.z
 
-    # z searching
-    high = -NUM_MAX
-    for p in face_points:
-        if p.z > high:
-            high = p.z
-    out.z_high = int(high)
-
-    low = NUM_MAX
-    for p in face_points:
-        if p.z < low:
-            low = p.z
-    out.z_low = int(low)
+    out.highest = int(y_high)
+    out.lowest = int(y_low)
+    out.x_high = int(x_high)
+    out.x_low = int(x_low)
+    out.z_high = int(z_high)
+    out.z_low = int(z_low)
 
     out.center = V3((out.x_high + out.x_low) * .5, (out.highest + out.lowest) * .5, (out.z_high + out.z_low) * .5)
-    out.x_radius = out.x_high - out.center.x
-    out.y_radius = out.highest - out.center.y
-    out.z_radius = out.z_high - out.center.z
+    out.x_radius = out.x_high - out.center.x + 1
+    out.y_radius = out.highest - out.center.y + 1
+    out.z_radius = out.z_high - out.center.z + 1
 
     return out
 
@@ -684,12 +670,41 @@ def box(center, radius, tight=1, height=10, filled=False, thickness=1):
     return evaluate_3d_range(center, -radius, radius, -radius, radius, -radius, radius, func)
 
 
+def build_bounds_for_3d_range(radius, options):
+    if options.min_x: min_x = -abs(options.min_x)
+    elif options.min_x_pct: min_x = options.min_x_pct * -(2 * radius)
+    else: min_x = -radius
+
+    if options.max_x: max_x = options.min_x
+    elif options.max_x_pct: max_x = options.max_x_pct * (2 * radius)
+    else: max_x = radius
+
+    if options.min_y: min_y = -abs(options.min_y)
+    elif options.min_y_pct: min_y = -radius + (options.min_y_pct * (2 * radius))
+    else: min_y = -radius
+
+    if options.max_y: max_y = options.min_y
+    elif options.max_y_pct: max_y = options.max_y_pct * (2 * radius)
+    else: max_y = radius
+
+    if options.min_z: min_z = -abs(options.min_z)
+    elif options.min_z_pct: min_z = options.min_z_pct * -(2 * radius)
+    else: min_z = -radius
+
+    if options.max_z: max_z = options.min_z
+    elif options.max_z_pct: max_z = options.max_z_pct * (2 * radius)
+    else: max_z = radius
+
+    return min_x, max_x, min_y, max_y, min_z, max_z    
+    
+
 def sphere(center, radius, tight=.5, height=10, filled=False, thickness=1, options=Map()):
     def func(x, y, z):
         c = math.sqrt(x * x + y * y + z * z)
         return c < (radius - tight) and (True if filled else (c >= (radius - thickness - tight)))
 
-    return evaluate_3d_range(center, -radius, radius, -radius, radius, -radius, radius, func)
+    min_x, max_x, min_y, max_y, min_z, max_z = build_bounds_for_3d_range(radius, options)
+    return evaluate_3d_range(center, min_x, max_x, min_y, max_y, min_z, max_z, func)
 
 
 def cylinder(center, radius, tight=.5, height=10, filled=False, thickness=1):

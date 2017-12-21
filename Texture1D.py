@@ -1,6 +1,6 @@
 from numpy import cumsum, random as rnd
 from Map import Map
-from Blocks import closest_by_color, color_as_rgb, block_by_id
+from Blocks import closest_by_color, color_as_rgb, block_by_id, DEBUG_MODE
 import math
 
 
@@ -43,9 +43,33 @@ class Texture1D(object):
             self.material = options.color or options.material or rand_hex_color(1)
 
     def color(self, options=Map()):
+        options = self.options + options
         if self.options.gradient:
             hex_colors = self.get_calculated_steps(options)
-            step = options.step or 0
+            if options.step:
+                step = options.step
+            elif options.point and options.bounds:
+
+                if self.axis == "y":
+                    bounds_lowest = options.bounds.lowest
+                    # bounds_highest = options.bounds.highest
+                    step = options.point.y - bounds_lowest
+                elif self.axis == "x":
+                    bounds_lowest = options.bounds.x_low
+                    # bounds_highest = options.bounds.x_high
+                    step = options.point.x - bounds_lowest
+                else:
+                    # if self.axis == "z":
+                    bounds_lowest = options.bounds.z_low
+                    # bounds_highest = options.bounds.z_high
+                    step = options.point.z - bounds_lowest
+
+                step = int(step)
+
+                # step_range = bounds_highest - bounds_lowest + 1
+                # step = dist_from_low
+            else:
+                step = 0
 
             if "hex" in hex_colors:
                 hex_colors = hex_colors["hex"]
@@ -70,10 +94,15 @@ class Texture1D(object):
     def block(self, options=Map()):
         if self.options.gradient:
             color = self.color(options)
-            if type(color) == tuple and len(color) == 3:
+            if (type(color) == tuple and len(color) == 3) or (type(color) == str):
                 block_obj = closest_by_color(color, self.options + options)
             else:
-                print("BLOCK ERROR - COLOR not recognized")
+                error_string = "Error - Texture1D block color (\"" + str(color) + "\") not recognized"
+                if DEBUG_MODE == 1:
+                    raise ValueError(error_string)
+                else:
+                    print(error_string)
+
                 block_obj = block_by_id(0)
         else:
             if self.blocks and self.chances:
@@ -87,7 +116,22 @@ class Texture1D(object):
         return block_obj
 
     def get_calculated_steps(self, options=Map()):
+        options = self.options + options
         steps = options.steps or self.steps
+
+        if not steps:
+            if not options.bounds:
+                raise ValueError("Material does not have associated bounds")
+            else:
+                b = options.bounds
+                if self.axis == "y":
+                    steps = b.highest - b.lowest + 1
+                elif self.axis == "x":
+                    steps = b.x_high - b.x_low + 1
+                elif self.axis == "z":
+                    steps = b.z_high - b.z_low + 1
+                self.steps = steps
+
         if steps:
             if self.gradient_calculated_steps and steps in self.gradient_calculated_steps:
                 return self.gradient_calculated_steps[steps]
@@ -312,8 +356,8 @@ def init():
                           (0, 15, 73), (58, 0, 103)]
 
     COMMON_TEXTURES.RainbowGlass = Texture1D(
-        Map(gradient=True, gradient_type="linear", onlyBlock=True, name_contains="Glass",
-            colors=COMMON_TEXTURES.Rainbow, axis="y"))
+        Map(gradient=True, gradient_type="linear", onlyBlock="Block", name_contains="Glass",
+            colors=COLOR_MAPS.Rainbow, axis="y"))
     COMMON_TEXTURES.OldStoneWall = Texture1D(Map(blocks=[4, 48, (97, 1)], chances=[.90, .08, .02], random=True))
 
 

@@ -210,8 +210,8 @@ def find_block_info(material, data=None, options=Map()):
         else:  # Random
             material = np.random.choice(material)
 
-    elif type(material) == Texture1D:
-        block_obj = material.block()
+    elif type(material) == Texture1D.Texture1D:
+        block_obj = material.block(options=options)
         data = block_obj["data"]
         material = block_obj["id"]
 
@@ -261,13 +261,16 @@ def find_block_info(material, data=None, options=Map()):
 
 def create_block(p, material=block.STONE.id, data=None, options=Map(choice_type="random")):
     try:
-        material, data = find_block_info(material, data=data, options=options)
+        material, data = find_block_info(material, data=data, options=options.copy(point=p))
 
         if not data:
             if material is None:
                 raise TypeError("No material passed in")
             else:
-                mc.setBlock(p.x, p.y, p.z, material)
+                if type(material) in [int, float]:
+                    mc.setBlock(p.x, p.y, p.z, material)
+                else:
+                    raise ValueError("Can't create write material: " + str(material))
         else:
             mc.setBlock(p.x, p.y, p.z, material, data)
     except AttributeError:
@@ -474,10 +477,8 @@ def test_pyramid(thickness=1):
 
 
 def test_shapes(line=True, buff=13, texture_base=89, texture_main="Glass", info=False):
-    # texture = Texture1D.Texture1D(Map(gradient=True, gradient_type="linear", onlyBlock=True, name_contains=texture_main,
-    #                                   colors=Texture1D.COLOR_MAPS.Rainbow.colors, axis="y"))
-    texture = Texture1D.COMMON_TEXTURES.RainbowGlass
-    # TODO: This stopped working, fix
+    texture = Texture1D.Texture1D(Map(gradient=True, gradient_type="linear", onlyBlock=True, name_contains=texture_main,
+                                      colors=Texture1D.COLOR_MAPS.Rainbow, axis="y"))
 
     def draw(func, position, radius=5, height=8, material=texture_base, info=False):
         points = func(V3(position.x, position.y, position.z), radius, .7, height=height)

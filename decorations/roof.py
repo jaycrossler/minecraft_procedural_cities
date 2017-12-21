@@ -13,7 +13,7 @@ materials = []
 
 
 def init():
-    variables.append(Map(var="roof", choices=["sphere","triangular"]))# ,"triangular","triangular","triangular", "pointy", "pointy_lines", "battlement", False]))
+    variables.append(Map(var="roof", choices=["sphere"])) #,"triangular","triangular", "pointy", "pointy_lines", "battlement", False]))
     variables.append(Map(var="roof_battlement_height", choices=[1, 2, 3]))
     variables.append(Map(var="roof_battlement_space", choices=[1, 2, 3]))
     variables.append(Map(var="roof_pointy_multiplier", choices=[0.4, 0.6, 0.8, 1, 1.2, 1.4, 1.6, 1.8, 2, 2.2, 2.5]))

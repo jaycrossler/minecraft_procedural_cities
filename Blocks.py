@@ -10,6 +10,8 @@ import sys
 # this is a pointer to the module object instance itself.
 this = sys.modules[__name__]
 
+DEBUG_MODE = 1  # 0 = Print errors, 1 = Throw Errors
+
 
 def block(description):
     out = None
@@ -89,7 +91,12 @@ def like(name, only_blocks="Block"):
     if len(b) > 0:
         return b
     else:
-        print("Error - blocks.like(\"" + str(name) + "\") - unrecognized block name, returning air")
+        error_string = "Error - blocks.like(\"" + str(name) + "\") - unrecognized block name, returning air"
+        if DEBUG_MODE == 1:
+            raise ValueError(error_string)
+        else:
+            print(error_string)
+
         return [block_library[0]]
 
 
@@ -98,7 +105,12 @@ def kind(kind="Flower"):
     if len(b) > 0:
         return b
     else:
-        print("Error - blocks.kind(\"" + str(name) + "\") - unrecognized block name, returning air")
+        error_string = "Error - blocks.kind(\"" + str(name) + "\") - unrecognized block name, returning air"
+        if DEBUG_MODE == 1:
+            raise ValueError(error_string)
+        else:
+            print(error_string)
+
         return [block_library[0]]
 
 
@@ -154,7 +166,12 @@ def closest_by_color(color, options=Map()):
     elif type(color) == tuple and len(color) == 3:
         target_color = color
     else:
-        print("ERROR - invalid color in closest_by_color:", color)
+        error_string = "Error - blocks.closest_by_color(\"" + str(color) + "\") - invalid color in closest_by_color"
+        if DEBUG_MODE == 1:
+            raise ValueError(error_string)
+        else:
+            print(error_string)
+
         target_color = color
 
     closest = None
