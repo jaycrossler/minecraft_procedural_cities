@@ -660,17 +660,18 @@ def circle(center, radius, tight=.7, height=10, axis="y", filled=False, thicknes
         return evaluate_3d_range(center, -radius, radius, -radius, radius, 0, 1, func)
 
 
-def box(center, radius, tight=1, height=10, filled=False, thickness=1):
+def box(center, radius, tight=1, height=10, filled=False, thickness=1, options=Map()):
     def func(x, y, z):
         def edge(i):
             return abs(i + .5) >= (radius - thickness)
 
         return True if filled else (edge(x) or edge(y) or edge(z))
 
-    return evaluate_3d_range(center, -radius, radius, -radius, radius, -radius, radius, func)
+    min_x, max_x, min_y, max_y, min_z, max_z = build_bounds_for_3d_range(radius, options)
+    return evaluate_3d_range(center, min_x, max_x, min_y, max_y, min_z, max_z, func)
 
 
-def build_bounds_for_3d_range(radius, options):
+def build_bounds_for_3d_range(radius, options, height=None):
     if options.min_x: min_x = -abs(options.min_x)
     elif options.min_x_pct: min_x = options.min_x_pct * -(2 * radius)
     else: min_x = -radius-1
@@ -679,13 +680,22 @@ def build_bounds_for_3d_range(radius, options):
     elif options.max_x_pct: max_x = options.max_x_pct * (2 * radius)
     else: max_x = radius+1
 
+    if height is not None:
+        y_max = height
+        y_min = 0
+    else:
+        y_max = radius
+        y_min = radius
+
     if options.min_y: min_y = -abs(options.min_y)
-    elif options.min_y_pct: min_y = -radius + (options.min_y_pct * (2 * radius))
-    else: min_y = -radius-1
+    elif options.min_y_pct: min_y = -y_min + (options.min_y_pct * (2 * y_min))
+    else: min_y = -y_min-1
 
     if options.max_y: max_y = options.min_y
-    elif options.max_y_pct: max_y = options.max_y_pct * (2 * radius)
-    else: max_y = radius+1
+    elif options.max_y_pct: max_y = options.max_y_pct * (2 * y_max)
+    else: max_y = y_max+1
+
+    # TODO: Are the ranges correct for %s?  They should proabably be applied to all
 
     if options.min_z: min_z = -abs(options.min_z)
     elif options.min_z_pct: min_z = options.min_z_pct * -(2 * radius)
@@ -707,23 +717,25 @@ def sphere(center, radius, tight=.5, height=10, filled=False, thickness=1, optio
     return evaluate_3d_range(center, min_x, max_x, min_y, max_y, min_z, max_z, func)
 
 
-def cylinder(center, radius, tight=.5, height=10, filled=False, thickness=1):
+def cylinder(center, radius, tight=.5, height=10, filled=False, thickness=1, options=Map()):
     def func(x, y, z):
         c = math.sqrt(x * x + z * z)
         return c < (radius - tight) and (
             True if filled else (c >= (radius - thickness - tight) or y < thickness or y >= (height - thickness)))
 
-    return evaluate_3d_range(center, -radius, radius, 0, height, -radius, radius, func)
+    min_x, max_x, min_y, max_y, min_z, max_z = build_bounds_for_3d_range(radius, options, height=height)
+    return evaluate_3d_range(center, min_x, max_x, min_y, max_y, min_z, max_z, func)
 
 
-def cone(center, radius, tight=.4, height=10, filled=False, thickness=1):
+def cone(center, radius, tight=.4, height=10, filled=False, thickness=1, options=Map()):
     def func(x, y, z):
         c = math.sqrt(x * x + z * z)
         outer = c < ((radius * (1 - y / float(height))) - tight)
         inner = c >= ((radius * (1 - y / float(height))) - tight - thickness)
         return outer and (True if filled else (y < thickness or inner))
 
-    return evaluate_3d_range(center, -radius, radius, 0, height, -radius, radius, func)
+    min_x, max_x, min_y, max_y, min_z, max_z = build_bounds_for_3d_range(radius, options, height=height)
+    return evaluate_3d_range(center, min_x, max_x, min_y, max_y, min_z, max_z, func)
 
 
 def rectangular_pyramid(center, radius, tight=.4, height=10, filled=False, thickness=1):

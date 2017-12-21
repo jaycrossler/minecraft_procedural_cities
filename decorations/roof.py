@@ -13,7 +13,7 @@ materials = []
 
 
 def init():
-    variables.append(Map(var="roof", choices=["sphere"])) #,"triangular","triangular", "pointy", "pointy_lines", "battlement", False]))
+    variables.append(Map(var="roof", choices=["shape"])) #,"triangular","triangular", "pointy", "pointy_lines", "battlement", False]))
     variables.append(Map(var="roof_battlement_height", choices=[1, 2, 3]))
     variables.append(Map(var="roof_battlement_space", choices=[1, 2, 3]))
     variables.append(Map(var="roof_pointy_multiplier", choices=[0.4, 0.6, 0.8, 1, 1.2, 1.4, 1.6, 1.8, 2, 2.2, 2.5]))
@@ -63,8 +63,8 @@ def decorate_roof(obj, options=Map()):
 
             obj.points = obj.points.union(vg.points_spaced(roof_line, Map(every=spacing)))
 
-    elif str.startswith(settings.roof, "sphere"):
-        obj.decorations.append("roof_sphere")
+    elif str.startswith(settings.roof, "shape"):
+        obj.decorations.append("roof_floating_shape")
     return obj
 
 

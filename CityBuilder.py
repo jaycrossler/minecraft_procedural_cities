@@ -125,11 +125,11 @@ if __name__ == "__main__":
     if "PYCHARM_HOSTED" in os.environ:
         # Running from within PyCharm
 
-        test_zones = [Map(p1= V3(-10, -1, 80), p2= V3(0, -1, 103)),
-                      Map(p1=V3(0, -1, 80), p2=  V3(14, -1, 103)),
-                      Map(p1=V3(15, -1, 80), p2=  V3(28, -1, 107)),
-                      Map(p1=V3(28, -1, 80), p2=  V3(44, -1, 107)),
-                      Map(p1=V3(45, -1, 80), p2=  V3(70, -1, 87))]
+        test_zones = [Map(p1=V3(-10, -1, 80), p2=V3(0, -1, 103)),
+                      Map(p1=V3(0, -1, 80), p2=V3(14, -1, 103)),
+                      Map(p1=V3(15, -1, 80), p2=V3(28, -1, 107)),
+                      Map(p1=V3(28, -1, 80), p2=V3(44, -1, 107)),
+                      Map(p1=V3(45, -1, 80), p2=V3(70, -1, 87))]
 
         c = city(40, buildings=True, castle=False)
         # c = test_c(10)

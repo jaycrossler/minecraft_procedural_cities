@@ -382,7 +382,7 @@ block_library = [{'name': 'Air', 'id': 0, 'data': 0, 'kind': 'Block', 'id_in_ima
  {'name': 'Soul Sand', 'id': 88, 'data': 0, 'kind': 'Block', 'id_in_image': 134, 'main_color': (44, 32, 24), 'second_color': (71, 54, 44), 'third_color': (107, 85, 72)},
  {'name': 'Glowstone', 'id': 89, 'data': 0, 'kind': 'Block', 'id_in_image': 161, 'main_color': (54, 43, 20), 'second_color': (94, 78, 44), 'third_color': (79, 56, 16)},
  {'name': 'Nether Portal', 'id': 90, 'data': 0, 'kind': 'Block', 'id_in_image': 215, 'main_color': (40, 2, 98), 'second_color': (79, 11, 166), 'third_color': (54, 1, 144)},
- {'name': "Jack o'Lantern", 'id': 91, 'data': 0, 'id_in_image': 242, 'main_color': (115, 71, 14), 'second_color': (89, 51, 7), 'third_color': (160, 97, 15)},
+ {'name': "Jack o'Lantern", 'id': 91, 'data': 0, 'kind': 'Block', 'id_in_image': 242, 'main_color': (115, 71, 14), 'second_color': (89, 51, 7), 'third_color': (160, 97, 15)},
  {'name': 'Cake Block', 'id': 92, 'data': 0, 'id_in_image': 269, 'main_color': (234, 233, 235), 'second_color': (221, 221, 221), 'third_color': (234, 29, 29)},
  {'name': 'Redstone Repeater Block (off)', 'id': 93, 'data': 0, 'id_in_image': 296, 'main_color': (156, 156, 156), 'second_color': (201, 201, 201), 'third_color': (80, 1, 0)},
  {'name': 'Redstone Repeater Block (on)', 'id': 94, 'data': 0, 'id_in_image': 323, 'main_color': (156, 156, 156), 'second_color': (201, 201, 201), 'third_color': (234, 1, 2)},
