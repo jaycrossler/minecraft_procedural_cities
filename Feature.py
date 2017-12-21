@@ -62,9 +62,15 @@ class Feature(object):
             self.blocks.append(Map(pos=blocks, id=material))
 
     def draw(self):
-        for item in self.blocks:
-            if type(item.id) == Texture1D.Texture1D and not item.id.options.bounds:
-                item.id.options.bounds = vg.bounds(self.blocks)
+        for i, item in enumerate(self.blocks):
+            if i == 0 and type(item.id) == Texture1D.Texture1D:
+                item.id.reset_between_objects()
+
+                if not item.id.options.bounds:
+                    item.id.options.bounds = vg.bounds(self.blocks)
+
+                # TODO: This won't reset Texture Gradients if there are multiple per Feature
+
             helpers.create_block(item.pos, item.id, item.data)
 
     def clear(self):

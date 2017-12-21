@@ -115,6 +115,10 @@ class Texture1D(object):
 
         return block_obj
 
+    def reset_between_objects(self):
+        self.gradient_calculated_steps = {}
+        self.options.bounds = None
+
     def get_calculated_steps(self, options=Map()):
         options = self.options + options
         steps = options.steps or self.steps

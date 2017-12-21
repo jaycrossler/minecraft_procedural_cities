@@ -673,29 +673,29 @@ def box(center, radius, tight=1, height=10, filled=False, thickness=1):
 def build_bounds_for_3d_range(radius, options):
     if options.min_x: min_x = -abs(options.min_x)
     elif options.min_x_pct: min_x = options.min_x_pct * -(2 * radius)
-    else: min_x = -radius
+    else: min_x = -radius-1
 
     if options.max_x: max_x = options.min_x
     elif options.max_x_pct: max_x = options.max_x_pct * (2 * radius)
-    else: max_x = radius
+    else: max_x = radius+1
 
     if options.min_y: min_y = -abs(options.min_y)
     elif options.min_y_pct: min_y = -radius + (options.min_y_pct * (2 * radius))
-    else: min_y = -radius
+    else: min_y = -radius-1
 
     if options.max_y: max_y = options.min_y
     elif options.max_y_pct: max_y = options.max_y_pct * (2 * radius)
-    else: max_y = radius
+    else: max_y = radius+1
 
     if options.min_z: min_z = -abs(options.min_z)
     elif options.min_z_pct: min_z = options.min_z_pct * -(2 * radius)
-    else: min_z = -radius
+    else: min_z = -radius-1
 
     if options.max_z: max_z = options.min_z
     elif options.max_z_pct: max_z = options.max_z_pct * (2 * radius)
-    else: max_z = radius
+    else: max_z = radius+1
 
-    return min_x, max_x, min_y, max_y, min_z, max_z    
+    return min_x, max_x, min_y, max_y, min_z, max_z
     
 
 def sphere(center, radius, tight=.5, height=10, filled=False, thickness=1, options=Map()):
