@@ -1,8 +1,10 @@
 from numpy import cumsum, random as rnd
 from Map import Map
-from Blocks import closest_by_color, color_as_rgb, block_by_id, DEBUG_MODE
+# from Blocks import closest_by_color, color_as_rgb, block_by_id, DEBUG_MODE
+import Blocks
 import math
 
+# TODO: Have Blocks not reset all gradients on new shape.  Only reset gradients[steps] and bounds
 
 # Example test steps:
 # import Texture1D;
@@ -31,10 +33,9 @@ class Texture1D(object):
         self.options = options
         if options.gradient:
             self.axis = options.gradient_axis or "y"
-            # TODO: Implement so xyz can be passed in
             self.gradient_type = options.gradient_type or "linear"
             self.colors_names = options.colors or rand_hex_color(2)
-            self.colors = [color_as_rgb(color_name) for color_name in self.colors_names]
+            self.colors = [Blocks.color_as_rgb(color_name) for color_name in self.colors_names]
         elif options.blocks:
             self.blocks = options.blocks
             if options.chances:
@@ -88,22 +89,22 @@ class Texture1D(object):
             else:
                 block = self.material
 
-            block_obj = block_by_id(block)
+            block_obj = Blocks.block(block)
             return block_obj["main_color"]
 
     def block(self, options=Map()):
         if self.options.gradient:
             color = self.color(options)
             if (type(color) == tuple and len(color) == 3) or (type(color) == str):
-                block_obj = closest_by_color(color, self.options + options)
+                block_obj = Blocks.closest_by_color(color, self.options + options)
             else:
                 error_string = "Error - Texture1D block color (\"" + str(color) + "\") not recognized"
-                if DEBUG_MODE == 1:
+                if Blocks.DEBUG_MODE == 1:
                     raise ValueError(error_string)
                 else:
                     print(error_string)
 
-                block_obj = block_by_id(0)
+                block_obj = Blocks.block_by_id(0)
         else:
             if self.blocks and self.chances:
                 block = weighted_choice(self.chances, self.blocks)
@@ -111,7 +112,7 @@ class Texture1D(object):
                 block = rnd.choice(self.blocks)
             else:
                 block = self.material
-            block_obj = block_by_id(block)
+            block_obj = Blocks.block(block)
 
         return block_obj
 
@@ -169,7 +170,7 @@ def hex_to_rgb(color):
 
     try:
         # out = [int(hex[i:i+2], 16) for i in range(1,6,2)]
-        out_rgb = color_as_rgb(color)
+        out_rgb = Blocks.color_as_rgb(color)
         out = [out_rgb[0], out_rgb[1], out_rgb[2]]
 
     except ValueError:
@@ -358,7 +359,7 @@ def init():
     COLOR_MAPS.RainbowPrime = ["#FF0000", "#FF7F00", "#FFFF00", "#00FF00", "#0000FF", "#4B0082", "#9400D3"]
     COLOR_MAPS.Rainbow = [(53, 0, 0), (175, 0, 54), (255, 120, 7), (92, 92, 0), (29, 43, 0), (0, 50, 73),
                           (0, 15, 73), (58, 0, 103)]
-    COLOR_MAPS.Wood = [(164, 164, 160), (46, 37, 22), (42, 33, 13), (48, 45, 40), (29, 18, 8), (33, 26, 15)]
+    COLOR_MAPS.Wood = ['Birch Wood', 'Oak Wood', 'Jungle Wood', 'Spruce Wood', 'Acacia Wood', 'Dark Oak Wood']
 
     COMMON_TEXTURES.RainbowGlass = Texture1D(
         Map(gradient=True, gradient_type="linear", onlyBlock="Block", name_contains="Glass",
@@ -367,7 +368,8 @@ def init():
     COMMON_TEXTURES.WoodBlends = Texture1D(
         Map(gradient=True, gradient_type="linear", onlyBlock="Block", name_contains="Wood",
             colors=COLOR_MAPS.Wood, axis="y"))
-    COMMON_TEXTURES.Glow = Texture1D(Map(blocks=["Glowstone", "Jack o'Lantern", "Redstone Lamp (active)", "Sea Lantern", "Beacon"], chances=[.2, .2, .2, .2, .2], random=True))
+    COMMON_TEXTURES.Glow = Texture1D(Map(blocks=["Glowstone", "Jack o'Lantern", "Redstone Lamp (active)", "Sea Lantern",
+                                                 "Beacon"], chances=[.96, .1, .1, .1, .1], random=True))
 
 
 init()

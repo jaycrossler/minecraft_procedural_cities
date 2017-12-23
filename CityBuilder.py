@@ -131,14 +131,14 @@ if __name__ == "__main__":
                       Map(p1=V3(28, -1, 80), p2=V3(44, -1, 107)),
                       Map(p1=V3(45, -1, 80), p2=V3(70, -1, 87))]
 
-        c = city(40, buildings=True, castle=False)
+        helpers.prep()
+        c = city(60, buildings=True, castle=True)
         # c = test_c(10)
         # c = helpers.test_shapes()
-        # c = Neighborhoods(test_zones[0:5])
-        # c.build()
+        # c = Neighborhoods(test_zones[0:2])
+#        c.build()
         time.sleep(10)
         c.clear()
-        helpers.prep()
 
         # t = Texture1D.COMMON_TEXTURES.OldStoneWall
         # print(t.block())

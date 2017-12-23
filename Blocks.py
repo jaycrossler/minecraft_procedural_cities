@@ -51,6 +51,13 @@ def block_by_id(block_id, data=0):
     if len(b) == 0:
         b = [x for x in block_library if x["id"] == block_id]
 
+    if not b:
+        error_string = "Error - blocks.block_by_id(\"" + str(block_id) + "\") - unrecognized block id"
+        if DEBUG_MODE == 1:
+            raise ValueError(error_string)
+        else:
+            print(error_string)
+
     return b[0] if b else {"name": "Unknown", "id": 0, "data": 0}
 
 
@@ -437,8 +444,8 @@ block_library = [{'name': 'Air', 'id': 0, 'data': 0, 'kind': 'Block', 'id_in_ima
  {'name': 'End Portal Frame', 'id': 120, 'data': 0, 'id_in_image': 137, 'main_color': (15, 31, 31), 'second_color': (100, 105, 77), 'third_color': (148, 150, 109)},
  {'name': 'End Stone', 'id': 121, 'data': 0, 'id_in_image': 138, 'main_color': (101, 102, 75), 'second_color': (142, 145, 107), 'third_color': (213, 218, 161)},
  {'name': 'Dragon Egg', 'id': 122, 'data': 0, 'id_in_image': 139, 'main_color': (6, 5, 8), 'second_color': (16, 16, 16), 'third_color': (28, 1, 32)},
- {'name': 'Redstone Lamp (inactive)', 'id': 123, 'data': 0, 'id_in_image': 140, 'main_color': (25, 16, 10), 'second_color': (80, 47, 27), 'third_color': (111, 69, 43)},
- {'name': 'Redstone Lamp (active)', 'id': 124, 'data': 0, 'id_in_image': 6, 'main_color': (33, 27, 19), 'second_color': (100, 76, 40), 'third_color': (75, 56, 27)},
+ {'name': 'Redstone Lamp (inactive)', 'id': 123, 'data': 0, 'kind': 'Block', 'id_in_image': 140, 'main_color': (25, 16, 10), 'second_color': (80, 47, 27), 'third_color': (111, 69, 43)},
+ {'name': 'Redstone Lamp (active)', 'id': 124, 'data': 0, 'kind': 'Block', 'id_in_image': 6, 'main_color': (33, 27, 19), 'second_color': (100, 76, 40), 'third_color': (75, 56, 27)},
  {'name': 'Double Oak Wood Slab', 'id': 125, 'data': 0, 'kind': 'Block', 'id_in_image': 33, 'main_color': (98, 80, 48), 'second_color': (174, 142, 87), 'third_color': (137, 111, 71)},
  {'name': 'Double Spruce Wood Slab', 'id': 125, 'data': 1, 'kind': 'Block', 'id_in_image': 60, 'main_color': (72, 54, 32), 'second_color': (48, 36, 22), 'third_color': (114, 85, 50)},
  {'name': 'Double Birch Wood Slab', 'id': 125, 'data': 2, 'kind': 'Block', 'id_in_image': 87, 'main_color': (87, 79, 54), 'second_color': (135, 125, 86), 'third_color': (117, 106, 71)},
@@ -462,7 +469,7 @@ block_library = [{'name': 'Air', 'id': 0, 'data': 0, 'kind': 'Block', 'id_in_ima
  {'name': 'Birch Wood Stairs', 'id': 135, 'data': 0, 'kind': 'Block', 'id_in_image': 191, 'main_color': (86, 79, 55), 'second_color': (134, 124, 85), 'third_color': (170, 154, 105)},
  {'name': 'Jungle Wood Stairs', 'id': 136, 'data': 0, 'kind': 'Block', 'id_in_image': 192, 'main_color': (107, 77, 54), 'second_color': (72, 51, 35), 'third_color': (160, 116, 82)},
  {'name': 'Command Block', 'id': 137, 'data': 0, 'kind': 'Block', 'id_in_image': 193, 'main_color': (80, 52, 36), 'second_color': (101, 91, 85), 'third_color': (110, 75, 52)},
- {'name': 'Beacon', 'id': 138, 'data': 0, 'id_in_image': 194, 'main_color': (93, 106, 107), 'second_color': (105, 149, 149), 'third_color': (11, 10, 17)},
+ {'name': 'Beacon', 'id': 138, 'data': 0, 'kind': 'Block', 'id_in_image': 194, 'main_color': (93, 106, 107), 'second_color': (105, 149, 149), 'third_color': (11, 10, 17)},
  {'name': 'Cobblestone Wall', 'id': 139, 'data': 0, 'kind': 'Block', 'id_in_image': 195, 'main_color': (90, 90, 90), 'second_color': (56, 56, 56), 'third_color': (39, 39, 39)},
  {'name': 'Mossy Cobblestone Wall', 'id': 139, 'data': 1, 'kind': 'Block', 'id_in_image': 196, 'main_color': (37, 50, 37), 'second_color': (88, 88, 88), 'third_color': (47, 86, 47)},
  {'name': 'Flower Pot', 'id': 140, 'data': 0, 'id_in_image': 35, 'main_color': (88, 48, 37), 'second_color': (59, 32, 25), 'third_color': (119, 67, 51)},
