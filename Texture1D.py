@@ -359,7 +359,7 @@ def init():
     COLOR_MAPS.RainbowPrime = ["#FF0000", "#FF7F00", "#FFFF00", "#00FF00", "#0000FF", "#4B0082", "#9400D3"]
     COLOR_MAPS.Rainbow = [(53, 0, 0), (175, 0, 54), (255, 120, 7), (92, 92, 0), (29, 43, 0), (0, 50, 73),
                           (0, 15, 73), (58, 0, 103)]
-    COLOR_MAPS.Wood = ['Birch Wood', 'Oak Wood', 'Jungle Wood', 'Spruce Wood', 'Acacia Wood', 'Dark Oak Wood']
+    COLOR_MAPS.Wood = [(164, 164, 160), (46, 37, 22), (42, 33, 13), (48, 45, 40), (29, 18, 8), (33, 26, 15)]
 
     COMMON_TEXTURES.RainbowGlass = Texture1D(
         Map(gradient=True, gradient_type="linear", onlyBlock="Block", name_contains="Glass",
