@@ -320,6 +320,9 @@ def flatten_list_of_lists(input):
 
 
 def choose_one(*argv):
+    if len(argv) == 1 and argv[0] and type(argv[0]) == list:
+        argv = argv[0]
+
     return argv[np.random.randint(0, len(argv) - 1)]
 
 

@@ -448,7 +448,7 @@ block_library = [{'name': 'Air', 'id': 0, 'data': 0, 'kind': 'Block', 'id_in_ima
  {'name': 'Redstone Lamp (active)', 'id': 124, 'data': 0, 'kind': 'Block', 'id_in_image': 6, 'main_color': (33, 27, 19), 'second_color': (100, 76, 40), 'third_color': (75, 56, 27)},
  {'name': 'Double Oak Wood Slab', 'id': 125, 'data': 0, 'kind': 'Block', 'id_in_image': 33, 'main_color': (98, 80, 48), 'second_color': (174, 142, 87), 'third_color': (137, 111, 71)},
  {'name': 'Double Spruce Wood Slab', 'id': 125, 'data': 1, 'kind': 'Block', 'id_in_image': 60, 'main_color': (72, 54, 32), 'second_color': (48, 36, 22), 'third_color': (114, 85, 50)},
- {'name': 'Double Birch Wood Slab', 'id': 125, 'data': 2, 'kind': 'Block', 'id_in_image': 87, 'main_color': (87, 79, 54), 'second_color': (135, 125, 86), 'third_color': (117, 106, 71)},
+ {'name': 'Double  Slab', 'id': 125, 'data': 2, 'kind': 'Block', 'id_in_image': 87, 'main_color': (87, 79, 54), 'second_color': (135, 125, 86), 'third_color': (117, 106, 71)},
  {'name': 'Double Jungle Wood Slab', 'id': 125, 'data': 3, 'kind': 'Block', 'id_in_image': 114, 'main_color': (73, 52, 36), 'second_color': (109, 78, 54), 'third_color': (50, 34, 23)},
  {'name': 'Double Acacia Wood Slab', 'id': 125, 'data': 4, 'kind': 'Block', 'id_in_image': 141, 'main_color': (89, 48, 26), 'second_color': (168, 91, 50), 'third_color': (116, 64, 36)},
  {'name': 'Double Dark Oak Wood Slab', 'id': 125, 'data': 5, 'kind': 'Block', 'id_in_image': 162, 'main_color': (29, 18, 8), 'second_color': (41, 26, 12), 'third_color': (42, 27, 12)},
