@@ -10,9 +10,10 @@ from V3 import *
 from libraries import voronoi_polygons, webcolors
 import VoxelGraphics as vg
 from Map import Map
-from shapely.geometry import Point
-from shapely.geometry.polygon import Polygon
+# from shapely.geometry import Point
+# from shapely.geometry.polygon import Polygon
 import collections
+import networkx as nx
 
 
 # TODO: Average out the dists of all cells per shell
@@ -48,14 +49,12 @@ def color_range(one, two, steps=16):
 
 
 def add_cells_to_image(polys, colors, draw, fill_line_bg='#000011', fill_line_fg='white', zone_data=Map()):
-    print(len(zone_data.outer_walls))
-
     for poly_id, poly in enumerate(polys):
 
         lines = []
-        for line_id, line in enumerate(poly):
-            lines.append(line[0])
-            lines.append(line[1])
+        for line_id, p1 in enumerate(poly):
+            lines.append(p1[0])
+            lines.append(p1[1])
 
         if poly_id == zone_data.center_id:
             color = 'red'
@@ -73,25 +72,27 @@ def add_cells_to_image(polys, colors, draw, fill_line_bg='#000011', fill_line_fg
 
         draw.polygon(lines, fill=color)
 
-        for line_id, line in enumerate(poly):
-            l2 = poly[(line_id + 1) % len(poly)]
-            draw.line((line[0], line[1], l2[0], l2[1]), fill=fill_line_bg, width=3)
-            draw.line((line[0], line[1], l2[0], l2[1]), fill=fill_line_fg)
-
     for poly_id, poly in enumerate(polys):
-        for line_id, line in enumerate(poly):
-            l2 = poly[(line_id + 1) % len(poly)]
+        for line_id, p1 in enumerate(poly):
+            p2 = poly[(line_id + 1) % len(poly)]
 
             is_outer = False
-            for w_poly, w_w in zone_data.outer_walls:
-                if w_poly == poly_id and w_w == line_id:
+            is_river = False
+
+            for w_poly, w_id in zone_data.outer_walls:
+                if w_poly == poly_id and w_id == line_id:
                     is_outer = True
+                    break
+            for r_poly, r_id in zone_data.river_edges:
+                if r_poly == poly_id and r_id == line_id:
+                    is_river = True
                     break
 
             if is_outer:
-                draw.line((line[0], line[1], l2[0], l2[1]), fill='black', width=7)
-                # draw.line((line[0], line[1], l2[0], l2[1]), fill='gray', width=3)
-                # draw.line((line[0], line[1], l2[0], l2[1]), fill='white', width=1)
+                draw.line((p1[0], p1[1], p2[0], p2[1]), fill='black', width=7)
+
+            if is_river:
+                draw.line((p1[0], p1[1], p2[0], p2[1]), fill='blue', width=9)
 
 
 def add_points_to_image(points, draw, fill_line_bg='blue', fill_line_fg='orange', c_size=2):
@@ -107,24 +108,13 @@ def add_ids_to_image(points, draw, fill_line_bg='blue'):
         draw.text(p, str(id), fill=fill_line_bg)
 
 
-#
-# def point_dir(point_id, dir="n", dist=1, cols=11):
-#     if dir == "n":
-#         return point_id - (cols * dist)
-#     elif dir == "s":
-#         return point_id + (cols * dist)
-#     elif dir == "e":
-#         return point_id + dist
-#     elif dir == "w":
-#         return point_id - dist
-#     elif dir == "ne":
-#         return point_id - (cols * dist) + 1
-#     elif dir == "se":
-#         return point_id + (cols * dist) + 1
-#     elif dir == "sw":
-#         return point_id + (cols * dist) - 1
-#     elif dir == "nw":
-#         return point_id - (cols * dist) - 1
+def add_line_segments_to_image(lines, draw, fill_line_bg='blue', c_size=2, skip_last=False):
+    for id, p1 in enumerate(lines):
+        if skip_last and id == len(lines)-1:
+            break
+
+        p2 = lines[(id + 1) % len(lines)]
+        draw.line((p1[0], p1[1], p2[0], p2[1]), fill=fill_line_bg, width=c_size)
 
 
 def dist_points(p1, p2):
@@ -138,8 +128,6 @@ def move_points_outwards(points, distance_multiplier=0.8, zone_data=Map(), band=
     zone_data.third = []
     zone_data.fourth = []
 
-    # for dir in ["nw", "n", "ne", "w", "e", "sw", "s", "se"]:
-    #     p2 = point_dir(center_point_id, dir=dir, dist=1, cols=cols)
     for p2, point in enumerate(points):
         to_point = points[p2]
 
@@ -158,9 +146,9 @@ def move_points_outwards(points, distance_multiplier=0.8, zone_data=Map(), band=
         elif dist < band * 1.7:  # Brown
             band_name = 'third'
             band_mult = .8
-        elif dist < band * 2.1:  # Black
-            band_name = 'fourth'
-            band_mult = .9
+        # elif dist < band * 2.1:  # Black
+        #     band_name = 'fourth'
+        #     band_mult = .9
 
         if band_name:
             points[p2][0] = center_point[0] + (math.cos(rad) * distance_multiplier * band_mult * dist)
@@ -195,7 +183,31 @@ def zones_around_point(points, center_id, num=10):
     return selected
 
 
-def zones_outer_walls(polys, zone_ids):
+def zones_rivers(polys, river_segments):
+    all_rivers = []
+    for seg_id, water_p1 in enumerate(river_segments):
+        if seg_id == len(river_segments) - 1:
+            break
+
+        water_p2 = river_segments[(seg_id + 1) % len(river_segments)]
+
+        for zone_id, poly in enumerate(polys):
+            for line_id, p1 in enumerate(poly):
+                p2 = poly[(line_id + 1) % len(poly)]
+
+                is_river = False
+                if (p1[0] == water_p1[0] and p1[1] == water_p1[1]) and (p2[0] == water_p2[0] and p2[1] == water_p2[1]):
+                    is_river = True
+                elif (p2[0] == water_p1[0] and p2[1] == water_p1[1]) and (p1[0] == water_p2[0] and p1[1] == water_p2[1]):
+                    is_river = True
+
+                if is_river:
+                    all_rivers.append((zone_id, line_id))
+
+    return all_rivers
+
+
+def zones_outer_walls(polys, zone_ids, prec=5):
     # Make a list of all of the walls of points in zone_ids
     all_walls = []
     for zone_id in zone_ids:
@@ -203,10 +215,10 @@ def zones_outer_walls(polys, zone_ids):
         for wall_id, wall in enumerate(poly):
             # Find walls both p1->p2 and p2->p1
             wall_next = poly[(wall_id + 1) % len(poly)]
-            w1t = (int(round(wall[0] / 5) * 5), int(round(wall[1] / 5) * 5), int(round(wall_next[0] / 5) * 5),
-                   int(round(wall_next[1] / 5) * 5))
-            w2t = (int(round(wall_next[0] / 5) * 5), int(round(wall_next[1] / 5) * 5), int(round(wall[0] / 5) * 5),
-                   int(round(wall[1] / 5) * 5))
+            w1t = (int(round(wall[0] / prec) * prec), int(round(wall[1] / prec) * prec),
+                   int(round(wall_next[0] / prec) * prec), int(round(wall_next[1] / prec) * prec))
+            w2t = (int(round(wall_next[0] / prec) * prec), int(round(wall_next[1] / prec) * prec),
+                   int(round(wall[0] / prec) * prec), int(round(wall[1] / prec) * prec))
             all_walls.append(w1t)
             all_walls.append(w2t)
 
@@ -251,6 +263,61 @@ def stretch_out(polys, P, rows=11, cols=11, dist=6):
     return polys, P
 
 
+def edge_graph_from_polys(polys, prec=5):
+    edge_graph = nx.Graph()
+
+    for poly_id, poly in enumerate(polys):
+        for wall_id, wall in enumerate(poly):
+            wall_next = poly[(wall_id + 1) % len(poly)]
+            w1 = (int(round(wall[0] / prec) * prec), int(round(wall[1] / prec) * prec))
+            w2 = (int(round(wall_next[0] / prec) * prec), int(round(wall_next[1] / prec) * prec))
+            dist = dist_points(w1, w2)
+
+            if (w1[0] == w2[0] and w1[1] == w2[1]) or (w1[0] in [0, width] and w2[0] in [0, height]):
+                pass
+                # Duplicate points
+            else:
+                edge_graph.add_node(w1)
+                edge_graph.add_node(w2)
+                if w1[0] in [0, width] or w2[0] in [0, height]:
+                    dist += 1000
+
+                edge_graph.add_edge(w1, w2, weight=dist)
+                # print("Cell", poly_id, "Adding edge: ", (w1, w2, dist))
+
+    return edge_graph
+
+
+def round_edge_points(polys, precision, width, height):
+    for poly_id, poly in enumerate(polys):
+        for wall_id, wall in enumerate(poly):
+            wall[0] = int(round(wall[0] / precision) * precision)
+            wall[1] = int(round(wall[1] / precision) * precision)
+
+            if wall[0] < 0:
+                wall[0] = 0
+            if wall[0] > width:
+                wall[0] = width
+            if wall[1] < 0:
+                wall[1] = 0
+            if wall[1] > height:
+                wall[1] = height
+
+    return polys
+
+
+def edge_point_closest_to(polys, x, y):
+    closest_point = None
+    closest_dist = 1000000
+
+    for edge_id, edge_pt in enumerate(polys):
+        dist = dist_points(edge_pt, (x, y))
+        if dist < closest_dist:
+            closest_dist = dist
+            closest_point = edge_pt
+    return int(round(closest_point[0])), int(round(closest_point[1]))
+
+
 if __name__ == '__main__':
     width = 1200
     height = 1200
@@ -258,12 +325,16 @@ if __name__ == '__main__':
     rows = 11
     cols = 11
     zones = 10
+    round_precision = 5
+    stretch = 6
 
-    im = Image.new('RGBA', (width, height))
+    im = Image.new('RGBA', (width + (cols + 2) * stretch, height + (rows + 2) * stretch))
     draw = ImageDraw.Draw(im)
 
     # Build cells and colorize them
     zone_data = Map()
+
+    # np.random.seed(41)
 
     points = voronoi_cells(rows, cols, width, height, chaos)
     center_point_id = int(cols * (rows - 1) / 2 + (cols - 1) / 2)
@@ -276,17 +347,26 @@ if __name__ == '__main__':
     central_zones = [points[id] for id in central_points]
 
     polys = voronoi_polygons.polygons(points)
+    polys = round_edge_points(polys, round_precision, width, height)
     zone_data.outer_walls = zones_outer_walls(polys, central_points)
 
-    polys, points = stretch_out(polys, points, 6)
+    zone_data.edge_graph = edge_graph_from_polys(polys)
+    r1 = edge_point_closest_to(zone_data.edge_graph.nodes, 0, height * .7)
+    r2 = edge_point_closest_to(zone_data.edge_graph.nodes, width, height *.55)
+    # print("Checking for", r1, "to", r2)
+    river = nx.shortest_path(zone_data.edge_graph, r1, r2, weight='weight')
+    zone_data.river_edges = zones_rivers(polys, river)
 
-    colors = color_range((0, 0, 255), (0, 0, 0), 32)
+    polys, points = stretch_out(polys, points, stretch)
+
+    colors = color_range((0, 255, 0), (0, 0, 0), 16)
     add_cells_to_image(polys, colors, draw, zone_data=zone_data)
     add_points_to_image(points, draw)
 
     add_points_to_image(central_zones, draw, fill_line_bg='gold', c_size=9)
-
     add_points_to_image([points[zone_data.center_id]], draw, fill_line_bg='red', c_size=5)
     add_ids_to_image(points, draw)
+    # add_line_segments_to_image(river, draw, fill_line_bg='gold', c_size=9, skip_last=True)
+    # add_line_segments_to_image(river, draw, fill_line_bg='blue', c_size=7, skip_last=True)
 
     im.show()
