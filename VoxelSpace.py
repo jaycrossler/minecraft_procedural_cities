@@ -14,9 +14,10 @@ from Map import Map
 # from shapely.geometry.polygon import Polygon
 import collections
 import networkx as nx
+import chroma
 
+# TODO: Average out the dists of all cells per shell?
 
-# TODO: Average out the dists of all cells per shell
 
 def voronoi_cells(rows=11, cols=11, width_pixels=1000, height_pixels=1000, chaos=0.09):
     P = np.random.random((rows * cols, 2))
@@ -56,21 +57,23 @@ def add_cells_to_image(polys, colors, draw, fill_line_bg='#000011', fill_line_fg
             lines.append(p1[0])
             lines.append(p1[1])
 
-        if poly_id == zone_data.center_id:
-            color = 'red'
-        elif poly_id in zone_data.first:
-            color = 'green'
-        elif poly_id in zone_data.second:
-            color = 'yellow'
-        elif poly_id in zone_data.third:
-            color = 'brown'
-        elif poly_id in zone_data.fourth:
-            color = 'cyan'
-        else:
-            color = helpers.choose_one(colors)
-            color = webcolors.rgb_to_hex(color)
+        color = webcolors.rgb_to_hex(helpers.choose_one(colors))
+        color = chroma.Color(color)
 
-        draw.polygon(lines, fill=color)
+        if poly_id == zone_data.center_id:
+            color -= chroma.Color(webcolors.name_to_hex('red'))
+        elif poly_id in zone_data.city_zones_in_walls:
+            color -= chroma.Color(webcolors.name_to_hex('orange'))
+        # elif poly_id in zone_data.first:
+        #     color -= chroma.Color(webcolors.name_to_hex('green'))
+        # elif poly_id in zone_data.second:
+        #     color -= chroma.Color(webcolors.name_to_hex('yellow'))
+        # elif poly_id in zone_data.third:
+        #     color -= chroma.Color(webcolors.name_to_hex('brown'))
+        # elif poly_id in zone_data.fourth:
+        #     color -= chroma.Color(webcolors.name_to_hex('lightblue'))
+
+        draw.polygon(lines, fill=color.hex)
 
     for poly_id, poly in enumerate(polys):
         for line_id, p1 in enumerate(poly):
@@ -110,7 +113,7 @@ def add_ids_to_image(points, draw, fill_line_bg='blue'):
 
 def add_line_segments_to_image(lines, draw, fill_line_bg='blue', c_size=2, skip_last=False):
     for id, p1 in enumerate(lines):
-        if skip_last and id == len(lines)-1:
+        if skip_last and id == len(lines) - 1:
             break
 
         p2 = lines[(id + 1) % len(lines)]
@@ -146,9 +149,9 @@ def move_points_outwards(points, distance_multiplier=0.8, zone_data=Map(), band=
         elif dist < band * 1.7:  # Brown
             band_name = 'third'
             band_mult = .8
-        # elif dist < band * 2.1:  # Black
-        #     band_name = 'fourth'
-        #     band_mult = .9
+        elif dist < band * 2.1:  # Black
+            band_name = 'fourth'
+            band_mult = .9
 
         if band_name:
             points[p2][0] = center_point[0] + (math.cos(rad) * distance_multiplier * band_mult * dist)
@@ -198,7 +201,8 @@ def zones_rivers(polys, river_segments):
                 is_river = False
                 if (p1[0] == water_p1[0] and p1[1] == water_p1[1]) and (p2[0] == water_p2[0] and p2[1] == water_p2[1]):
                     is_river = True
-                elif (p2[0] == water_p1[0] and p2[1] == water_p1[1]) and (p1[0] == water_p2[0] and p1[1] == water_p2[1]):
+                elif (p2[0] == water_p1[0] and p2[1] == water_p1[1]) and (
+                        p1[0] == water_p2[0] and p1[1] == water_p2[1]):
                     is_river = True
 
                 if is_river:
@@ -321,52 +325,69 @@ def edge_point_closest_to(polys, x, y):
 if __name__ == '__main__':
     width = 1200
     height = 1200
+    buffer = 100
     chaos = 0.08
-    rows = 11
-    cols = 11
-    zones = 10
+    rows = 21
+    cols = 21
+    zones_within_walls = rows + cols
     round_precision = 5
-    stretch = 6
+    stretch = 0
+    background_color = '#ccc5b8'
+    background_color2 = (100, 100, 100)
+    show_point_info = False
 
-    im = Image.new('RGBA', (width + (cols + 2) * stretch, height + (rows + 2) * stretch))
+    # Build the basic image
+    im = Image.new('RGBA', (width, height), color=background_color)
     draw = ImageDraw.Draw(im)
+    # np.random.seed(41)
 
     # Build cells and colorize them
     zone_data = Map()
 
-    # np.random.seed(41)
-
+    # Generate the points that will be used for the image
     points = voronoi_cells(rows, cols, width, height, chaos)
     center_point_id = int(cols * (rows - 1) / 2 + (cols - 1) / 2)
     zone_data.center_id = center_point_id
 
+    # Move points around to cluster city centers differently
     points, zone_data = move_points_outwards(points, distance_multiplier=1, band=int((width + height) / rows),
                                              zone_data=zone_data)
 
-    central_points = zones_around_point(points, zone_data.center_id, zones)
-    central_zones = [points[id] for id in central_points]
+    # Pick which points should be within the city walls
+    zone_data.city_zones_in_walls = zones_around_point(points, zone_data.center_id, zones_within_walls)
+    central_zones = [points[id] for id in zone_data.city_zones_in_walls]
 
+    # Turn the points into polygons
     polys = voronoi_polygons.polygons(points)
-    polys = round_edge_points(polys, round_precision, width, height)
-    zone_data.outer_walls = zones_outer_walls(polys, central_points)
+    polys = round_edge_points(polys, round_precision, width, height)  # Rivers use rounded edge points
 
+    # Build walls around city points
+    zone_data.outer_walls = zones_outer_walls(polys, zone_data.city_zones_in_walls)
+
+    # Build a map of all edges
     zone_data.edge_graph = edge_graph_from_polys(polys)
+
+    # Find River path
     r1 = edge_point_closest_to(zone_data.edge_graph.nodes, 0, height * .7)
-    r2 = edge_point_closest_to(zone_data.edge_graph.nodes, width, height *.55)
-    # print("Checking for", r1, "to", r2)
+    r2 = edge_point_closest_to(zone_data.edge_graph.nodes, width, height * .55)
     river = nx.shortest_path(zone_data.edge_graph, r1, r2, weight='weight')
     zone_data.river_edges = zones_rivers(polys, river)
 
-    polys, points = stretch_out(polys, points, stretch)
+    # Stretch out all zones so there is some space between
+    polys, points = stretch_out(polys, points, dist=stretch)
 
-    colors = color_range((0, 255, 0), (0, 0, 0), 16)
+    # Determine colors and then add them to image
+    colors = color_range(webcolors.hex_to_rgb(background_color), background_color2, 16)
     add_cells_to_image(polys, colors, draw, zone_data=zone_data)
-    add_points_to_image(points, draw)
+    # add_points_to_image(points, draw)
 
-    add_points_to_image(central_zones, draw, fill_line_bg='gold', c_size=9)
-    add_points_to_image([points[zone_data.center_id]], draw, fill_line_bg='red', c_size=5)
-    add_ids_to_image(points, draw)
-    # add_line_segments_to_image(river, draw, fill_line_bg='gold', c_size=9, skip_last=True)
-    # add_line_segments_to_image(river, draw, fill_line_bg='blue', c_size=7, skip_last=True)
+    # Add annotations to image
+    if show_point_info:
+        add_points_to_image(central_zones, draw, fill_line_bg='gold', c_size=9)
+        add_points_to_image([points[zone_data.center_id]], draw, fill_line_bg='red', c_size=5)
+        add_ids_to_image(points, draw)
+        add_line_segments_to_image(river, draw, fill_line_bg='gold', c_size=9, skip_last=True)
+        add_line_segments_to_image(river, draw, fill_line_bg='blue', c_size=7, skip_last=True)
 
+    im = im.crop((buffer, buffer, width-buffer-buffer, height-buffer-buffer))
     im.show()
