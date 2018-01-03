@@ -10,11 +10,12 @@ from V3 import *
 from libraries import voronoi_polygons, webcolors
 import VoxelGraphics as vg
 from Map import Map
-# from shapely.geometry import Point
-# from shapely.geometry.polygon import Polygon
+from shapely.geometry import Point
+from shapely.geometry.polygon import Polygon
 import collections
 import networkx as nx
 import chroma
+
 
 # TODO: Average out the dists of all cells per shell?
 
@@ -99,7 +100,6 @@ def add_cells_to_image(polys, colors, draw, zone_data=Map()):
 
 
 def add_polys_to_image(polys, draw, colors, color=None, outline='brown'):
-
     for poly_id, poly in enumerate(polys):
         lines = []
         for line_id, p1 in enumerate(poly):
@@ -348,17 +348,78 @@ def move_point_towards(point, center, dist=1):
     return [point[0] + stepx, point[1] + stepy]
 
 
+def bounding_box(poly):
+    x_min = y_min = 100000
+    x_max = y_max = -100000
+
+    for point in poly:
+        if point[0] > x_max: x_max = round(point[0])
+        if point[0] < x_min: x_min = round(point[0])
+        if point[1] > y_max: y_max = round(point[1])
+        if point[1] < y_min: y_min = round(point[1])
+
+    return Map(x_min=x_min, y_min=y_min, x_max=x_max, y_max=y_max)
+
+
 def create_building_polys(polys, city_zones_in_walls, dist=3):
     buildings = []
     for z in city_zones_in_walls:
         # TODO: For now, just makes 1 big building
         zone = polys[z]
         center = vg.polygon_center(zone)
-        poly = []
+        poly_bounds = []
         for v_id, vertex in enumerate(zone):
-            poly.append(move_point_towards(vertex, center, dist=dist))
+            poly_bounds.append(move_point_towards(vertex, center, dist=dist))
 
-        buildings.append(poly)
+        bounds = bounding_box(poly_bounds)
+
+        local_buildings = []
+        for i in range(1, 10):
+            for attempt in range(100):
+                width = np.random.triangular(5, 8, 12)
+                height = np.random.triangular(5, 8, 12)
+
+                xmax = bounds.x_max - width - 1
+                ymax = bounds.y_max - height - 1
+
+                if bounds.x_min >= bounds.x_max:
+                    break
+                elif xmax > bounds.x_min:
+                    try:
+                        x = np.random.randint(bounds.x_min, xmax)
+                    except ValueError:
+                        break
+
+                else:
+                        x = np.random.randint(bounds.x_min, bounds.x_max)
+
+                if bounds.y_min >= bounds.y_max:
+                    break
+                elif ymax > bounds.y_min:
+                    try:
+                        y = np.random.randint(bounds.y_min, ymax)
+                    except ValueError:
+                        break
+                else:
+                    y = np.random.randint(bounds.y_min, bounds.y_max)
+
+                rect_maybe = [[x, y], [x + width, y], [x + width, y + height], [x, y + height]]
+                poly_maybe = Polygon(rect_maybe)
+
+                overlaps = False
+                for b in local_buildings:
+                    if poly_maybe.intersects(Polygon(b)):
+                        overlaps = True
+                        break
+                if not overlaps:
+                    local_buildings.append(rect_maybe)
+                    break
+
+        for b in local_buildings:
+            if Polygon(b).intersects(Polygon(poly_bounds)):
+                buildings.append(b)
+
+        buildings.insert(0, poly_bounds)
 
     return buildings
 
@@ -436,5 +497,5 @@ if __name__ == '__main__':
     # Draw buildings
     add_polys_to_image(zone_data.building_polys, draw, colors, outline='black')
 
-    im = im.crop((buffer, buffer, width-buffer-buffer, height-buffer-buffer))
+    im = im.crop((buffer, buffer, width - buffer - buffer, height - buffer - buffer))
     im.show()
