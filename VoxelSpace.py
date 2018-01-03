@@ -49,7 +49,7 @@ def color_range(one, two, steps=16):
     return colors
 
 
-def add_cells_to_image(polys, colors, draw, fill_line_bg='#000011', fill_line_fg='white', zone_data=Map()):
+def add_cells_to_image(polys, colors, draw, zone_data=Map()):
     for poly_id, poly in enumerate(polys):
 
         lines = []
@@ -63,7 +63,7 @@ def add_cells_to_image(polys, colors, draw, fill_line_bg='#000011', fill_line_fg
         if poly_id == zone_data.center_id:
             color -= chroma.Color(webcolors.name_to_hex('red'))
         elif poly_id in zone_data.city_zones_in_walls:
-            color -= chroma.Color(webcolors.name_to_hex('orange'))
+            color -= chroma.Color(webcolors.name_to_hex('white'))
         # elif poly_id in zone_data.first:
         #     color -= chroma.Color(webcolors.name_to_hex('green'))
         # elif poly_id in zone_data.second:
@@ -96,6 +96,23 @@ def add_cells_to_image(polys, colors, draw, fill_line_bg='#000011', fill_line_fg
 
             if is_river:
                 draw.line((p1[0], p1[1], p2[0], p2[1]), fill='blue', width=9)
+
+
+def add_polys_to_image(polys, draw, colors, color=None, outline='brown'):
+
+    for poly_id, poly in enumerate(polys):
+        lines = []
+        for line_id, p1 in enumerate(poly):
+            lines.append(p1[0])
+            lines.append(p1[1])
+
+        if not color:
+            color = webcolors.rgb_to_hex(helpers.choose_one(colors))
+            color = chroma.Color(color)
+            color -= chroma.Color(webcolors.name_to_hex('orange'))
+            color = color.hex
+
+        draw.polygon(lines, fill=color, outline=outline)
 
 
 def add_points_to_image(points, draw, fill_line_bg='blue', fill_line_fg='orange', c_size=2):
@@ -322,6 +339,29 @@ def edge_point_closest_to(polys, x, y):
     return int(round(closest_point[0])), int(round(closest_point[1]))
 
 
+def move_point_towards(point, center, dist=1):
+    dx, dy = (center[0] - point[0], center[1] - point[1])
+    distance = dist_points(point, center)
+    stepx, stepy = (dx * dist / distance, dy * dist / distance)
+
+    return [point[0] + stepx, point[1] + stepy]
+
+
+def create_building_polys(polys, city_zones_in_walls, dist=3):
+    buildings = []
+    for z in city_zones_in_walls:
+        # TODO: For now, just makes 1 big building
+        zone = polys[z]
+        center = vg.polygon_center(zone)
+        poly = []
+        for v_id, vertex in enumerate(zone):
+            poly.append(move_point_towards(vertex, center, dist=dist))
+
+        buildings.append(poly)
+
+    return buildings
+
+
 if __name__ == '__main__':
     width = 1200
     height = 1200
@@ -376,6 +416,9 @@ if __name__ == '__main__':
     # Stretch out all zones so there is some space between
     polys, points = stretch_out(polys, points, dist=stretch)
 
+    # Create inner building polygons to cells
+    zone_data.building_polys = create_building_polys(polys, zone_data.city_zones_in_walls, dist=5)
+
     # Determine colors and then add them to image
     colors = color_range(webcolors.hex_to_rgb(background_color), background_color2, 16)
     add_cells_to_image(polys, colors, draw, zone_data=zone_data)
@@ -388,6 +431,9 @@ if __name__ == '__main__':
         add_ids_to_image(points, draw)
         add_line_segments_to_image(river, draw, fill_line_bg='gold', c_size=9, skip_last=True)
         add_line_segments_to_image(river, draw, fill_line_bg='blue', c_size=7, skip_last=True)
+
+    # Draw buildings
+    add_polys_to_image(zone_data.building_polys, draw, colors, outline='black')
 
     im = im.crop((buffer, buffer, width-buffer-buffer, height-buffer-buffer))
     im.show()

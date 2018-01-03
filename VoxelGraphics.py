@@ -956,6 +956,54 @@ def dist(p1, p2):
     return math.sqrt((p2.x - p1.x) ** 2 + (p2.y - p1.y) ** 2 + (p2.z - p1.z) ** 2)
 
 
+def polygon_center(poly):
+    if len(poly) < 1:
+        raise ValueError("No polygon edges passed in to vg.polygon_center")
+    elif len(poly) == 1:
+        return poly[0]
+
+    x = y = 0
+    last_point = poly[len(poly) - 1]
+    first_point = poly[0]
+    if hasattr(first_point,"x") and hasattr(first_point,"y"):
+        # Points are style of {x, y}
+        skip_last = last_point.x == first_point.x and last_point.y == first_point.y
+
+        for id, vertex in enumerate(poly):
+            if skip_last and (id == len(poly) - 1):
+                continue
+            x += vertex["x"]
+            y += vertex["y"]
+
+        if skip_last:
+            x = x / (len(poly) - 1)
+            y = y / (len(poly) - 1)
+        else:
+            x = x / (len(poly))
+            y = y / (len(poly))
+
+        return {"x": x, "y": y}
+
+    else:
+        # Points are style of [x, y]
+        skip_last = last_point[0] == first_point[0] and last_point[1] == first_point[1]
+
+        for id, vertex in enumerate(poly):
+            if skip_last and (id == len(poly) - 1):
+                continue
+            x += vertex[0]
+            y += vertex[1]
+
+        if skip_last:
+            x = x / (len(poly) - 1)
+            y = y / (len(poly) - 1)
+        else:
+            x = x / (len(poly))
+            y = y / (len(poly))
+
+        return [x, y]
+
+
 def best_points_for_triangular_roof(corners):
     p1a = (corners[0] + corners[1]) * .5
     p2a = (corners[2] + corners[3]) * .5
