@@ -106,13 +106,14 @@ def add_polys_to_image(polys, draw, colors, color=None, outline='brown'):
             lines.append(p1[0])
             lines.append(p1[1])
 
-        if not color:
-            color = webcolors.rgb_to_hex(helpers.choose_one(colors))
-            color = chroma.Color(color)
-            color -= chroma.Color(webcolors.name_to_hex('orange'))
-            color = color.hex
-
-        draw.polygon(lines, fill=color, outline=outline)
+        if color is None:
+            color_1 = webcolors.rgb_to_hex(helpers.choose_one(colors))
+            color_1 = chroma.Color(color_1)
+            color_1 -= chroma.Color(webcolors.name_to_hex('orange'))
+            color_1 = color_1.hex
+            draw.polygon(lines, fill=color_1, outline=outline)
+        else:
+            draw.polygon(lines, fill=color, outline=outline)
 
 
 def add_points_to_image(points, draw, fill_line_bg='blue', fill_line_fg='orange', c_size=2):
