@@ -285,26 +285,39 @@ def stretch_out(polys, P, rows=11, cols=11, dist=6):
     return polys, P
 
 
-def edge_graph_from_polys(polys, prec=5):
+def edge_graph_from_polys(polys, prec=5, zone_data=None, value_on_walls=None):
     edge_graph = nx.Graph()
 
     for poly_id, poly in enumerate(polys):
-        for wall_id, wall in enumerate(poly):
-            wall_next = poly[(wall_id + 1) % len(poly)]
-            w1 = (int(round(wall[0] / prec) * prec), int(round(wall[1] / prec) * prec))
-            w2 = (int(round(wall_next[0] / prec) * prec), int(round(wall_next[1] / prec) * prec))
-            dist = dist_points(w1, w2)
 
-            if (w1[0] == w2[0] and w1[1] == w2[1]) or (w1[0] in [0, width] and w2[0] in [0, height]):
+        for edge_id, edge in enumerate(poly):
+            wall_next = poly[(edge_id + 1) % len(poly)]
+
+            e1 = (int(round(edge[0] / prec) * prec), int(round(edge[1] / prec) * prec))
+            e2 = (int(round(wall_next[0] / prec) * prec), int(round(wall_next[1] / prec) * prec))
+
+            on_wall = False
+            if value_on_walls is not None:
+                for wall in zone_data.outer_walls:
+                    if wall[0] == poly_id and wall[1] == edge_id:
+                        on_wall = True
+                        break
+
+            if on_wall:
+                dist = 0
+            else:
+                dist = dist_points(e1, e2)
+
+            if (e1[0] == e2[0] and e1[1] == e2[1]) or (e1[0] in [0, width] and e2[0] in [0, height]):
                 pass
                 # Duplicate points
             else:
-                edge_graph.add_node(w1)
-                edge_graph.add_node(w2)
-                if w1[0] in [0, width] or w2[0] in [0, height]:
+                edge_graph.add_node(e1)
+                edge_graph.add_node(e2)
+                if e1[0] in [0, width] or e2[0] in [0, height]:
                     dist += 1000
 
-                edge_graph.add_edge(w1, w2, weight=dist)
+                edge_graph.add_edge(e1, e2, weight=dist)
                 # print("Cell", poly_id, "Adding edge: ", (w1, w2, dist))
 
     return edge_graph
@@ -362,9 +375,8 @@ def bounding_box(poly):
 
 
 def create_building_polys(polys, city_zones_in_walls, dist=3):
-    buildings = []
+    all_buildings = []
     for z in city_zones_in_walls:
-        # TODO: For now, just makes 1 big building
         zone = polys[z]
         center = vg.polygon_center(zone)
         poly_bounds = []
@@ -372,54 +384,66 @@ def create_building_polys(polys, city_zones_in_walls, dist=3):
             poly_bounds.append(move_point_towards(vertex, center, dist=dist))
 
         bounds = bounding_box(poly_bounds)
+        polygon_bounds = Polygon(poly_bounds)
 
-        local_buildings = []
-        for i in range(1, 10):
-            for attempt in range(100):
-                width = np.random.triangular(5, 8, 12)
-                height = np.random.triangular(5, 8, 12)
+        # TODO: Have multiple layout methods
+        zone_buildings = create_building_polys_random(polygon_bounds, bounds)
+        all_buildings.extend(zone_buildings)
 
-                xmax = bounds.x_max - width - 1
-                ymax = bounds.y_max - height - 1
+        all_buildings.insert(0, poly_bounds)
 
-                if bounds.x_min >= bounds.x_max:
-                    break
-                elif xmax > bounds.x_min:
-                    try:
-                        x = np.random.randint(bounds.x_min, xmax)
-                    except ValueError:
-                        break
+    return all_buildings
 
-                else:
-                        x = np.random.randint(bounds.x_min, bounds.x_max)
 
-                if bounds.y_min >= bounds.y_max:
-                    break
-                elif ymax > bounds.y_min:
-                    try:
-                        y = np.random.randint(bounds.y_min, ymax)
-                    except ValueError:
-                        break
-                else:
-                    y = np.random.randint(bounds.y_min, bounds.y_max)
+def create_building_polys_random(polygon_bounds, bounds):
+    buildings = []
+    area = round(polygon_bounds.area / 200)
 
-                rect_maybe = [[x, y], [x + width, y], [x + width, y + height], [x, y + height]]
-                poly_maybe = Polygon(rect_maybe)
+    local_buildings = []
+    for i in range(1, area):
+        for attempt in range(100):
+            width = np.random.triangular(5, 8, 12)
+            height = np.random.triangular(5, 8, 12)
 
-                overlaps = False
-                for b in local_buildings:
-                    if poly_maybe.intersects(Polygon(b)):
-                        overlaps = True
-                        break
-                if not overlaps:
-                    local_buildings.append(rect_maybe)
+            xmax = bounds.x_max - width - 1
+            ymax = bounds.y_max - height - 1
+
+            if bounds.x_min >= bounds.x_max:
+                break
+            elif xmax > bounds.x_min:
+                try:
+                    x = np.random.randint(bounds.x_min, xmax)
+                except ValueError:
                     break
 
-        for b in local_buildings:
-            if Polygon(b).intersects(Polygon(poly_bounds)):
-                buildings.append(b)
+            else:
+                    x = np.random.randint(bounds.x_min, bounds.x_max)
 
-        buildings.insert(0, poly_bounds)
+            if bounds.y_min >= bounds.y_max:
+                break
+            elif ymax > bounds.y_min:
+                try:
+                    y = np.random.randint(bounds.y_min, ymax)
+                except ValueError:
+                    break
+            else:
+                y = np.random.randint(bounds.y_min, bounds.y_max)
+
+            rect_maybe = [[x, y], [x + width, y], [x + width, y + height], [x, y + height]]
+            poly_maybe = Polygon(rect_maybe)
+
+            overlaps = False
+            for b in local_buildings:
+                if poly_maybe.intersects(Polygon(b)):
+                    overlaps = True
+                    break
+            if not overlaps:
+                local_buildings.append(rect_maybe)
+                break
+
+    for b in local_buildings:
+        if Polygon(b).intersects(polygon_bounds):
+            buildings.append(b)
 
     return buildings
 
@@ -467,7 +491,7 @@ if __name__ == '__main__':
     zone_data.outer_walls = zones_outer_walls(polys, zone_data.city_zones_in_walls)
 
     # Build a map of all edges
-    zone_data.edge_graph = edge_graph_from_polys(polys)
+    zone_data.edge_graph = edge_graph_from_polys(polys, prec=round_precision, zone_data=zone_data, value_on_walls=20)
 
     # Find River path
     r1 = edge_point_closest_to(zone_data.edge_graph.nodes, 0, height * .7)
