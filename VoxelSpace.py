@@ -397,13 +397,22 @@ def create_building_polys(polys, city_zones_in_walls, dist=3):
 
 def create_building_polys_random(polygon_bounds, bounds):
     buildings = []
-    area = round(polygon_bounds.area / 200)
+    area = round(polygon_bounds.area / 150)
+
+    sizes = np.random.choice(["large", "medium", "small"])
+    if sizes == "large":
+        max_size = 30
+    elif sizes == "medium":
+        max_size = 18
+    else:
+        max_size = 12
 
     local_buildings = []
     for i in range(1, area):
         for attempt in range(100):
-            width = np.random.triangular(5, 8, 12)
-            height = np.random.triangular(5, 8, 12)
+
+            width = np.random.triangular(5, round(max_size/2)+1, max_size)
+            height = np.random.triangular(5, round(max_size/2)+1, max_size)
 
             xmax = bounds.x_max - width - 1
             ymax = bounds.y_max - height - 1
@@ -440,6 +449,10 @@ def create_building_polys_random(polygon_bounds, bounds):
             if not overlaps:
                 local_buildings.append(rect_maybe)
                 break
+
+            if attempt == 100:
+                if max_size > 10:
+                    max_size -= 1
 
     for b in local_buildings:
         if Polygon(b).intersects(polygon_bounds):
