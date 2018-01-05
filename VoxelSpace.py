@@ -17,6 +17,7 @@ import networkx as nx
 import chroma
 
 
+# TODO: Have multiple voronoi settings to change poly layouts, for example try averaging centers or
 # TODO: Average out the dists of all cells per shell?
 
 
@@ -102,7 +103,12 @@ def add_cells_to_image(polys, colors, draw, zone_data=Map()):
 def add_polys_to_image(polys, draw, colors, color=None, outline='brown'):
     for poly_id, poly in enumerate(polys):
         lines = []
-        for line_id, p1 in enumerate(poly):
+        if type(poly) == Polygon:
+            line = poly.exterior.coords
+        else:
+            line = poly
+
+        for line_id, p1 in enumerate(line):
             lines.append(p1[0])
             lines.append(p1[1])
 
@@ -285,6 +291,11 @@ def stretch_out(polys, P, rows=11, cols=11, dist=6):
     return polys, P
 
 
+def is_horiz(p1, p2):
+    card = vg.cardinality(Map(x=p1[0], y=p1[1]), Map(x=p2[0], y=p2[1]), as_vector=False)
+    return card[-1] in ["e", "w"]
+
+
 def edge_graph_from_polys(polys, prec=5, zone_data=None, value_on_walls=None):
     edge_graph = nx.Graph()
 
@@ -383,19 +394,25 @@ def create_building_polys(polys, city_zones_in_walls, dist=3):
         for v_id, vertex in enumerate(zone):
             poly_bounds.append(move_point_towards(vertex, center, dist=dist))
 
-        bounds = bounding_box(poly_bounds)
         polygon_bounds = Polygon(poly_bounds)
 
-        # TODO: Have multiple layout methods
-        zone_buildings = create_building_polys_random(polygon_bounds, bounds)
+        layout = np.random.choice(["random", "edge"])
+        if layout == "random":
+            zone_buildings = create_building_polys_on_edges(polygon_bounds, poly_bounds)
+        elif layout == "edge":
+            zone_buildings = create_building_polys_random(polygon_bounds, poly_bounds)
         all_buildings.extend(zone_buildings)
 
-        all_buildings.insert(0, poly_bounds)
+        # all_buildings.insert(0, poly_bounds)
 
     return all_buildings
 
 
-def create_building_polys_random(polygon_bounds, bounds):
+def create_building_polys_random(polygon_bounds, poly_bounds):
+    # Brute force try for 100 random placements of polys within each zone for n buildings
+
+    bounds = bounding_box(poly_bounds)
+
     buildings = []
     area = round(polygon_bounds.area / 150)
 
@@ -411,8 +428,8 @@ def create_building_polys_random(polygon_bounds, bounds):
     for i in range(1, area):
         for attempt in range(100):
 
-            width = np.random.triangular(5, round(max_size/2)+1, max_size)
-            height = np.random.triangular(5, round(max_size/2)+1, max_size)
+            width = np.random.triangular(5, round(max_size / 2) + 1, max_size)
+            height = np.random.triangular(5, round(max_size / 2) + 1, max_size)
 
             xmax = bounds.x_max - width - 1
             ymax = bounds.y_max - height - 1
@@ -426,7 +443,7 @@ def create_building_polys_random(polygon_bounds, bounds):
                     break
 
             else:
-                    x = np.random.randint(bounds.x_min, bounds.x_max)
+                x = np.random.randint(bounds.x_min, bounds.x_max)
 
             if bounds.y_min >= bounds.y_max:
                 break
@@ -453,6 +470,73 @@ def create_building_polys_random(polygon_bounds, bounds):
             if attempt == 100:
                 if max_size > 10:
                     max_size -= 1
+
+    for b in local_buildings:
+        if Polygon(b).intersects(polygon_bounds):
+            buildings.append(b)
+
+    return buildings
+
+
+def create_building_polys_on_edges(polygon_bounds, poly_bounds):
+    buildings = []
+    area = round(polygon_bounds.area / 50)
+
+    sizes = np.random.choice(["large", "medium", "small"])
+    if sizes == "large":
+        max_size = 40
+    elif sizes == "medium":
+        max_size = 25
+    else:
+        max_size = 20
+    max_size = max(max_size, area)
+
+    local_buildings = []
+    for point_id, point in enumerate(poly_bounds):
+        point_next = poly_bounds[(point_id + 1) % len(poly_bounds)]
+        edge = [point, point_next]
+        mid = [(point[0] + point_next[0]) / 2, (point[1] + point_next[1]) / 2]
+
+        bounds = bounding_box(edge)
+        # if (bounds.x_max - bounds.x_min) < 8 and (bounds.y_max - bounds.y_min) < 8:
+        #     continue
+
+        is_horizontal_2 = (bounds.x_max - bounds.x_min) > (bounds.y_max - bounds.y_min)
+
+        if is_horizontal_2:
+            last_slice = bounds.x_min
+        else:
+            last_slice = bounds.y_min
+
+        for attempt in range(100):
+            if is_horizontal_2:
+                x = last_slice
+                y = mid[1]
+                width = min(np.random.triangular(round(max_size / 3), round(max_size / 2) + 1, max_size), bounds.x_max - last_slice - 1)
+                height = min(np.random.triangular(round(max_size / 3), round(max_size / 2) + 1, max_size), bounds.y_max - bounds.y_min - 1)
+                rect_maybe = [[x, y - height], [x + width, y - height], [x + width, y + height], [x, y + height]]
+                rect_cut = polygon_bounds.intersection(Polygon(rect_maybe))
+
+                if rect_cut.area > 30:
+                    buildings.append(rect_cut)
+                last_slice += width + 1
+
+                if last_slice > (bounds.x_max - max_size/3):
+                    break
+            else:
+                x = mid[0]
+                y = last_slice
+                width = min(np.random.triangular(round(max_size / 3), round(max_size / 2) + 1, max_size), bounds.x_max - bounds.x_min - 1)
+                height = min(np.random.triangular(round(max_size / 3), round(max_size / 2) + 1, max_size), bounds.y_max - last_slice - 1)
+                rect_maybe = [[x - width, y], [x + width, y], [x + width, y + height], [x - width, y + height]]
+                rect_cut = polygon_bounds.intersection(Polygon(rect_maybe))
+
+                if rect_cut.area > 30:
+                    buildings.append(rect_cut)
+                last_slice += height + 1
+
+                if last_slice > (bounds.y_max - max_size/3):
+                    break
 
     for b in local_buildings:
         if Polygon(b).intersects(polygon_bounds):
