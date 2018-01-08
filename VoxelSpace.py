@@ -396,11 +396,11 @@ def create_building_polys(polys, city_zones_in_walls, dist=3):
 
         polygon_bounds = Polygon(poly_bounds)
 
-        layout = np.random.choice(["random", "edge"])
+        layout = np.random.choice(["edge"])
         if layout == "random":
-            zone_buildings = create_building_polys_on_edges(polygon_bounds, poly_bounds)
-        elif layout == "edge":
             zone_buildings = create_building_polys_random(polygon_bounds, poly_bounds)
+        elif layout == "edge":
+            zone_buildings = create_building_polys_on_edges(polygon_bounds, poly_bounds)
         all_buildings.extend(zone_buildings)
 
         # all_buildings.insert(0, poly_bounds)
@@ -478,9 +478,9 @@ def create_building_polys_random(polygon_bounds, poly_bounds):
     return buildings
 
 
-def create_building_polys_on_edges(polygon_bounds, poly_bounds):
+def create_building_polys_on_edges(polygon_of_zone, poly_edges):
     buildings = []
-    area = round(polygon_bounds.area / 50)
+    area = round(polygon_of_zone.area / 50)
 
     sizes = np.random.choice(["large", "medium", "small"])
     if sizes == "large":
@@ -490,59 +490,99 @@ def create_building_polys_on_edges(polygon_bounds, poly_bounds):
     else:
         max_size = 20
     max_size = max(max_size, area)
+    min_size = round(max_size / 3)
+    mid_size = round(max_size / 2) + 1
+
+    poly_bounds = bounding_box(poly_edges)
+    poly_mid = [(poly_bounds.x_max - poly_bounds.x_min) / 2, (poly_bounds.y_max - poly_bounds.y_min) / 2]
+
+    last_was_horizontal = False
+    is_horizontal = False
+    x = y = height = width = 0
 
     local_buildings = []
-    for point_id, point in enumerate(poly_bounds):
-        point_next = poly_bounds[(point_id + 1) % len(poly_bounds)]
+    # Repeat for each edge to create buildings along edge
+    for point_id, point in enumerate(poly_edges):
+        point_next = poly_edges[(point_id + 1) % len(poly_edges)]
         edge = [point, point_next]
-        mid = [(point[0] + point_next[0]) / 2, (point[1] + point_next[1]) / 2]
+        edge_mid = [(point[0] + point_next[0]) / 2, (point[1] + point_next[1]) / 2]
 
-        bounds = bounding_box(edge)
+        edge_bounds = bounding_box(edge)
+        last_was_horizontal = is_horizontal
+        is_horizontal = (edge_bounds.x_max - edge_bounds.x_min) > (edge_bounds.y_max - edge_bounds.y_min)
+
         # if (bounds.x_max - bounds.x_min) < 8 and (bounds.y_max - bounds.y_min) < 8:
         #     continue
 
-        is_horizontal_2 = (bounds.x_max - bounds.x_min) > (bounds.y_max - bounds.y_min)
-
-        if is_horizontal_2:
-            last_slice = bounds.x_min
+        is_left = is_top = False
+        if is_horizontal:
+            last_slice = edge_bounds.x_min
+            is_top = edge_mid[1] < poly_mid[1]
         else:
-            last_slice = bounds.y_min
+            if last_was_horizontal:
+                last_slice = y + height
+            else:
+                last_slice = edge_bounds.y_min
+            is_left = edge_mid[0] < poly_mid[0]
 
         for attempt in range(100):
-            if is_horizontal_2:
-                x = last_slice
-                y = mid[1]
-                width = min(np.random.triangular(round(max_size / 3), round(max_size / 2) + 1, max_size), bounds.x_max - last_slice - 1)
-                height = min(np.random.triangular(round(max_size / 3), round(max_size / 2) + 1, max_size), bounds.y_max - bounds.y_min - 1)
+            if is_horizontal:
+                if is_top:
+                    x = last_slice
+                    y = edge_mid[1]
+                    last_x = edge_bounds.x_max - last_slice + 1
+                    last_y = edge_bounds.y_max - edge_bounds.y_min + 1
+                    width = min(np.random.triangular(min_size, mid_size, max_size), last_x)
+                    height = min(np.random.triangular(min_size, mid_size, max_size), last_y)
+                else:
+                    x = last_slice
+                    y = edge_mid[1]
+                    last_x = edge_bounds.x_max - last_slice + 1
+                    last_y = edge_bounds.y_max - edge_bounds.y_min + 1
+                    width = min(np.random.triangular(min_size, mid_size, max_size), last_x)
+                    height = min(np.random.triangular(min_size, mid_size, max_size), last_y)
+
                 rect_maybe = [[x, y - height], [x + width, y - height], [x + width, y + height], [x, y + height]]
-                rect_cut = polygon_bounds.intersection(Polygon(rect_maybe))
+                rect_cut = polygon_of_zone.intersection(Polygon(rect_maybe))
 
                 if rect_cut.area > 30:
                     buildings.append(rect_cut)
                 last_slice += width + 1
 
-                if last_slice > (bounds.x_max - max_size/3):
+                if last_slice > (edge_bounds.x_max - max_size/3):
                     break
             else:
-                x = mid[0]
-                y = last_slice
-                width = min(np.random.triangular(round(max_size / 3), round(max_size / 2) + 1, max_size), bounds.x_max - bounds.x_min - 1)
-                height = min(np.random.triangular(round(max_size / 3), round(max_size / 2) + 1, max_size), bounds.y_max - last_slice - 1)
+                if is_left:
+                    x = edge_mid[0]
+                    y = last_slice
+                    last_x = edge_bounds.x_max - edge_bounds.x_min + 1
+                    last_y = edge_bounds.y_max - last_slice + 1
+                    width = min(np.random.triangular(min_size, mid_size, max_size), last_x)
+                    height = min(np.random.triangular(min_size, mid_size, max_size), last_y)
+                else:
+                    x = edge_mid[0]
+                    y = last_slice
+                    last_x = edge_bounds.x_max - edge_bounds.x_min + 1
+                    last_y = edge_bounds.y_max - last_slice + 1
+                    width = min(np.random.triangular(min_size, mid_size, max_size), last_x)
+                    height = min(np.random.triangular(min_size, mid_size, max_size), last_y)
+
                 rect_maybe = [[x - width, y], [x + width, y], [x + width, y + height], [x - width, y + height]]
-                rect_cut = polygon_bounds.intersection(Polygon(rect_maybe))
+                rect_cut = polygon_of_zone.intersection(Polygon(rect_maybe))
 
                 if rect_cut.area > 30:
                     buildings.append(rect_cut)
                 last_slice += height + 1
 
-                if last_slice > (bounds.y_max - max_size/3):
+                if last_slice > (edge_bounds.y_max - max_size/3):
                     break
 
     for b in local_buildings:
-        if Polygon(b).intersects(polygon_bounds):
+        if Polygon(b).intersects(polygon_of_zone):
             buildings.append(b)
 
     return buildings
+
 
 
 if __name__ == '__main__':
